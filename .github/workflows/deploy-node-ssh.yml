@@ -1,0 +1,113 @@
+name: Deploy to VPS - Production
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  NODE_VERSION: '22'
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run tests
+        run: npm test || true
+      
+      - name: Build application
+        env:
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_BASE_URL: ${{ secrets.NEXT_PUBLIC_BASE_URL }}
+          NEXT_PUBLIC_LMS_BASE_URL: ${{ secrets.NEXT_PUBLIC_LMS_BASE_URL }}
+          NEXT_PUBLIC_STORAGE_URL: ${{ secrets.NEXT_PUBLIC_STORAGE_URL }}
+          NEXT_PUBLIC_SESSION_SECRET: ${{ secrets.NEXT_PUBLIC_SESSION_SECRET }}
+          NEXT_PUBLIC_SESSION_PASSWORD: ${{ secrets.NEXT_PUBLIC_SESSION_PASSWORD }}
+        run: npm run build
+      
+      - name: Create deployment archive
+        run: |
+          tar -czf next-deploy.tar.gz \
+            .next \
+            public \
+            package.json \
+            package-lock.json \
+            next.config.ts \
+            ecosystem.config.js \
+            scripts \
+            .env.production 2>/dev/null || true
+      
+      - name: Upload archive as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nextjs-build
+          path: next-deploy.tar.gz
+          retention-days: 1
+
+  deploy:
+    needs: test-and-build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: nextjs-build
+      
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+      
+      - name: Add server to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p ${{ secrets.DEPLOY_SSH_PORT }} ${{ secrets.DEPLOY_SSH_HOST }} >> ~/.ssh/known_hosts
+      
+      - name: Transfer archive to server
+        run: |
+          scp -P ${{ secrets.DEPLOY_SSH_PORT }} \
+            next-deploy.tar.gz \
+            ${{ secrets.DEPLOY_SSH_USER }}@${{ secrets.DEPLOY_SSH_HOST }}:~
+      
+      - name: Extract application code
+        run: |
+          ssh -p ${{ secrets.DEPLOY_SSH_PORT }} ${{ secrets.DEPLOY_SSH_USER }}@${{ secrets.DEPLOY_SSH_HOST }} \
+            "mkdir -p /home/${{ secrets.DEPLOY_SSH_USER }}/cdp.unizik.qverselearning.org && \
+             tar -xzf ~/next-deploy.tar.gz -C /home/${{ secrets.DEPLOY_SSH_USER }}/cdp.unizik.qverselearning.org && \
+             rm ~/next-deploy.tar.gz"
+      
+      - name: Make script executable
+        run: |
+          ssh -p ${{ secrets.DEPLOY_SSH_PORT }} ${{ secrets.DEPLOY_SSH_USER }}@${{ secrets.DEPLOY_SSH_HOST }} \
+            "chmod +x /home/${{ secrets.DEPLOY_SSH_USER }}/cdp.unizik.qverselearning.org/scripts/deploy-server.sh"
+
+            
+      - name: Run deployment script
+        run: |
+            ssh -p ${{ secrets.DEPLOY_SSH_PORT }} ${{ secrets.DEPLOY_SSH_USER }}@${{ secrets.DEPLOY_SSH_HOST }} \
+            "NEXT_PUBLIC_API_URL='${{ secrets.NEXT_PUBLIC_API_URL }}' \
+            NEXT_PUBLIC_BASE_URL='${{ secrets.NEXT_PUBLIC_BASE_URL }}' \
+            NEXT_PUBLIC_LMS_BASE_URL='${{ secrets.NEXT_PUBLIC_LMS_BASE_URL }}' \
+            NEXT_PUBLIC_STORAGE_URL='${{ secrets.NEXT_PUBLIC_STORAGE_URL }}' \
+            NEXT_PUBLIC_SESSION_PASSWORD='${{ secrets.NEXT_PUBLIC_SESSION_PASSWORD }}' \
+            NEXT_PUBLIC_SESSION_SECRET='${{ secrets.NEXT_PUBLIC_SESSION_SECRET }}' \
+            AUTH_SECRET='${{ secrets.AUTH_SECRET }}' \
+            sudo -E bash /home/${{ secrets.DEPLOY_SSH_USER }}/cdp.unizik.qverselearning.org/scripts/deploy-server.sh \
+                /home/${{ secrets.DEPLOY_SSH_USER }}/cdp.unizik.qverselearning.org \
+                cdp.unizik.qverselearning.org \
+                3800 \
+                cdp.unizik.qverselearning.org \
+                support@qverselearning.com"
