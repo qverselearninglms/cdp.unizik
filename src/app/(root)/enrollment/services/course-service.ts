@@ -2,7 +2,7 @@ import { Category, Enrollment, ApiCategory, ApiCourse, Course, SubCategory, Paym
 import { mockCategories, mockCourses, mockSubCategories } from '../data/mock-data';
 import { apiClient } from '@/core/client';
 import { ApiError } from '@/types/auth';
-import { lmsLoginUrl } from '@/config';
+import { lmsBaseUrl } from '@/config';
 
 interface EnrolledCourseResponseType {
     course_id: number | string;
@@ -353,7 +353,7 @@ class CourseService {
     }
 
     redirectToCourseWarePlatform = (username: string): void => {
-        const courseUrl = `${lmsLoginUrl}/ssotester/index.php?sso_loggers=1&u=${username}&password=1`;
+        const courseUrl = `${lmsBaseUrl}/ssotester/index.php?sso_loggers=1&u=${username}&password=1`;
         window.open(courseUrl, '_blank');
     }
 

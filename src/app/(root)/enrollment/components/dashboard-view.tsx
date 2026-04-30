@@ -2,14 +2,11 @@ import { useCourseStore } from '../stores/course-store';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { BookOpen, Plus, Award, Rocket, Target, Database, RefreshCcw } from 'lucide-react';
+import { Plus, Award, Database } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useCourseQueries } from '../hooks/use-course-queries';
 import { courseService } from '../services/course-service';
 import { ConfirmModal } from '@/components/global/confirm-modal';
-import Link from 'next/link';
-import { lmsLoginUrl } from '@/config';
-import { useAuthContext } from '@/providers/AuthProvider';
 
 export function DashboardView({ userId }: { userId: string }) {
     const { enrolledCourses, toggleShowAllCategories, clearCache } = useCourseStore();

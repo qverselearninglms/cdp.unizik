@@ -48,6 +48,7 @@ export const FULL_TUITION_FEE = 195000;
 export const APP_CONFIG = {
     name: SITE_NAME,
     short_name: SITE_SHORT_NAME,
+    version: "1.0.0",
     apiUrl: remoteApiUrl,
     description: "Unizik Learn - E-Learning Platform for Nnamdi Azikiwe University, Awka",
     keywords: ["Unizik", "Unizik Learn", "E-Learning", "University", "University Portal", "University Student Portal", "Awka", "Nigeria"],

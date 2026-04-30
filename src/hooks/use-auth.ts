@@ -91,7 +91,7 @@ export function useAuth() {
                 if (session.user?.role === "STUDENT") router.push(`/enrollment`)
 
                 // redirect to lms  
-                // else router.push(`${lmsLoginUrl}/ssotester/index.php?sso_loggers=1&u=${session.user.school_reg_number}&password=1`)
+                // else router.push(`${lmsBaseUrl}/ssotester/index.php?sso_loggers=1&u=${session.user.school_reg_number}&password=1`)
                 else router.push(`/${session.user?.role.toLocaleLowerCase() + ROUTES.dashboard}`)
             }
         },
