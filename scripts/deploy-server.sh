@@ -49,21 +49,17 @@ fi
 NGINX_CONF="/etc/nginx/conf.d/${DOMAIN}.conf"
 
 echo "Writing Nginx config to ${NGINX_CONF}..."
+# Notice we are ONLY writing the HTTP port 80 block. 
+# Certbot will automatically inject the port 443 block and SSL paths later.
 sudo tee "${NGINX_CONF}" > /dev/null <<EOF
 server {
     listen 80;
     server_name ${DOMAIN};
 
-    # Redirect HTTP to HTTPS
-    return 301 https://\$host\$request_uri;
-}
-
-server {
-    listen 443 ssl;
-    server_name ${DOMAIN};
-
-    ssl_certificate     /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+    # Let's Encrypt challenge
+    location /.well-known/acme-challenge/ {
+        root /var/www/html;
+    }
 
     # Proxy /api/v1/* to remote backend
     location /api/v1/ {
@@ -87,15 +83,10 @@ server {
         proxy_set_header   X-Forwarded-Proto \$scheme;
         proxy_cache_bypass \$http_upgrade;
     }
-
-    # Let's Encrypt challenge
-    location /.well-known/acme-challenge/ {
-        root /var/www/html;
-    }
 }
 EOF
 
-# Test nginx config
+# Test nginx config (This will now pass because it only looks for standard HTTP directives)
 if sudo nginx -t 2>/dev/null; then
   echo "✅ Nginx config OK, reloading..."
   sudo systemctl reload nginx 2>/dev/null || sudo service nginx reload 2>/dev/null
@@ -110,6 +101,7 @@ fi
 # ============================================
 if command -v certbot >/dev/null 2>&1; then
   echo "Attempting SSL setup..."
+  # The --redirect flag tells Certbot to automatically add the 301 redirect to the config
   sudo certbot --nginx --non-interactive --agree-tos --redirect \
     -m "${LE_EMAIL}" -d "${DOMAIN}" 2>/dev/null || true
 else
