@@ -4,7 +4,7 @@ set -euo pipefail
 
 APP_DIR="${1:-/home/qverselearning/cdp.unizik.qverselearning.org}"
 APP_NAME="${2:-cdp.unizik.qverselearning.org}"
-APP_PORT="${3:-3700}"
+APP_PORT="${3:-3800}"
 DOMAIN="${4:-cdp.unizik.qverselearning.org}"
 ARCHIVE="next-deploy.tar.gz"
 NGINX_CONF="/etc/nginx/conf.d/${DOMAIN}.conf"
