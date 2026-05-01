@@ -141,11 +141,24 @@ if pm2 list 2>/dev/null | grep -q "${APP_NAME}"; then
     pm2 stop "${APP_NAME}"
 fi
 
+# ── Fix node_modules ownership if previously installed as root ────────────────
+# This happens when a prior deploy ran the script via "sudo -E bash".
+# We must own node_modules before npm ci can safely remove/replace it.
+if [[ -d "${APP_DIR}/node_modules" ]]; then
+    NM_OWNER=$(stat -c '%U' "${APP_DIR}/node_modules" 2>/dev/null || echo "")
+    CURRENT_USER=$(whoami)
+    if [[ "${NM_OWNER}" != "${CURRENT_USER}" ]]; then
+        echo "node_modules owned by '${NM_OWNER}', fixing ownership for '${CURRENT_USER}'..."
+        sudo rm -rf "${APP_DIR}/node_modules"
+        echo "✅ Stale root-owned node_modules removed"
+    fi
+fi
+
 # ── Install production dependencies ──────────────────────────────────────────
 echo "Installing production dependencies..."
 npm ci --omit=dev || {
     echo "npm ci failed — cleaning node_modules and retrying..."
-    rm -rf node_modules
+    sudo rm -rf node_modules
     npm cache clean --force
     npm ci --omit=dev
 }
