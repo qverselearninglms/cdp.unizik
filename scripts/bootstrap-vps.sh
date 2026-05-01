@@ -7,11 +7,15 @@
 # SCOPE: only installs missing global tools (Node, PM2, Nginx, Certbot).
 #        Does NOT modify other apps, other Nginx vhosts, or other PM2 processes.
 #
+# Supports:
+#   - Debian/Ubuntu  (apt)
+#   - RHEL/CentOS/CloudLinux/AlmaLinux/Rocky 8+ (dnf)
+#
 # Usage:
 #   bash scripts/bootstrap-vps.sh [deploy-user]
 #
-# Prerequisite: The SSH user must have passwordless sudo for apt, nginx,
-#   certbot, npm, and systemctl commands.
+# Prerequisite: The SSH user must have passwordless sudo for the package
+#   manager, nginx, certbot, npm, and systemctl commands.
 # =============================================================================
 set -euo pipefail
 
@@ -22,12 +26,48 @@ echo "  VPS Bootstrap"
 echo "  User: ${DEPLOY_USER}"
 echo "============================================"
 
+# ── Detect OS family ─────────────────────────────────────────────────────────
+OS_ID=""
+OS_LIKE=""
+if [[ -f /etc/os-release ]]; then
+    # shellcheck disable=SC1091
+    OS_ID=$(. /etc/os-release && echo "${ID:-}")
+    OS_LIKE=$(. /etc/os-release && echo "${ID_LIKE:-}")
+fi
+
+is_rhel_family() {
+    echo "${OS_ID} ${OS_LIKE}" | grep -qiE 'rhel|fedora|centos|cloudlinux|almalinux|rocky'
+}
+
+is_debian_family() {
+    echo "${OS_ID} ${OS_LIKE}" | grep -qiE 'debian|ubuntu'
+}
+
+if is_rhel_family; then
+    PKG_MGR="dnf"
+    echo "  OS    : RHEL-family (${OS_ID})"
+elif is_debian_family; then
+    PKG_MGR="apt"
+    echo "  OS    : Debian-family (${OS_ID})"
+else
+    echo "  OS    : Unknown (${OS_ID}) — attempting dnf then apt"
+    command -v dnf &>/dev/null && PKG_MGR="dnf" || PKG_MGR="apt"
+fi
+echo "  PKG   : ${PKG_MGR}"
+echo "============================================"
+
 # ── Node.js 22 ────────────────────────────────────────────────────────────────
 NODE_MAJOR=$(node -e "process.stdout.write(process.version.split('.')[0].replace('v',''))" 2>/dev/null || echo "0")
 if [[ "${NODE_MAJOR}" -lt 22 ]]; then
     echo "Installing Node.js 22..."
-    curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
-    sudo apt-get install -y nodejs
+    if [[ "${PKG_MGR}" == "dnf" ]]; then
+        # NodeSource RPM setup for RHEL 8+ / CloudLinux 8+
+        curl -fsSL https://rpm.nodesource.com/setup_22.x | sudo -E bash -
+        sudo dnf install -y nodejs --setopt=nodesource-nodejs.module_hotfixes=1
+    else
+        curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+        sudo apt-get install -y nodejs
+    fi
     echo "✅ Node.js $(node -v) installed"
 else
     echo "✅ Node.js $(node -v) already installed"
@@ -42,9 +82,8 @@ else
     echo "✅ PM2 $(pm2 -v) already installed"
 fi
 
-# ── PM2 systemd startup (current user) ───────────────────────────────────────
-# Only registers the service if it isn't already active.
-# This ensures PM2 restarts on server reboot — no other services are touched.
+# ── PM2 systemd startup (scoped to deploy user) ───────────────────────────────
+# Registers only pm2-${DEPLOY_USER} service — no other services are touched.
 PM2_SERVICE="pm2-${DEPLOY_USER}"
 if ! systemctl is-enabled "${PM2_SERVICE}" &>/dev/null; then
     echo "Registering PM2 startup service for user '${DEPLOY_USER}'..."
@@ -62,8 +101,14 @@ fi
 # ── Nginx ─────────────────────────────────────────────────────────────────────
 if ! command -v nginx &>/dev/null; then
     echo "Installing Nginx..."
-    sudo apt-get update -y
-    sudo apt-get install -y nginx
+    if [[ "${PKG_MGR}" == "dnf" ]]; then
+        # Enable the Nginx module stream on RHEL 8-family
+        sudo dnf module enable -y nginx:mainline 2>/dev/null || true
+        sudo dnf install -y nginx
+    else
+        sudo apt-get update -y
+        sudo apt-get install -y nginx
+    fi
 fi
 sudo systemctl enable nginx &>/dev/null || true
 sudo systemctl start  nginx &>/dev/null || true
@@ -72,7 +117,13 @@ echo "✅ Nginx is running"
 # ── Certbot (with Nginx plugin) ───────────────────────────────────────────────
 if ! command -v certbot &>/dev/null; then
     echo "Installing Certbot..."
-    sudo apt-get install -y certbot python3-certbot-nginx
+    if [[ "${PKG_MGR}" == "dnf" ]]; then
+        # EPEL is required for certbot on RHEL-family
+        sudo dnf install -y epel-release 2>/dev/null || true
+        sudo dnf install -y certbot python3-certbot-nginx
+    else
+        sudo apt-get install -y certbot python3-certbot-nginx
+    fi
     echo "✅ Certbot installed"
 else
     echo "✅ Certbot already installed"
@@ -83,21 +134,26 @@ sudo mkdir -p /var/www/html/.well-known/acme-challenge
 echo "✅ ACME challenge directory ready"
 
 # ── Port 80 conflict check ────────────────────────────────────────────────────
-# If Apache (or anything else) is already bound to port 80, Nginx cannot start
-# on that port and requests will be served by the wrong process.
-# This script will NOT touch Apache — it only warns so you can act safely.
-if sudo ss -tlnp 2>/dev/null | grep ':80' | grep -qiv nginx; then
+# If Apache/httpd is on port 80, Nginx cannot bind to it and your site will
+# return Apache's default response (403/forbidden) instead of your Next.js app.
+# This script does NOT touch Apache — it only warns so you can act safely.
+if sudo ss -tlnp 2>/dev/null | grep ':80' | grep -qivE 'nginx'; then
     echo ""
     echo "⚠️  WARNING: Something other than Nginx is listening on port 80:"
     sudo ss -tlnp 2>/dev/null | grep ':80' || true
     echo ""
-    echo "   If it is Apache serving this domain, disable only its default vhost"
-    echo "   (this does NOT affect other Apache-hosted sites on this server):"
+    echo "   CloudLinux/cPanel often runs Apache (httpd) on port 80."
+    echo "   To fix WITHOUT affecting other Apache-hosted sites, change Apache"
+    echo "   to listen on a non-public port (e.g. 8080) and let Nginx front it,"
+    echo "   OR switch your domain's vhost to use Nginx in cPanel (if supported)."
     echo ""
-    echo "     sudo a2dissite 000-default.conf"
-    echo "     sudo systemctl reload apache2"
+    echo "   Quick fix for a standalone VPS (no other Apache sites):"
+    echo "     sudo systemctl stop httpd"
+    echo "     sudo systemctl disable httpd"
+    echo "     sudo systemctl restart nginx"
     echo ""
-    echo "   After that, Nginx will take over port 80 and proxy to Next.js."
+    echo "   If other apps depend on Apache, use an Nginx→Apache reverse proxy"
+    echo "   pattern instead — ask your hosting provider or see Namecheap docs."
     echo ""
 fi
 
