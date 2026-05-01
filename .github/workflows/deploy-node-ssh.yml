@@ -104,7 +104,7 @@ jobs:
             NEXT_PUBLIC_STORAGE_URL='${{ secrets.NEXT_PUBLIC_STORAGE_URL }}' \
             NEXT_PUBLIC_SESSION_PASSWORD='${{ secrets.NEXT_PUBLIC_SESSION_PASSWORD }}' \
             NEXT_PUBLIC_SESSION_SECRET='${{ secrets.NEXT_PUBLIC_SESSION_SECRET }}' \
-            AUTH_SECRET='${{ secrets.AUTH_SECRET }}' \
+            NEXT_PUBLIC_AUTH_SECRET='${{ secrets.NEXT_PUBLIC_AUTH_SECRET }}' \
             sudo -E bash /home/${{ secrets.DEPLOY_SSH_USER }}/cdp.unizik.qverselearning.org/scripts/deploy-server.sh \
                 /home/${{ secrets.DEPLOY_SSH_USER }}/cdp.unizik.qverselearning.org \
                 cdp.unizik.qverselearning.org \
