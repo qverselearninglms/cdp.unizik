@@ -117,7 +117,7 @@ NODE_ENV=production
 EOF
 
 # Append additional env vars (these come from CI/CD session)
-printenv | grep -E '^(NEXT_PUBLIC_)' >> "${ENV_FILE}" 2>/dev/null || true
+printenv | grep -E '^(NEXT_PUBLIC_|AUTH_SECRET=)' >> "${ENV_FILE}" 2>/dev/null || true
 
 chmod 600 "${ENV_FILE}"
 chown "${DEPLOY_USER}:${DEPLOY_USER}" "${ENV_FILE}"
