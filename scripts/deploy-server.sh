@@ -148,6 +148,46 @@ PROXYEOF
     write_proxy_conf "${CPANEL_SSL_DIR}/nextjs-proxy.conf"
     echo "✅ cPanel userdata written"
 
+    # ── .htaccess in document root ────────────────────────────────────────────
+    # cPanel's document root for a subdomain is typically one of:
+    #   ~/public_html/<domain>  OR  ~/<domain>  OR  ~/public_html
+    # We check all three and write .htaccess to whichever exists.
+    # The .htaccess proxies every request to Next.js via mod_rewrite,
+    # which works regardless of whether the VirtualHost proxy is active yet.
+    # This is domain-scoped — no other site's .htaccess is ever touched.
+    for DOCROOT in \
+        "${HOME}/public_html/${DOMAIN}" \
+        "${HOME}/${DOMAIN}" \
+        "${HOME}/public_html"; do
+        if [[ -d "${DOCROOT}" ]]; then
+            HTACCESS="${DOCROOT}/.htaccess"
+            echo "Writing ${HTACCESS}..."
+            cat > "${HTACCESS}" <<HTEOF
+# Managed by deploy-server.sh — do not edit manually.
+# Proxies all requests for ${DOMAIN} to Next.js on port ${APP_PORT}.
+Options -Indexes
+DirectoryIndex disabled
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Pass WebSocket upgrades through
+    RewriteCond %{HTTP:Upgrade} websocket [NC]
+    RewriteRule ^(.*)$ ws://127.0.0.1:${APP_PORT}/\$1 [P,L]
+
+    # Proxy /api/v1/* → remote backend
+    RewriteRule ^api/v1/(.*)$ https://cdp.api.unizik.qverselearning.org/api/v1/\$1 [P,L]
+
+    # Proxy everything else → Next.js app
+    RewriteRule ^(.*)$ http://127.0.0.1:${APP_PORT}/\$1 [P,L]
+</IfModule>
+HTEOF
+            chmod 644 "${HTACCESS}"
+            echo "✅ .htaccess written to ${DOCROOT}"
+            break
+        fi
+    done
+
     # Rebuild httpd.conf from all userdata, then gracefully reload Apache.
     # This regenerates the entire httpd.conf but every domain's config comes
     # from its own userdata — rebuilding does not change other domains.
