@@ -179,6 +179,7 @@ jobs:
           ssh -p ${{ secrets.DEPLOY_SSH_PORT }} \
             ${{ secrets.DEPLOY_SSH_USER }}@${{ secrets.DEPLOY_SSH_HOST }} \
             "AUTH_SECRET='${{ secrets.AUTH_SECRET }}' \
+             NEXTAUTH_URL='${{ secrets.NEXTAUTH_URL }}' \
              NEXT_PUBLIC_API_URL='${{ secrets.NEXT_PUBLIC_API_URL }}' \
              NEXT_PUBLIC_BASE_URL='${{ secrets.NEXT_PUBLIC_BASE_URL }}' \
              NEXT_PUBLIC_LMS_BASE_URL='${{ secrets.NEXT_PUBLIC_LMS_BASE_URL }}' \
