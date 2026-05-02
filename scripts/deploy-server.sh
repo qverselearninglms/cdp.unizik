@@ -179,9 +179,16 @@ HTEOF
     chmod 644 "${HTACCESS}"
     echo "✅ .htaccess written to ${APP_DIR}"
 
-    # Ensure directories are traversable by Apache
-    chmod 755 "$APP_DIR"
-    chmod 755 "$(dirname "$APP_DIR")"   # e.g., /home/qverselearning
+    # ── Fix directory permissions so Apache can traverse to .htaccess ─────────
+    # cPanel sets /home/<user> to 700 by default. Apache's worker process
+    # (nobody/apache) cannot enter it, so it 403s before reading .htaccess.
+    # 711 = owner has full access; group+other can traverse but NOT list — safe.
+    # APP_DIR itself must be 755 so Apache can read files inside it.
+    # These are scoped to this user's home and app dir only.
+    sudo chmod 711 "$(dirname "${APP_DIR}")"   # /home/qverselearning  → 711
+    chmod 755 "${APP_DIR}"                     # .../cdp.unizik...org  → 755
+    chmod 644 "${APP_DIR}/.htaccess"
+    echo "✅ Directory permissions fixed (711/755/644)"
 
     # Rebuild httpd.conf from all userdata, then gracefully reload Apache.
     # This regenerates the entire httpd.conf but every domain's config comes
