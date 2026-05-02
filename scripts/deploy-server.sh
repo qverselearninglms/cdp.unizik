@@ -66,10 +66,92 @@ fi
 chmod 600 "${ENV_FILE}"
 echo "✅ .env.production written"
 
+# ── Detect which web server owns port 80 ─────────────────────────────────────
+# On cPanel/CloudLinux VPS, Apache (httpd) typically owns port 80.
+# On a clean VPS, Nginx typically owns port 80.
+# We configure whichever is actually serving traffic — the other is left alone.
+WEBSERVER="nginx"  # default
+
+# ss -tlnp output includes the process name in the users:() field on RHEL/Debian
+_port80=$(sudo ss -tlnp 2>/dev/null | grep ' :80 \| :80$' || true)
+if echo "${_port80}" | grep -qiE '"httpd"|"apache2"'; then
+    WEBSERVER="apache"
+elif echo "${_port80}" | grep -qi '"nginx"'; then
+    WEBSERVER="nginx"
+else
+    # Fallback: check which service is active when ss output lacks process info
+    if sudo systemctl is-active httpd &>/dev/null 2>&1 && \
+       ! sudo systemctl is-active nginx &>/dev/null 2>&1; then
+        WEBSERVER="apache"
+    fi
+fi
+
+echo "  Web server on port 80: ${WEBSERVER}"
+
+# =============================================================================
+if [[ "${WEBSERVER}" == "apache" ]]; then
+# =============================================================================
+# ── Apache vhost (proxy to Next.js) ──────────────────────────────────────────
+# Only writes /etc/httpd/conf.d/${DOMAIN}.conf — no other vhost is touched.
+# Requires mod_proxy + mod_proxy_http (included in httpd on RHEL 8+ by default).
+    APACHE_CONF="/etc/httpd/conf.d/${DOMAIN}.conf"
+    echo "Writing Apache vhost ${APACHE_CONF}..."
+    sudo tee "${APACHE_CONF}" > /dev/null <<APACHEEOF
+<VirtualHost *:80>
+    ServerName ${DOMAIN}
+
+    # Forward real client IP to Next.js
+    ProxyPreserveHost On
+    ProxyRequests    Off
+    RequestHeader    set X-Forwarded-Proto "http"
+
+    # WebSocket upgrade support (required by Next.js)
+    RewriteEngine On
+    RewriteCond %{HTTP:Upgrade} websocket [NC]
+    RewriteCond %{HTTP:Connection} upgrade [NC]
+    RewriteRule ^/(.*) ws://127.0.0.1:${APP_PORT}/\$1 [P,L]
+
+    # Proxy /api/v1/* → remote backend subdomain
+    ProxyPass        /api/v1/ https://cdp.api.unizik.qverselearning.org/api/v1/
+    ProxyPassReverse /api/v1/ https://cdp.api.unizik.qverselearning.org/api/v1/
+
+    # Proxy all other traffic → Next.js app on port ${APP_PORT}
+    ProxyPass        / http://127.0.0.1:${APP_PORT}/
+    ProxyPassReverse / http://127.0.0.1:${APP_PORT}/
+</VirtualHost>
+APACHEEOF
+
+    if sudo apachectl -t 2>&1 | grep -q "Syntax OK"; then
+        sudo systemctl reload httpd 2>/dev/null || sudo service httpd reload
+        echo "✅ Apache vhost written and reloaded"
+    else
+        echo "❌ Apache config test failed — aborting deploy"
+        sudo apachectl -t
+        exit 1
+    fi
+
+    # ── SSL via certbot --apache ──────────────────────────────────────────────
+    if command -v certbot &>/dev/null; then
+        if sudo certbot certificates 2>/dev/null | grep -q "Domains:.*${DOMAIN}"; then
+            echo "Renewing existing SSL certificate for ${DOMAIN}..."
+            sudo certbot renew --apache --cert-name "${DOMAIN}" --non-interactive 2>/dev/null || true
+        else
+            echo "Obtaining SSL certificate for ${DOMAIN}..."
+            sudo certbot --apache --non-interactive --agree-tos --redirect \
+                -m "${LE_EMAIL}" -d "${DOMAIN}" 2>/dev/null || true
+        fi
+        echo "✅ SSL handled"
+    else
+        echo "⚠️  Certbot not found — skipping SSL. Run bootstrap-vps.sh to install it."
+    fi
+
+# =============================================================================
+else
+# =============================================================================
 # ── Nginx vhost for THIS domain only ─────────────────────────────────────────
 # Only /etc/nginx/conf.d/${DOMAIN}.conf is written. No other file is touched.
-echo "Writing ${NGINX_CONF}..."
-sudo tee "${NGINX_CONF}" > /dev/null <<NGINXEOF
+    echo "Writing ${NGINX_CONF}..."
+    sudo tee "${NGINX_CONF}" > /dev/null <<NGINXEOF
 server {
     listen 80;
     server_name ${DOMAIN};
@@ -108,31 +190,31 @@ server {
 }
 NGINXEOF
 
-# Validate then gracefully reload Nginx.
-# nginx -t checks ALL vhosts but reload is graceful — other sites keep serving.
-if sudo nginx -t 2>&1; then
-    sudo systemctl reload nginx 2>/dev/null || sudo service nginx reload
-    echo "✅ Nginx reloaded"
-else
-    echo "❌ Nginx config test failed — aborting deploy"
-    exit 1
-fi
-
-# ── SSL certificate for THIS domain only ─────────────────────────────────────
-# certbot -d ${DOMAIN} modifies only this domain's conf. Other certs untouched.
-if command -v certbot &>/dev/null; then
-    if sudo certbot certificates 2>/dev/null | grep -q "Domains:.*${DOMAIN}"; then
-        echo "Renewing existing SSL certificate for ${DOMAIN}..."
-        sudo certbot renew --nginx --cert-name "${DOMAIN}" --non-interactive 2>/dev/null || true
+    # nginx -t validates ALL vhosts; reload is graceful — other sites keep serving
+    if sudo nginx -t 2>&1; then
+        sudo systemctl reload nginx 2>/dev/null || sudo service nginx reload
+        echo "✅ Nginx reloaded"
     else
-        echo "Obtaining SSL certificate for ${DOMAIN}..."
-        sudo certbot --nginx --non-interactive --agree-tos --redirect \
-            -m "${LE_EMAIL}" -d "${DOMAIN}" 2>/dev/null || true
+        echo "❌ Nginx config test failed — aborting deploy"
+        exit 1
     fi
-    echo "✅ SSL handled"
-else
-    echo "⚠️  Certbot not found — skipping SSL. Run bootstrap-vps.sh to install it."
-fi
+
+    # ── SSL via certbot --nginx ───────────────────────────────────────────────
+    if command -v certbot &>/dev/null; then
+        if sudo certbot certificates 2>/dev/null | grep -q "Domains:.*${DOMAIN}"; then
+            echo "Renewing existing SSL certificate for ${DOMAIN}..."
+            sudo certbot renew --nginx --cert-name "${DOMAIN}" --non-interactive 2>/dev/null || true
+        else
+            echo "Obtaining SSL certificate for ${DOMAIN}..."
+            sudo certbot --nginx --non-interactive --agree-tos --redirect \
+                -m "${LE_EMAIL}" -d "${DOMAIN}" 2>/dev/null || true
+        fi
+        echo "✅ SSL handled"
+    else
+        echo "⚠️  Certbot not found — skipping SSL. Run bootstrap-vps.sh to install it."
+    fi
+
+fi  # end WEBSERVER detection
 
 # ── Stop THIS app before installing deps ──────────────────────────────────────
 # pm2 stop by name — only this process is affected

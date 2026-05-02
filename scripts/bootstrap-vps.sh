@@ -114,15 +114,15 @@ sudo systemctl enable nginx &>/dev/null || true
 sudo systemctl start  nginx &>/dev/null || true
 echo "✅ Nginx is running"
 
-# ── Certbot (with Nginx plugin) ───────────────────────────────────────────────
+# ── Certbot (with Nginx AND Apache plugins) ───────────────────────────────────
 if ! command -v certbot &>/dev/null; then
     echo "Installing Certbot..."
     if [[ "${PKG_MGR}" == "dnf" ]]; then
         # EPEL is required for certbot on RHEL-family
         sudo dnf install -y epel-release 2>/dev/null || true
-        sudo dnf install -y certbot python3-certbot-nginx
+        sudo dnf install -y certbot python3-certbot-nginx python3-certbot-apache
     else
-        sudo apt-get install -y certbot python3-certbot-nginx
+        sudo apt-get install -y certbot python3-certbot-nginx python3-certbot-apache
     fi
     echo "✅ Certbot installed"
 else
