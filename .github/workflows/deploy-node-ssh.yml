@@ -47,6 +47,7 @@ jobs:
 
       # Archive contains everything the server needs.
       # node_modules is intentionally excluded — npm ci runs on the server.
+      # .htaccess is included so cPanel/Apache proxies to Next.js immediately on extract.
       - name: Create deployment archive
         run: |
           tar -czf next-deploy.tar.gz \
@@ -56,7 +57,8 @@ jobs:
             package-lock.json \
             next.config.ts \
             ecosystem.config.js \
-            scripts
+            scripts \
+            .htaccess
 
       - name: Upload archive as artifact
         uses: actions/upload-artifact@v4

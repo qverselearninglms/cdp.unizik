@@ -148,21 +148,12 @@ PROXYEOF
     write_proxy_conf "${CPANEL_SSL_DIR}/nextjs-proxy.conf"
     echo "✅ cPanel userdata written"
 
-    # ── .htaccess in document root ────────────────────────────────────────────
-    # cPanel's document root for a subdomain is typically one of:
-    #   ~/public_html/<domain>  OR  ~/<domain>  OR  ~/public_html
-    # We check all three and write .htaccess to whichever exists.
-    # The .htaccess proxies every request to Next.js via mod_rewrite,
-    # which works regardless of whether the VirtualHost proxy is active yet.
-    # This is domain-scoped — no other site's .htaccess is ever touched.
-    for DOCROOT in \
-        "${HOME}/public_html/${DOMAIN}" \
-        "${HOME}/${DOMAIN}" \
-        "${HOME}/public_html"; do
-        if [[ -d "${DOCROOT}" ]]; then
-            HTACCESS="${DOCROOT}/.htaccess"
-            echo "Writing ${HTACCESS}..."
-            cat > "${HTACCESS}" <<HTEOF
+    # ── .htaccess in document root (APP_DIR IS the cPanel subdomain docroot) ───
+    # Writing directly to APP_DIR — no guessing needed.
+    # The archive also ships a .htaccess so it is present immediately on extract.
+    HTACCESS="${APP_DIR}/.htaccess"
+    echo "Writing ${HTACCESS}..."
+    cat > "${HTACCESS}" <<HTEOF
 # Managed by deploy-server.sh — do not edit manually.
 # Proxies all requests for ${DOMAIN} to Next.js on port ${APP_PORT}.
 Options -Indexes
@@ -171,7 +162,10 @@ DirectoryIndex disabled
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
-    # Pass WebSocket upgrades through
+    # Skip rewriting for .well-known (ACME/SSL challenges)
+    RewriteRule ^\.well-known/ - [L]
+
+    # WebSocket upgrade passthrough (required by Next.js)
     RewriteCond %{HTTP:Upgrade} websocket [NC]
     RewriteRule ^(.*)$ ws://127.0.0.1:${APP_PORT}/\$1 [P,L]
 
@@ -182,11 +176,12 @@ DirectoryIndex disabled
     RewriteRule ^(.*)$ http://127.0.0.1:${APP_PORT}/\$1 [P,L]
 </IfModule>
 HTEOF
-            chmod 644 "${HTACCESS}"
-            echo "✅ .htaccess written to ${DOCROOT}"
-            break
-        fi
-    done
+    chmod 644 "${HTACCESS}"
+    echo "✅ .htaccess written to ${APP_DIR}"
+
+    # Ensure directories are traversable by Apache
+    chmod 755 "$APP_DIR"
+    chmod 755 "$(dirname "$APP_DIR")"   # e.g., /home/qverselearning
 
     # Rebuild httpd.conf from all userdata, then gracefully reload Apache.
     # This regenerates the entire httpd.conf but every domain's config comes
