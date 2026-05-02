@@ -1,17 +1,34 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Deploy script — cdp.unizik.qverselearning.org
+# deploy-server.sh — Generic Next.js server-side deploy script
 # -----------------------------------------------------------------------------
-# SCOPE: This script touches ONLY resources belonging to this application.
+# REUSABLE: Copy this file unchanged to any Next.js project. All app-specific
+# values come in as arguments — configure them in your CI/CD workflow only.
+#
+# SCOPE: This script touches ONLY resources belonging to the target app.
+#   - Apache: writes cPanel userdata for ${DOMAIN} only
 #   - Nginx:  writes /etc/nginx/conf.d/${DOMAIN}.conf only
 #   - PM2:    manages only the process named "${APP_NAME}"
 #   - Files:  writes inside ${APP_DIR} only
 #   - SSL:    certbot targets -d ${DOMAIN} only
-# Other apps and vhosts on this VPS are never modified.
+# Other apps and vhosts on this server are NEVER modified.
 #
 # Run as the deploy user (plain bash, NOT sudo bash).
-# Uses sudo internally only for Nginx conf write, nginx reload, and certbot.
+# Uses sudo internally only for web server conf writes, reloads, and certbot.
 # Prerequisite: run scripts/bootstrap-vps.sh once before the first deploy.
+#
+# Usage:
+#   bash deploy-server.sh <APP_DIR> <APP_NAME> <APP_PORT> <DOMAIN> <LE_EMAIL> [BACKEND_URL]
+#
+# Arguments:
+#   APP_DIR     — absolute path where the app lives      e.g. /home/user/myapp.com
+#   APP_NAME    — PM2 process name                       e.g. myapp.com
+#   APP_PORT    — port Next.js listens on                e.g. 3000
+#   DOMAIN      — public domain name                     e.g. myapp.com
+#   LE_EMAIL    — Let's Encrypt / AutoSSL contact email  e.g. admin@example.com
+#   BACKEND_URL — (optional) backend API base URL to proxy /api/v1/* to.
+#                 e.g. https://api.myapp.com/api/v1/     (trailing slash required)
+#                 Omit or leave empty when there is no external backend proxy.
 # =============================================================================
 set -euo pipefail
 
@@ -20,16 +37,48 @@ APP_NAME="${2:-cdp.unizik.qverselearning.org}"
 APP_PORT="${3:-3800}"
 DOMAIN="${4:-cdp.unizik.qverselearning.org}"
 LE_EMAIL="${5:-support@qverselearning.com}"
+BACKEND_URL="${6:-https://cdp.api.unizik.qverselearning.org/api/v1/}"   # optional — trailing slash required
 
 ARCHIVE="next-deploy.tar.gz"
 NGINX_CONF="/etc/nginx/conf.d/${DOMAIN}.conf"
 ENV_FILE="${APP_DIR}/.env.production"
 
+# ── Precompute backend proxy blocks ───────────────────────────────────────────
+# Inserted into web server config heredocs below. All are empty strings when
+# BACKEND_URL is not set — meaning the app has no /api/v1/ passthrough proxy.
+_BACKEND_PROXY_BLOCK=""    # Apache ProxyPass pair
+_HTACCESS_BACKEND_RULE=""  # .htaccess RewriteRule
+_NGINX_BACKEND_LOC=""      # Nginx location block
+
+if [[ -n "${BACKEND_URL}" ]]; then
+    _BACKEND_PROXY_BLOCK="    # Proxy /api/v1/* to remote backend
+    ProxyPass        /api/v1/ ${BACKEND_URL}
+    ProxyPassReverse /api/v1/ ${BACKEND_URL}"
+
+    _HTACCESS_BACKEND_RULE="
+    # Proxy /api/v1/* to remote backend
+    RewriteRule ^api/v1/(.*)\$ ${BACKEND_URL}\$1 [P,L]"
+
+    _BACKEND_HOST=$(echo "${BACKEND_URL}" | sed -E 's|https?://([^/]+).*|\1|')
+    _NGINX_BACKEND_LOC="    location /api/v1/ {
+        proxy_pass            ${BACKEND_URL};
+        proxy_ssl_server_name on;
+        proxy_set_header      Host ${_BACKEND_HOST};
+        proxy_set_header      X-Real-IP \$remote_addr;
+        proxy_set_header      X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header      X-Forwarded-Proto \$scheme;
+        proxy_read_timeout    30s;
+        proxy_connect_timeout 10s;
+    }
+"
+fi
+
 echo "============================================"
-echo "  Deploy: ${APP_NAME}"
-echo "  Dir   : ${APP_DIR}"
-echo "  Port  : ${APP_PORT}"
-echo "  Domain: ${DOMAIN}"
+echo "  Deploy  : ${APP_NAME}"
+echo "  Dir     : ${APP_DIR}"
+echo "  Port    : ${APP_PORT}"
+echo "  Domain  : ${DOMAIN}"
+echo "  Backend : ${BACKEND_URL:-none}"
 echo "============================================"
 
 # ── App directory ─────────────────────────────────────────────────────────────
@@ -83,10 +132,15 @@ elif echo "${_port80}" | grep -qi '"nginx"'; then
     WEBSERVER="nginx"
 else
     # Fallback when ss output lacks process names
-    if sudo systemctl is-active httpd &>/dev/null 2>&1 && \
-       ! sudo systemctl is-active nginx &>/dev/null 2>&1; then
+    if sudo systemctl is-active httpd &>/dev/null 2>&1; then
         WEBSERVER="apache"
     fi
+fi
+
+# On cPanel, Apache is ALWAYS the app server (httpd on port 81/444) even when
+# Nginx sits in front on port 80 as a reverse proxy. Override to apache.
+if [[ "${IS_CPANEL}" == "true" ]]; then
+    WEBSERVER="apache"
 fi
 
 echo "  Web server : ${WEBSERVER}"
@@ -132,9 +186,7 @@ if [[ "${IS_CPANEL}" == "true" && "${WEBSERVER}" == "apache" ]]; then
         RewriteRule ^/(.*) ws://127.0.0.1:${APP_PORT}/\$1 [P,L]
     </IfModule>
 
-    # Proxy /api/v1/* → remote backend subdomain
-    ProxyPass        /api/v1/ https://cdp.api.unizik.qverselearning.org/api/v1/
-    ProxyPassReverse /api/v1/ https://cdp.api.unizik.qverselearning.org/api/v1/
+${_BACKEND_PROXY_BLOCK}
 
     # Proxy all other traffic → Next.js app on port ${APP_PORT}
     ProxyPass        / http://127.0.0.1:${APP_PORT}/
@@ -168,9 +220,7 @@ DirectoryIndex disabled
     # WebSocket upgrade passthrough (required by Next.js)
     RewriteCond %{HTTP:Upgrade} websocket [NC]
     RewriteRule ^(.*)$ ws://127.0.0.1:${APP_PORT}/\$1 [P,L]
-
-    # Proxy /api/v1/* → remote backend
-    RewriteRule ^api/v1/(.*)$ https://cdp.api.unizik.qverselearning.org/api/v1/\$1 [P,L]
+${_HTACCESS_BACKEND_RULE}
 
     # Proxy everything else → Next.js app
     RewriteRule ^(.*)$ http://127.0.0.1:${APP_PORT}/\$1 [P,L]
@@ -240,8 +290,7 @@ elif [[ "${WEBSERVER}" == "apache" ]]; then
         RewriteRule ^/(.*) ws://127.0.0.1:${APP_PORT}/\$1 [P,L]
     </IfModule>
 
-    ProxyPass        /api/v1/ https://cdp.api.unizik.qverselearning.org/api/v1/
-    ProxyPassReverse /api/v1/ https://cdp.api.unizik.qverselearning.org/api/v1/
+${_BACKEND_PROXY_BLOCK}
 
     ProxyPass        / http://127.0.0.1:${APP_PORT}/
     ProxyPassReverse / http://127.0.0.1:${APP_PORT}/
@@ -283,17 +332,7 @@ server {
         root /var/www/html;
     }
 
-    location /api/v1/ {
-        proxy_pass            https://cdp.api.unizik.qverselearning.org/api/v1/;
-        proxy_ssl_server_name on;
-        proxy_set_header      Host cdp.api.unizik.qverselearning.org;
-        proxy_set_header      X-Real-IP \$remote_addr;
-        proxy_set_header      X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header      X-Forwarded-Proto \$scheme;
-        proxy_read_timeout    30s;
-        proxy_connect_timeout 10s;
-    }
-
+${_NGINX_BACKEND_LOC}
     location / {
         proxy_pass            http://127.0.0.1:${APP_PORT};
         proxy_http_version    1.1;

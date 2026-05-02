@@ -7,12 +7,38 @@ on:
   push:
     branches: [main]
 
+# ─────────────────────────────────────────────────────────────────────────────
+# CONFIGURE THESE for each application — everything else is generic.
+#
+# To reuse this workflow in another repo:
+#   1. Copy this file unchanged.
+#   2. Edit the values below (the env block).
+#   3. Update the NEXT_PUBLIC_* vars in the build step to match your app.
+#   4. Set the required secrets in GitHub → Settings → Secrets and variables.
+#
+# Required secrets (same for every app on the same server):
+#   DEPLOY_SSH_PRIVATE_KEY  — private key whose public key is in ~/.ssh/authorized_keys
+#   DEPLOY_SSH_HOST         — server IP or hostname
+#   DEPLOY_SSH_PORT         — SSH port (usually 22)
+#   DEPLOY_SSH_USER         — SSH login username
+#
+# App-specific secrets (add/rename to match your app):
+#   AUTH_SECRET             — NextAuth / auth library secret
+#   NEXT_PUBLIC_*           — any public env vars baked into the build
+# ─────────────────────────────────────────────────────────────────────────────
 env:
+  # ── App identity (change these for each application) ────────────────────────
+  APP_NAME: cdp.unizik.qverselearning.org    # PM2 process name — must be unique per app on the server
+  APP_PORT: '3800'                            # port Next.js listens on — must be unique per app on the server
+  DOMAIN: cdp.unizik.qverselearning.org       # public domain name
+  LE_EMAIL: support@qverselearning.com        # SSL contact email (cPanel AutoSSL / Let's Encrypt)
+
+  # Backend proxy — set to https://your-api.com/api/v1/ (trailing slash required).
+  # Leave empty (BACKEND_URL: '') if this app has no external backend to proxy.
+  BACKEND_URL: 'https://cdp.api.unizik.qverselearning.org/api/v1/'
+
+  # ── Infrastructure (no need to change per app) ───────────────────────────────
   NODE_VERSION: '22'
-  APP_DIR: /home/${{ secrets.DEPLOY_SSH_USER }}/cdp.unizik.qverselearning.org
-  APP_NAME: cdp.unizik.qverselearning.org
-  APP_PORT: '3800'
-  DOMAIN: cdp.unizik.qverselearning.org
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Job 1 — Build
@@ -35,6 +61,9 @@ jobs:
 
       # NEXT_PUBLIC_* vars are baked into the bundle at build time.
       # They do NOT need to exist on the server at runtime.
+      #
+      # CONFIGURE: add/remove NEXT_PUBLIC_* lines below to match your app's
+      # build-time public variables. The names must match your GitHub secrets.
       - name: Build application
         env:
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
@@ -82,6 +111,12 @@ jobs:
     if: github.ref == 'refs/heads/main'
 
     steps:
+      # Compute APP_DIR here (env context not available in job-level env: blocks).
+      # APP_DIR follows the cPanel convention ~/DOMAIN — change the path here if
+      # your server uses a different directory layout.
+      - name: Set APP_DIR
+        run: echo "APP_DIR=/home/${{ secrets.DEPLOY_SSH_USER }}/${{ env.DOMAIN }}" >> $GITHUB_ENV
+
       - name: Download build artifact
         uses: actions/download-artifact@v4
         with:
@@ -127,8 +162,12 @@ jobs:
                ${{ secrets.DEPLOY_SSH_USER }}"
 
       # ── Step 4: Deploy app (scoped to this app only) ────────────────────────
-      # Env vars are passed in-line so deploy-server.sh can write .env.production.
-      # Script runs as the deploy user; uses sudo only for nginx/certbot ops.
+      # Runtime secrets are passed as env vars so deploy-server.sh can write
+      # .env.production on the server. NEXT_PUBLIC_* vars are already baked into
+      # the build — passing them here is optional but harmless.
+      #
+      # CONFIGURE: add/remove NEXT_PUBLIC_* lines below to match your app's
+      # runtime secrets. The variable names must match your GitHub secrets.
       - name: Deploy application
         run: |
           ssh -p ${{ secrets.DEPLOY_SSH_PORT }} \
@@ -141,8 +180,9 @@ jobs:
              NEXT_PUBLIC_SESSION_SECRET='${{ secrets.NEXT_PUBLIC_SESSION_SECRET }}' \
              NEXT_PUBLIC_SESSION_PASSWORD='${{ secrets.NEXT_PUBLIC_SESSION_PASSWORD }}' \
              bash ${{ env.APP_DIR }}/scripts/deploy-server.sh \
-               ${{ env.APP_DIR }} \
-               ${{ env.APP_NAME }} \
-               ${{ env.APP_PORT }} \
-               ${{ env.DOMAIN }} \
-               support@qverselearning.com"
+               '${{ env.APP_DIR }}' \
+               '${{ env.APP_NAME }}' \
+               '${{ env.APP_PORT }}' \
+               '${{ env.DOMAIN }}' \
+               '${{ env.LE_EMAIL }}' \
+               '${{ env.BACKEND_URL }}'"
