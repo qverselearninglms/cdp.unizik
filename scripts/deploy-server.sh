@@ -66,56 +66,141 @@ fi
 chmod 600 "${ENV_FILE}"
 echo "✅ .env.production written"
 
-# ── Detect which web server owns port 80 ─────────────────────────────────────
-# On cPanel/CloudLinux VPS, Apache (httpd) typically owns port 80.
-# On a clean VPS, Nginx typically owns port 80.
-# We configure whichever is actually serving traffic — the other is left alone.
-WEBSERVER="nginx"  # default
+# ── Detect environment ────────────────────────────────────────────────────────
+# Determines: (1) which web server owns port 80, (2) whether this is cPanel.
+# Config is written ONLY for this domain — all other vhosts are never touched.
+DEPLOY_USER="$(whoami)"
+IS_CPANEL=false
+if [[ -d /usr/local/cpanel ]] || [[ -x /scripts/rebuildhttpdconf ]]; then
+    IS_CPANEL=true
+fi
 
-# ss -tlnp output includes the process name in the users:() field on RHEL/Debian
-_port80=$(sudo ss -tlnp 2>/dev/null | grep ' :80 \| :80$' || true)
+WEBSERVER="nginx"  # default
+_port80=$(sudo ss -tlnp 2>/dev/null | grep -E ' :80 | :80$' || true)
 if echo "${_port80}" | grep -qiE '"httpd"|"apache2"'; then
     WEBSERVER="apache"
 elif echo "${_port80}" | grep -qi '"nginx"'; then
     WEBSERVER="nginx"
 else
-    # Fallback: check which service is active when ss output lacks process info
+    # Fallback when ss output lacks process names
     if sudo systemctl is-active httpd &>/dev/null 2>&1 && \
        ! sudo systemctl is-active nginx &>/dev/null 2>&1; then
         WEBSERVER="apache"
     fi
 fi
 
-echo "  Web server on port 80: ${WEBSERVER}"
+echo "  Web server : ${WEBSERVER}"
+echo "  cPanel env : ${IS_CPANEL}"
 
 # =============================================================================
-if [[ "${WEBSERVER}" == "apache" ]]; then
+if [[ "${IS_CPANEL}" == "true" && "${WEBSERVER}" == "apache" ]]; then
 # =============================================================================
-# ── Apache vhost (proxy to Next.js) ──────────────────────────────────────────
-# Only writes /etc/httpd/conf.d/${DOMAIN}.conf — no other vhost is touched.
-# Requires mod_proxy + mod_proxy_http (included in httpd on RHEL 8+ by default).
-    APACHE_CONF="/etc/httpd/conf.d/${DOMAIN}.conf"
-    echo "Writing Apache vhost ${APACHE_CONF}..."
-    sudo tee "${APACHE_CONF}" > /dev/null <<APACHEEOF
-<VirtualHost *:80>
-    ServerName ${DOMAIN}
+# ── cPanel/CloudLinux: Apache vhost via cPanel userdata system ───────────────
+#
+# WHY userdata, not /etc/httpd/conf.d/:
+#   cPanel regenerates /etc/httpd/conf.d/ from its own internal database on
+#   every "rebuild". Any file written there directly is silently overwritten.
+#   The supported, stable location for per-domain custom directives is:
+#     /usr/local/apache/conf/userdata/std/2_4/<user>/<domain>/
+#     /usr/local/apache/conf/userdata/ssl/2_4/<user>/<domain>/
+#   cPanel includes these files verbatim inside the matching <VirtualHost>
+#   block when it rebuilds httpd.conf. They are domain-scoped — touching
+#   one domain's userdata directory never affects any other domain.
+#
+# The proxy directives below replace the default document-root file serving
+# with a full proxy to the Next.js app, eliminating the .htaccess 403.
 
-    # Forward real client IP to Next.js
+    CPANEL_STD_DIR="/usr/local/apache/conf/userdata/std/2_4/${DEPLOY_USER}/${DOMAIN}"
+    CPANEL_SSL_DIR="/usr/local/apache/conf/userdata/ssl/2_4/${DEPLOY_USER}/${DOMAIN}"
+
+    sudo mkdir -p "${CPANEL_STD_DIR}" "${CPANEL_SSL_DIR}"
+
+    # Shared proxy content written to both HTTP and SSL vhost userdata
+    write_proxy_conf() {
+        local TARGET="$1"
+        sudo tee "${TARGET}" > /dev/null <<PROXYEOF
+# Managed by deploy-server.sh — do not edit manually.
+# Proxies all traffic for ${DOMAIN} to Next.js on port ${APP_PORT}.
+<IfModule mod_proxy.c>
     ProxyPreserveHost On
-    ProxyRequests    Off
-    RequestHeader    set X-Forwarded-Proto "http"
+    ProxyRequests     Off
 
-    # WebSocket upgrade support (required by Next.js)
-    RewriteEngine On
-    RewriteCond %{HTTP:Upgrade} websocket [NC]
-    RewriteCond %{HTTP:Connection} upgrade [NC]
-    RewriteRule ^/(.*) ws://127.0.0.1:${APP_PORT}/\$1 [P,L]
+    # WebSocket support required by Next.js
+    <IfModule mod_proxy_wstunnel.c>
+        RewriteEngine On
+        RewriteCond %{HTTP:Upgrade} websocket [NC]
+        RewriteRule ^/(.*) ws://127.0.0.1:${APP_PORT}/\$1 [P,L]
+    </IfModule>
 
     # Proxy /api/v1/* → remote backend subdomain
     ProxyPass        /api/v1/ https://cdp.api.unizik.qverselearning.org/api/v1/
     ProxyPassReverse /api/v1/ https://cdp.api.unizik.qverselearning.org/api/v1/
 
     # Proxy all other traffic → Next.js app on port ${APP_PORT}
+    ProxyPass        / http://127.0.0.1:${APP_PORT}/
+    ProxyPassReverse / http://127.0.0.1:${APP_PORT}/
+</IfModule>
+PROXYEOF
+    }
+
+    echo "Writing cPanel userdata proxy config for ${DOMAIN} (HTTP + SSL)..."
+    write_proxy_conf "${CPANEL_STD_DIR}/nextjs-proxy.conf"
+    write_proxy_conf "${CPANEL_SSL_DIR}/nextjs-proxy.conf"
+    echo "✅ cPanel userdata written"
+
+    # Rebuild httpd.conf from all userdata, then gracefully reload Apache.
+    # This regenerates the entire httpd.conf but every domain's config comes
+    # from its own userdata — rebuilding does not change other domains.
+    if [[ -x /scripts/rebuildhttpdconf ]]; then
+        echo "Running /scripts/rebuildhttpdconf..."
+        sudo /scripts/rebuildhttpdconf 2>/dev/null || true
+    fi
+
+    if sudo apachectl -t 2>&1 | grep -q "Syntax OK"; then
+        sudo systemctl reload httpd 2>/dev/null || sudo service httpd reload
+        echo "✅ Apache reloaded"
+    else
+        echo "❌ Apache config test failed — aborting deploy"
+        sudo apachectl -t
+        exit 1
+    fi
+
+    # ── SSL on cPanel ─────────────────────────────────────────────────────────
+    # cPanel has AutoSSL (Let's Encrypt built-in). Running standalone certbot on
+    # a cPanel server risks conflicting with cPanel's own cert renewal for ALL
+    # domains on the server. Use cPanel's AutoSSL instead.
+    echo ""
+    echo "ℹ️  SSL ACTION REQUIRED (one-time, in cPanel UI):"
+    echo "   cPanel → SSL/TLS → AutoSSL → Run AutoSSL for '${DOMAIN}'"
+    echo "   Once issued, HTTPS will work automatically. Do NOT run certbot."
+    echo ""
+
+# =============================================================================
+elif [[ "${WEBSERVER}" == "apache" ]]; then
+# =============================================================================
+# ── Plain Apache (no cPanel): full VirtualHost in /etc/httpd/conf.d/ ─────────
+# Only writes /etc/httpd/conf.d/${DOMAIN}.conf — no other vhost is touched.
+
+    APACHE_CONF="/etc/httpd/conf.d/${DOMAIN}.conf"
+    echo "Writing Apache vhost ${APACHE_CONF}..."
+    sudo tee "${APACHE_CONF}" > /dev/null <<APACHEEOF
+<VirtualHost *:80>
+    ServerName ${DOMAIN}
+
+    ProxyPreserveHost On
+    ProxyRequests     Off
+    RequestHeader     set X-Forwarded-Proto "http"
+
+    <IfModule mod_proxy_wstunnel.c>
+        RewriteEngine On
+        RewriteCond %{HTTP:Upgrade} websocket [NC]
+        RewriteCond %{HTTP:Connection} upgrade [NC]
+        RewriteRule ^/(.*) ws://127.0.0.1:${APP_PORT}/\$1 [P,L]
+    </IfModule>
+
+    ProxyPass        /api/v1/ https://cdp.api.unizik.qverselearning.org/api/v1/
+    ProxyPassReverse /api/v1/ https://cdp.api.unizik.qverselearning.org/api/v1/
+
     ProxyPass        / http://127.0.0.1:${APP_PORT}/
     ProxyPassReverse / http://127.0.0.1:${APP_PORT}/
 </VirtualHost>
@@ -130,19 +215,14 @@ APACHEEOF
         exit 1
     fi
 
-    # ── SSL via certbot --apache ──────────────────────────────────────────────
     if command -v certbot &>/dev/null; then
         if sudo certbot certificates 2>/dev/null | grep -q "Domains:.*${DOMAIN}"; then
-            echo "Renewing existing SSL certificate for ${DOMAIN}..."
             sudo certbot renew --apache --cert-name "${DOMAIN}" --non-interactive 2>/dev/null || true
         else
-            echo "Obtaining SSL certificate for ${DOMAIN}..."
             sudo certbot --apache --non-interactive --agree-tos --redirect \
                 -m "${LE_EMAIL}" -d "${DOMAIN}" 2>/dev/null || true
         fi
         echo "✅ SSL handled"
-    else
-        echo "⚠️  Certbot not found — skipping SSL. Run bootstrap-vps.sh to install it."
     fi
 
 # =============================================================================
@@ -150,18 +230,17 @@ else
 # =============================================================================
 # ── Nginx vhost for THIS domain only ─────────────────────────────────────────
 # Only /etc/nginx/conf.d/${DOMAIN}.conf is written. No other file is touched.
+
     echo "Writing ${NGINX_CONF}..."
     sudo tee "${NGINX_CONF}" > /dev/null <<NGINXEOF
 server {
     listen 80;
     server_name ${DOMAIN};
 
-    # ACME challenge for Let's Encrypt
     location /.well-known/acme-challenge/ {
         root /var/www/html;
     }
 
-    # Proxy /api/v1/* → backend subdomain
     location /api/v1/ {
         proxy_pass            https://cdp.api.unizik.qverselearning.org/api/v1/;
         proxy_ssl_server_name on;
@@ -173,7 +252,6 @@ server {
         proxy_connect_timeout 10s;
     }
 
-    # Proxy all other traffic → Next.js app
     location / {
         proxy_pass            http://127.0.0.1:${APP_PORT};
         proxy_http_version    1.1;
@@ -199,22 +277,19 @@ NGINXEOF
         exit 1
     fi
 
-    # ── SSL via certbot --nginx ───────────────────────────────────────────────
     if command -v certbot &>/dev/null; then
         if sudo certbot certificates 2>/dev/null | grep -q "Domains:.*${DOMAIN}"; then
-            echo "Renewing existing SSL certificate for ${DOMAIN}..."
             sudo certbot renew --nginx --cert-name "${DOMAIN}" --non-interactive 2>/dev/null || true
         else
-            echo "Obtaining SSL certificate for ${DOMAIN}..."
             sudo certbot --nginx --non-interactive --agree-tos --redirect \
                 -m "${LE_EMAIL}" -d "${DOMAIN}" 2>/dev/null || true
         fi
         echo "✅ SSL handled"
     else
-        echo "⚠️  Certbot not found — skipping SSL. Run bootstrap-vps.sh to install it."
+        echo "⚠️  Certbot not found — skipping SSL."
     fi
 
-fi  # end WEBSERVER detection
+fi  # end web server detection
 
 # ── Stop THIS app before installing deps ──────────────────────────────────────
 # pm2 stop by name — only this process is affected
