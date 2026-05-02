@@ -105,7 +105,7 @@ NODE_ENV=production
 ENVEOF
 
 # Append runtime secrets injected by CI/CD via environment variables
-printenv | grep -E '^(AUTH_SECRET=|NEXTAUTH_SECRET=|NEXT_PUBLIC_)' >> "${ENV_FILE}" 2>/dev/null || true
+printenv | grep -E '^(AUTH_SECRET=|NEXTAUTH_SECRET=|WEBSERVER_OVERRIDE=|NEXT_PUBLIC_)' >> "${ENV_FILE}" 2>/dev/null || true
 
 # Derive NEXTAUTH_SECRET from AUTH_SECRET when not explicitly set
 if grep -q "^AUTH_SECRET=" "${ENV_FILE}" && ! grep -q "^NEXTAUTH_SECRET=" "${ENV_FILE}"; then

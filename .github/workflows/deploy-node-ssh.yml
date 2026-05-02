@@ -178,6 +178,7 @@ jobs:
         run: |
           ssh -p ${{ secrets.DEPLOY_SSH_PORT }} \
             ${{ secrets.DEPLOY_SSH_USER }}@${{ secrets.DEPLOY_SSH_HOST }} \
+            "WEBSERVER_OVERRIDE='${{ secrets.WEBSERVER_OVERRIDE }}' \
             "AUTH_SECRET='${{ secrets.AUTH_SECRET }}' \
              NEXT_PUBLIC_API_URL='${{ secrets.NEXT_PUBLIC_API_URL }}' \
              NEXT_PUBLIC_BASE_URL='${{ secrets.NEXT_PUBLIC_BASE_URL }}' \
