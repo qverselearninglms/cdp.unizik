@@ -37,6 +37,12 @@ env:
   # Leave empty (BACKEND_URL: '') if this app has no external backend to proxy.
   BACKEND_URL: 'https://cdp.api.unizik.qverselearning.org/api/v1/'
 
+  # Webserver that fronts this domain: nginx or apache.
+  # On cPanel servers Nginx sits on port 80 in front of Apache — set nginx here
+  # so Nginx proxies directly to Next.js, bypassing Apache entirely.
+  # Leave blank to auto-detect (auto-detect defaults to apache on cPanel).
+  WEBSERVER: nginx
+
   # ── Infrastructure (no need to change per app) ───────────────────────────────
   NODE_VERSION: '22'
 
@@ -185,4 +191,5 @@ jobs:
                '${{ env.APP_PORT }}' \
                '${{ env.DOMAIN }}' \
                '${{ env.LE_EMAIL }}' \
-               '${{ env.BACKEND_URL }}'"
+               '${{ env.BACKEND_URL }}' \
+               '${{ env.WEBSERVER }}'"

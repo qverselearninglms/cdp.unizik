@@ -38,6 +38,7 @@ APP_PORT="${3:-3800}"
 DOMAIN="${4:-cdp.unizik.qverselearning.org}"
 LE_EMAIL="${5:-support@qverselearning.com}"
 BACKEND_URL="${6:-https://cdp.api.unizik.qverselearning.org/api/v1/}"   # optional — trailing slash required
+WEBSERVER_OVERRIDE="${7:-}"   # optional: force "nginx" or "apache" — leave blank for auto-detect
 
 ARCHIVE="next-deploy.tar.gz"
 NGINX_CONF="/etc/nginx/conf.d/${DOMAIN}.conf"
@@ -138,8 +139,12 @@ else
 fi
 
 # On cPanel, Apache is ALWAYS the app server (httpd on port 81/444) even when
-# Nginx sits in front on port 80 as a reverse proxy. Override to apache.
-if [[ "${IS_CPANEL}" == "true" ]]; then
+# Nginx sits in front on port 80 as a reverse proxy. Default to apache.
+# WEBSERVER_OVERRIDE lets you choose nginx even on a cPanel server — useful
+# when you want Nginx to proxy directly to Node without going through Apache.
+if [[ -n "${WEBSERVER_OVERRIDE}" ]]; then
+    WEBSERVER="${WEBSERVER_OVERRIDE}"
+elif [[ "${IS_CPANEL}" == "true" ]]; then
     WEBSERVER="apache"
 fi
 
@@ -320,7 +325,49 @@ APACHEEOF
 else
 # =============================================================================
 # ── Nginx vhost for THIS domain only ─────────────────────────────────────────
-# Only /etc/nginx/conf.d/${DOMAIN}.conf is written. No other file is touched.
+# Writes /etc/nginx/conf.d/${DOMAIN}.conf only — no other file is touched.
+# Works on both plain VPS and cPanel servers (Nginx fronting Apache).
+# On cPanel: Nginx proxies directly to Next.js, bypassing Apache entirely.
+
+    # Detect cPanel-managed SSL cert paths (AutoSSL places them here)
+    CPANEL_CERT="/etc/apache2/conf/ssl.crt/${DOMAIN}.crt"
+    CPANEL_KEY="/etc/apache2/conf/ssl.key/${DOMAIN}.key"
+    CPANEL_CA="/etc/apache2/conf/ssl.crt/${DOMAIN}.ca-bundle"
+
+    # Build the SSL server block — included only when a cert is present.
+    # On plain VPS, certbot adds its own ssl block so this stays empty.
+    _SSL_BLOCK=""
+    if [[ -f "${CPANEL_CERT}" && -f "${CPANEL_KEY}" ]]; then
+        _CA_LINE=""
+        [[ -f "${CPANEL_CA}" ]] && _CA_LINE="    ssl_trusted_certificate ${CPANEL_CA};"
+        _SSL_BLOCK="
+server {
+    listen 443 ssl;
+    server_name ${DOMAIN};
+
+    ssl_certificate     ${CPANEL_CERT};
+    ssl_certificate_key ${CPANEL_KEY};
+${_CA_LINE}
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_ciphers         HIGH:!aNULL:!MD5;
+
+    ${_NGINX_BACKEND_LOC}
+    location / {
+        proxy_pass            http://127.0.0.1:${APP_PORT};
+        proxy_http_version    1.1;
+        proxy_set_header      Upgrade \$http_upgrade;
+        proxy_set_header      Connection 'upgrade';
+        proxy_set_header      Host \$host;
+        proxy_set_header      X-Real-IP \$remote_addr;
+        proxy_set_header      X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header      X-Forwarded-Proto https;
+        proxy_cache_bypass    \$http_upgrade;
+        proxy_read_timeout    60s;
+        proxy_connect_timeout 10s;
+    }
+}"
+        echo "✅ cPanel SSL cert found — writing HTTPS server block"
+    fi
 
     echo "Writing ${NGINX_CONF}..."
     sudo tee "${NGINX_CONF}" > /dev/null <<NGINXEOF
@@ -347,6 +394,7 @@ ${_NGINX_BACKEND_LOC}
         proxy_connect_timeout 10s;
     }
 }
+${_SSL_BLOCK}
 NGINXEOF
 
     # nginx -t validates ALL vhosts; reload is graceful — other sites keep serving
@@ -355,10 +403,23 @@ NGINXEOF
         echo "✅ Nginx reloaded"
     else
         echo "❌ Nginx config test failed — aborting deploy"
+        sudo nginx -t
         exit 1
     fi
 
-    if command -v certbot &>/dev/null; then
+    # SSL: use certbot on plain VPS; on cPanel use AutoSSL (certbot conflicts)
+    if [[ "${IS_CPANEL}" == "true" ]]; then
+        if [[ -f "${CPANEL_CERT}" ]]; then
+            echo "✅ SSL already active via cPanel AutoSSL"
+        else
+            echo ""
+            echo "ℹ️  SSL ACTION REQUIRED (one-time, in cPanel UI):"
+            echo "   cPanel → SSL/TLS → AutoSSL → Run AutoSSL for '${DOMAIN}'"
+            echo "   Once issued, re-deploy and the HTTPS server block will be written automatically."
+            echo "   Do NOT run certbot on a cPanel server."
+            echo ""
+        fi
+    elif command -v certbot &>/dev/null; then
         if sudo certbot certificates 2>/dev/null | grep -q "Domains:.*${DOMAIN}"; then
             sudo certbot renew --nginx --cert-name "${DOMAIN}" --non-interactive 2>/dev/null || true
         else
