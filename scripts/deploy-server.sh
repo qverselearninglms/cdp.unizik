@@ -32,10 +32,10 @@
 # =============================================================================
 set -euo pipefail
 
-APP_DIR="${1:-/home/qverselearning/cdp.unizik.qverselearning.org}"
-APP_NAME="${2:-cdp.unizik.qverselearning.org}"
+APP_DIR="${1:-/home/qverselearning/cdp.unizik.edu.ng}"
+APP_NAME="${2:-cdp.unizik.edu.ng}"
 APP_PORT="${3:-3800}"
-DOMAIN="${4:-cdp.unizik.qverselearning.org}"
+DOMAIN="${4:-cdp.unizik.edu.ng}"
 LE_EMAIL="${5:-support@qverselearning.com}"
 BACKEND_URL="${6:-https://cdp.api.unizik.qverselearning.org/api/v1/}"   # optional — trailing slash required
 WEBSERVER_OVERRIDE="${7:-}"   # optional: force "nginx" or "apache" — leave blank for auto-detect

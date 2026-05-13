@@ -44,7 +44,7 @@ export const Footer: React.FC = () => {
                             <li>🏢 Unizik E-Learning System</li>
                             <li>📞 +234 (0) 48 550 940</li>
                             <li>✉️ info@unizik.edu.ng</li>
-                            <li>🌐 https://cdp.unizik.qverselearning.org</li>
+                            <li>🌐 https://cdp.unizik.edu.ng</li>
                         </ul>
                     </div>
                 </div>

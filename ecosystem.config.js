@@ -1,6 +1,6 @@
 module.exports = {
     apps: [{
-        name: process.env.APP_NAME || 'cdp.unizik.qverselearning.org',
+        name: process.env.APP_NAME || 'cdp.unizik.edu.ng',
         script: 'node_modules/.bin/next',
         args: 'start',
         instances: 'max',

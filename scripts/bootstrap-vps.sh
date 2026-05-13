@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# bootstrap-vps.sh — One-time VPS setup for cdp.unizik.qverselearning.org
+# bootstrap-vps.sh — One-time VPS setup for cdp.unizik.edu.ng
 # -----------------------------------------------------------------------------
 # Run ONCE on a fresh VPS before the first deploy, then never again.
 # SAFE: completely idempotent — re-running is harmless.

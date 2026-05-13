@@ -1,5 +1,5 @@
 # Managed by deploy pipeline — proxies all traffic to Next.js on port 3800.
-# This file is scoped to cdp.unizik.qverselearning.org only.
+# This file is scoped to cdp.unizik.edu.ng only.
 Options -Indexes
 DirectoryIndex disabled
 
