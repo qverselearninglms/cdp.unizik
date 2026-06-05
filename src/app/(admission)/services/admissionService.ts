@@ -104,6 +104,7 @@ export const admissionService = {
         return { ...mockStudent! };
     },
 
+    
     /* ---------- Initiate Application Payment ---------- */
     async initiateApplicationPayment(): Promise<PaymentInitiationResponse> {
         // TODO: replace with → apiClient.post<PaymentInitiationResponse>("/payments/application/initiate", {}, { access_token: true })
