@@ -163,4 +163,3 @@ export function AdmissionCompleteSection({ student }: StepSectionProps) {
         </motion.div>
     );
 }
-
