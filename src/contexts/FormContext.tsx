@@ -23,7 +23,7 @@ export const FormProvider: React.FC<{
     children: React.ReactNode
 }> = ({ children }) => {
     const searchParams = useSearchParams()
-    const callbackUrl = searchParams.get("callbackUrl") || "/enrollment";
+    const callbackUrl = searchParams.get("callbackUrl") || "/process-admission";//-/enrollment
     const referenceNumber = searchParams.get('email') || ''
     const { login, requestParentOTP, isLoggingIn, parentOTP, removeparentOTP } = useAuthContext()
 

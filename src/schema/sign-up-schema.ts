@@ -15,21 +15,21 @@ export const personalInfoSchema = z.object({
     nationality: selectMenuSchema('country'),
 
     state: selectMenuSchema('state', true),
-    
+
     local_gov_area: selectMenuSchema('local_gov_area', true),
 
     phone: phoneSchema(),
 });
 
-export const academicInfoSchema = z.object({
-    course_name: nameSchema('Course Name', true),
+// export const academicInfoSchema = z.object({
+//     course_name: nameSchema('Course Name', true),
 
-    school_reg_number: regNumberSchema('School Registration Number', true),
+//     school_reg_number: regNumberSchema('School Registration Number', true),
 
-    jamb_reg_number: regNumberSchema('Jamb Registration Number', true),
+//     jamb_reg_number: regNumberSchema('Jamb Registration Number', true),
 
-    school_email: emailSchema("School Email", true),
-});
+//     school_email: emailSchema("School Email", true),
+// });
 
 
 export const accouintInfoSchema = z.object({
@@ -43,12 +43,12 @@ export const accouintInfoSchema = z.object({
 
 }).refine((data) => data.password === data.confirm_password, {
     message: 'Passwords do not match',
-    path: ['confirmPassword'],
+    path: ['confirm_password'],
 });
 
 export const signUpSchema = object({
     ...personalInfoSchema.shape,
-    ...academicInfoSchema.shape,
+    // ...academicInfoSchema.shape,
     ...accouintInfoSchema.shape,
 });
 

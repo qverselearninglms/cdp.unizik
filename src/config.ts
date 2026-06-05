@@ -41,9 +41,9 @@ export enum UserRole {
     PARENT = "PARENT",
 }
 
-export const APPLICATION_FEE = 37000;
-export const ACCEPTANCE_FEE = 30000;
-export const FULL_TUITION_FEE = 195000;
+export const APPLICATION_FEE_AMOUNT = 37000;
+export const ACCEPTANCE_FEE_AMOUNT = 30000;
+export const FULL_TUITION_FEE_AMOUNT = 195000;
 
 export const APP_CONFIG = {
     name: SITE_NAME,

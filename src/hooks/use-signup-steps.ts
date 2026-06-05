@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { FileText, GraduationCap, User } from "lucide-react";
-import { academicInfoSchema, accouintInfoSchema, personalInfoSchema } from "@/schema/sign-up-schema";
+import { FileText,  User } from "lucide-react";
+import { accouintInfoSchema, personalInfoSchema } from "@/schema/sign-up-schema";
 import { UseFormReturn } from 'react-hook-form';
 
 // Step configuration
@@ -12,13 +12,13 @@ export const STEPS = [
         icon: User,
         schema: personalInfoSchema,
     },
-    {
-        id: 'Academics',
-        title: 'Academic Information',
-        description: `course name, school registration number, Jamb registration number, school email ...`,
-        icon: GraduationCap,
-        schema: academicInfoSchema,
-    },
+    // {
+    //     id: 'Academics',
+    //     title: 'Academic Information',
+    //     description: `course name, school registration number, Jamb registration number, school email ...`,
+    //     icon: GraduationCap,
+    //     schema: academicInfoSchema,
+    // },
     {
         id: 'Account',
         title: 'Account Information',

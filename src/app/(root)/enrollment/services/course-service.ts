@@ -24,7 +24,8 @@ class CourseService {
             // Transform API courses to Enrollment format
             return apiCourses.map((apiCourse: EnrolledCourseResponseType) => this.transformApiCourseToEnrollment(apiCourse));
         } catch (error) {
-            console.error('Failed to fetch enrollments from API:', error);
+            const apiError = error as ApiError;
+            console.error(`Failed to fetch enrollments from API [${apiError?.statusCode ?? 'unknown'}]:`, apiError?.message ?? String(error));
             return [];
         }
     }
@@ -36,7 +37,11 @@ class CourseService {
 
             return paidCategories
         } catch (error) {
-            console.error('Failed to fetch paid categories from API:', error);
+            const apiError = error as ApiError;
+            console.error(
+                `Failed to fetch paid categories from API [${apiError?.statusCode ?? 'unknown'}]:`,
+                apiError?.message ?? String(error)
+            );
             return [];
         }
     }
@@ -49,7 +54,8 @@ class CourseService {
             // Transform API courses to Enrollment format
             return apiCourses.map(apiCourse => this.transformApiCourseToEnrollment(apiCourse));
         } catch (error) {
-            console.error('Failed to fetch categories from API:', error);
+            const apiError = error as ApiError;
+            console.error(`Failed to fetch enrolled courses from API [${apiError?.statusCode ?? 'unknown'}]:`, apiError?.message ?? String(error));
             return [];
         }
     }
@@ -62,7 +68,8 @@ class CourseService {
             this.apiCategoriesCache = results.data;
             return this.apiCategoriesCache as ApiCategory[];
         } catch (error) {
-            console.error('Failed to fetch categories from API:', error);
+            const apiError = error as ApiError;
+            console.error(`Failed to fetch categories from API [${apiError?.statusCode ?? 'unknown'}]:`, apiError?.message ?? String(error));
             return [];
         }
     }
@@ -75,7 +82,8 @@ class CourseService {
             this.apiCoursesCache = results.data;
             return this.apiCoursesCache as ApiCourse[];
         } catch (error) {
-            console.error('Failed to fetch courses from API:', error);
+            const apiError = error as ApiError;
+            console.error(`Failed to fetch courses from API [${apiError?.statusCode ?? 'unknown'}]:`, apiError?.message ?? String(error));
             return [];
         }
     }

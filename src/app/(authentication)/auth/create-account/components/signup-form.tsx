@@ -16,7 +16,7 @@ export function SignupForm() {
     const {
         register,
         handleSubmit,
-        formState: { errors, isSubmitting, isValid },
+        formState: { errors, isValid },
         control,
         setValue,
         getValues,
@@ -31,7 +31,8 @@ export function SignupForm() {
         delta,
         // DATA & ACTIONS
         error,
-        onSubmit
+        onSubmit,
+        isLoading,
     } = useSignup();
 
     return (
@@ -57,7 +58,7 @@ export function SignupForm() {
                 )}
 
                 {/* Step 2: Academic Information */}
-                {currentStep === 1 && (
+                {/* {currentStep === 1 && (
                     <motion.div
                         initial={{ x: delta >= 1 ? '80%' : '-80%', opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
@@ -65,10 +66,10 @@ export function SignupForm() {
                     >
                         <ParentInformation register={register} errors={errors} control={control} setValue={setValue} getValues={getValues} watch={watch} />
                     </motion.div>
-                )}
+                )} */}
 
                 {/* Step 3: Account Information */}
-                {currentStep === 2 && (
+                {currentStep === 1 && (
                     <motion.div
                         initial={{ x: delta >= 1 ? '80%' : '-80%', opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
@@ -103,8 +104,8 @@ export function SignupForm() {
                     {currentStep === steps.length - 1 ? (
                         <Button
                             type="submit"
-                            disabled={!isValid || isSubmitting}
-                            loading={isSubmitting}
+                            disabled={!isValid || isLoading}
+                            loading={isLoading}
                             className="flex items-center px-6 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
                         >
                             <Check className="w-4 h-4 ml-1" />
@@ -112,7 +113,7 @@ export function SignupForm() {
                         </Button>
                     ) : (
                         <Button
-                            // type="Button"
+                            type="button"
                             onClick={nextStep}
                             className="flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 cursor-pointer"
                         >

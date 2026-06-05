@@ -88,7 +88,7 @@ export function useAuth() {
                 toast.success(`Welcome back, ${session.user.first_name}!`);
                 setparentOTP(false);
 
-                if (session.user?.role === "STUDENT") router.push(`/enrollment`)
+                if (session.user?.role === "STUDENT") router.push(`/process-admission`)
 
                 // redirect to lms  
                 // else router.push(`${lmsBaseUrl}/ssotester/index.php?sso_loggers=1&u=${session.user.school_reg_number}&password=1`)

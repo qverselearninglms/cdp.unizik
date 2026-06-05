@@ -13,7 +13,7 @@ export const ParentInformation: React.FC<ParentInformationProps> = ({ register, 
             <h5 className="text-2xl text-accent">
                 The Parent details are optional
             </h5>
-            <div className="grid grid-cols-1 gap-4">
+            {/* <div className="grid grid-cols-1 gap-4">
                 <InputField
                     id='course_name'
                     {...register('course_name')}
@@ -48,7 +48,7 @@ export const ParentInformation: React.FC<ParentInformationProps> = ({ register, 
                     placeholder="Enter your school email address"
                     error={errors.school_email?.message}
                 />
-            </div>
+            </div> */}
         </div>
     )
 }

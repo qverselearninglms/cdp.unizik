@@ -13,6 +13,7 @@ import { APP_CONFIG, LOCAL_STORAGE_KEYS } from "@/config";
 interface ApiErrorResponse {
     message?: string;
     errors?: Record<string, string[]>;
+    data?: Record<string, string[]> | unknown;
     success?: boolean;
     error?: string;
 }
@@ -78,15 +79,15 @@ class ApiClient {
                         }
                     };
                 }
-                
+
                 // Handle different response structures
                 const responseData = response.data;
-                
+
                 // If it's already in ApiResponse format, return as is
                 if (responseData && typeof responseData === 'object' && 'status' in responseData) {
                     return response;
                 }
-                
+
                 // If response is an array (like categories data from /odl/categories)
                 if (Array.isArray(responseData)) {
                     response.data = {
@@ -96,20 +97,20 @@ class ApiClient {
                     };
                     return response;
                 }
-                
+
                 // If response is an object with data property
                 if (responseData && typeof responseData === 'object' && 'data' in responseData) {
                     // Already formatted correctly
                     return response;
                 }
-                
+
                 // For any other response structure, wrap it
                 response.data = {
                     status: 200,
                     message: 'Success',
                     data: responseData || null
                 };
-                
+
                 return response;
             },
             async (error: unknown) => {
@@ -140,6 +141,21 @@ class ApiClient {
         this.failedQueue = [];
     }
 
+    /**
+     * Returns true when `value` is a non-array object whose every value is a
+     * string array — i.e. a field-errors map like { state: ["required"] }.
+     */
+    private isFieldErrorsRecord(value: unknown): value is Record<string, string[]> {
+        return (
+            typeof value === 'object' &&
+            value !== null &&
+            !Array.isArray(value) &&
+            Object.values(value as Record<string, unknown>).every(
+                (v) => Array.isArray(v) && (v as unknown[]).every((item) => typeof item === 'string')
+            )
+        );
+    }
+
     private handleError(error: unknown): ApiError {
         // Handle Axios errors
         if (axios.isAxiosError(error)) {
@@ -148,11 +164,18 @@ class ApiClient {
             // Server responded with error status
             if (axiosError.response) {
                 const responseData = axiosError.response.data;
+
+                // Some endpoints return field errors under `errors`; others (e.g. 422
+                // validation) return them under `data`.  Normalise to `errors`.
+                const fieldErrors: Record<string, string[]> | undefined =
+                    responseData?.errors ??
+                    (this.isFieldErrorsRecord(responseData?.data) ? responseData.data : undefined);
+
                 return {
-                    message: responseData?.message || 
-                             responseData?.error || 
-                             `HTTP ${axiosError.response.status}: ${axiosError.response.statusText}`,
-                    errors: responseData?.errors,
+                    message: responseData?.message ||
+                        responseData?.error ||
+                        `HTTP ${axiosError.response.status}: ${axiosError.response.statusText}`,
+                    errors: fieldErrors,
                     statusCode: axiosError.response.status,
                 };
             }

@@ -5,17 +5,18 @@ import { SignUpFormData, signUpSchema } from '@/schema/sign-up-schema';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useForm, UseFormReturn } from 'react-hook-form';
-import { useMutation } from '@tanstack/react-query';
 import { authApi } from '@/lib/services/auth';
 import { toast } from 'sonner';
 import { ApiError, SignupResponse } from '@/types/auth';
 import { useRouter } from 'next/navigation';
 import { STEPS, useSignupSteps } from './use-signup-steps';
 import { createMutation } from '@/core/queryHooks';
+import { handleApiError } from '@/lib/api-error';
 
 interface UseSignupReturn extends UseFormReturn<SignUpFormData> {
     error: string | null;
-    onSubmit: (data: SignUpFormData) => Promise<void>
+    onSubmit: (data: SignUpFormData) => Promise<void>;
+    isLoading: boolean;
 
     getStepStatus: (stepIndex: number) => "completed" | "current" | "upcoming";
     goToStep: (stepIndex: number) => Promise<void>;
@@ -73,18 +74,8 @@ export function useSignup(): UseSignupReturn {
                 setCompletedSteps([]);
             },
             onError: (error: ApiError) => {
-                const message = error.message || "Login failed. Please try again.";
-                toast.error(message);
-
-                setError(message);
-                if (error.errors) {
-                    // Handle validation errors
-                    Object.values(error.errors).forEach((messages: unknown) => {
-                        if (Array.isArray(messages)) {
-                            messages.forEach((msg) => toast.error(msg));
-                        }
-                    });
-                }
+                handleApiError(error, 'Signup failed. Please try again.');
+                setError(error.message || 'Signup failed. Please try again.');
             },
         },
     });
@@ -101,7 +92,7 @@ export function useSignup(): UseSignupReturn {
         formState: form.formState,
         onSubmit,
         error,
-        // signup
+        isLoading: signupMutation.isPending,
 
         getStepStatus,
         goToStep,
