@@ -17,6 +17,7 @@ import type {
 } from "../types/admission";
 import type { UserInterface } from "@/types/global";
 import { ACCEPTANCE_FEE_AMOUNT, APPLICATION_FEE_AMOUNT } from "@/config/global.config";
+import { apiClient } from "@/core/client";
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                             */
@@ -104,12 +105,14 @@ export const admissionService = {
         return { ...mockStudent! };
     },
 
-    
+
     /* ---------- Initiate Application Payment ---------- */
     async initiateApplicationPayment(): Promise<PaymentInitiationResponse> {
-        // TODO: replace with → apiClient.post<PaymentInitiationResponse>("/payments/application/initiate", {}, { access_token: true })
-        await delay(1200);
+        // TODO: replace with → 
         const ref = `QHUB-APP-${Date.now()}`;
+        const initData = apiClient.post<PaymentInitiationResponse>("/application/initialize-payment", { amount: APPLICATION_FEE_AMOUNT }, { access_token: true });
+        console.log("Initiating application payment with API, got response:", initData, { amount: APPLICATION_FEE_AMOUNT });
+        // return initData;
         return {
             success: true,
             reference: ref,
@@ -117,6 +120,17 @@ export const admissionService = {
             message: "Payment initiated successfully",
         };
     },
+    // async initiateApplicationPayment(): Promise<PaymentInitiationResponse> {
+    //     // TODO: replace with → apiClient.post<PaymentInitiationResponse>("/payments/application/initiate", {}, { access_token: true })
+    //     await delay(1200);
+    //     const ref = `QHUB-APP-${Date.now()}`;
+    //     return {
+    //         success: true,
+    //         reference: ref,
+    //         gateway_url: `https://app.credodemo.com/pay?ref=${ref}&amount=${APPLICATION_FEE_AMOUNT}`,
+    //         message: "Payment initiated successfully",
+    //     };
+    // },
 
     /* ---------- Verify Application Payment ---------- */
     async verifyApplicationPayment(reference: string): Promise<PaymentVerificationResponse> {

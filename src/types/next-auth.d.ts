@@ -27,3 +27,10 @@ declare module "next-auth/providers" {
     password: string;
   }
 }
+
+// Extend the AxiosRequestConfig interface
+declare module 'axios' {
+  export interface AxiosRequestConfig {
+    access_token?: boolean;   // custom flag
+  }
+}

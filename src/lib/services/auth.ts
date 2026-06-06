@@ -31,7 +31,7 @@ export const authApi = {
             refreshToken,
         }),
 
-    getProfile: () => apiClient.get<UserInterface>("/student/profile"),
+    getProfile: () => apiClient.get<UserInterface>("/application/profile"),
 
     forgotPassword: (forgotCredention: forgotPasswordFormData) =>
         apiClient.post("/auth/password/forgot", { ...forgotCredention }),

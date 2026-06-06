@@ -34,7 +34,7 @@ set -euo pipefail
 
 APP_DIR="${1:-/home/qverselearning/cdp.unizik.edu.ng}"
 APP_NAME="${2:-cdp.unizik.edu.ng}"
-APP_PORT="${3:-3800}"
+APP_PORT="${3:-3801}"
 DOMAIN="${4:-cdp.unizik.edu.ng}"
 LE_EMAIL="${5:-support@qverselearning.com}"
 BACKEND_URL="${6:-https://cdp.api.unizik.qverselearning.org/api/v1/}"   # optional — trailing slash required

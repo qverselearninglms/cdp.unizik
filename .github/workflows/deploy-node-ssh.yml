@@ -30,7 +30,7 @@ on:
 env:
   # ── App identity (change these for each application) ────────────────────────
   APP_NAME: cdp.unizik.edu.ng    # PM2 process name — must be unique per app on the server
-  APP_PORT: '3800'                            # port Next.js listens on — must be unique per app on the server
+  APP_PORT: '3801'                            # port Next.js listens on — must be unique per app on the server
   DOMAIN: cdp.unizik.edu.ng       # public domain name
   LE_EMAIL: support@qverselearning.com        # SSL contact email (cPanel AutoSSL / Let's Encrypt)
 

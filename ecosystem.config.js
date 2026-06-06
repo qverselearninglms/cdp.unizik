@@ -8,7 +8,7 @@ module.exports = {
         // Next.js reads .env.production automatically when NODE_ENV=production.
         // PM2 only needs to set PORT and NODE_ENV here.
         env: {
-            PORT: process.env.APP_PORT || 3800,
+            PORT: process.env.APP_PORT || 3801,
             NODE_ENV: 'production',
         },
     }],

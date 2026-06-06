@@ -1,4 +1,4 @@
-# Managed by deploy pipeline — proxies all traffic to Next.js on port 3800.
+# Managed by deploy pipeline — proxies all traffic to Next.js on port 3801.
 # This file is scoped to cdp.unizik.edu.ng only.
 Options -Indexes
 DirectoryIndex disabled
@@ -11,11 +11,11 @@ DirectoryIndex disabled
 
     # WebSocket upgrade passthrough (required by Next.js)
     RewriteCond %{HTTP:Upgrade} websocket [NC]
-    RewriteRule ^(.*)$ ws://127.0.0.1:3800/$1 [P,L]
+    RewriteRule ^(.*)$ ws://127.0.0.1:3801/$1 [P,L]
 
     # Proxy /api/v1/* to remote backend
     RewriteRule ^api/v1/(.*)$ https://cdp.api.unizik.qverselearning.org/api/v1/$1 [P,L]
 
     # Proxy all other requests to Next.js
-    RewriteRule ^(.*)$ http://127.0.0.1:3800/$1 [P,L]
+    RewriteRule ^(.*)$ http://127.0.0.1:3801/$1 [P,L]
 </IfModule>
