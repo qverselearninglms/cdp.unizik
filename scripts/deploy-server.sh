@@ -465,16 +465,15 @@ echo "✅ Dependencies installed"
 
 # ── Start / reload THIS app via PM2 ──────────────────────────────────────────
 # All pm2 commands below are scoped to APP_NAME — other processes are untouched.
-# --update-env is always passed so PM2 re-reads the current environment
-# (including the .env.production written above) on every deploy.
+# We always delete + re-start (instead of restart) so that PM2 picks up the
+# current working directory (APP_DIR). A plain `pm2 restart` keeps the old cwd
+# from whenever the process was first created, which would serve stale code.
 if pm2 list 2>/dev/null | grep -q "${APP_NAME}"; then
-    echo "Restarting ${APP_NAME} with updated env..."
-    APP_NAME="${APP_NAME}" APP_PORT="${APP_PORT}" \
-        pm2 restart "${APP_NAME}" --update-env
-else
-    echo "Starting ${APP_NAME} via ecosystem.config.js..."
-    APP_NAME="${APP_NAME}" APP_PORT="${APP_PORT}" pm2 start ecosystem.config.js
+    echo "Deleting old ${APP_NAME} process to reset cwd..."
+    pm2 delete "${APP_NAME}"
 fi
+echo "Starting ${APP_NAME} via ecosystem.config.js..."
+APP_NAME="${APP_NAME}" APP_PORT="${APP_PORT}" pm2 start ecosystem.config.js
 
 # Persist the current PM2 process list (saves all running apps, not just this one)
 pm2 save
