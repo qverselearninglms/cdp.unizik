@@ -66,6 +66,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+        # clean previous build artifacts to prevent accidental inclusion in the deployment archive.
+      - name: Clean previous build
+        run: rm -rf .next
+
       # NEXT_PUBLIC_* vars are baked into the bundle at build time.
       # They do NOT need to exist on the server at runtime.
       #
