@@ -106,9 +106,102 @@ export const FORM_STEPS: StepConfig[] = [
 
 export const TOTAL_STEPS = FORM_STEPS.length;
 
-// ─── Storage Key ─────────────────────────────────────────────────────────────
+// ─── Storage Keys ─────────────────────────────────────────────────────────────
 export const FORM_STORAGE_KEY = 'odl_admission_form';
 export const STEP_STORAGE_KEY = 'odl_admission_step';
+
+// ─── API: Application Record (matches server response) ───────────────────────
+// Mirrors the `application` object returned by the PHP backend.
+// All fields that can be null on the server are typed as `string | null` etc.
+export interface ApplicationRecord {
+    id: number;
+    user_id: number;
+
+    // Personal Information
+    gender: string | null;
+    lga: string | null;
+    hometown: string | null;
+    hometown_address: string | null;
+    contact_address: string | null;
+    religion: string | null;
+    disability: string | null;
+    other_disability: string | null;
+    dob: string | null;
+
+    // Sponsor
+    has_sponsor: boolean;
+    sponsor_name: string | null;
+    sponsor_relationship: string | null;
+    sponsor_phone_number: string | null;
+    sponsor_email: string | null;
+    sponsor_contact_address: string | null;
+
+    // Qualification
+    awaiting_result: boolean;
+    first_sitting: Record<string, unknown> | null;
+    second_sitting: Record<string, unknown> | null;
+
+    // Documents — server stores as URL strings after upload
+    passport: string | null;
+    first_school_leaving: string | null;
+    o_level: string | null;
+    other_documents: string[] | null;
+    images: string[] | null;
+    undergraduateDegree: string | null;
+    degree: string | null;
+    degree_transcript: string | null;
+    college: string | null;
+    ond: string | null;
+    hnd: string | null;
+    masters: string | null;
+    phd: string | null;
+    professional: string | null;
+    others: string | null;
+
+    // Academic / Career
+    university: string | null;
+    gpa: string | null;
+    graduationYear: string | null;
+    workExperience: string | null;
+    currentPosition: string | null;
+    company: string | null;
+    yearsOfExperience: string | null;
+    personalStatement: string | null;
+    careerGoals: string | null;
+
+    // Next of Kin
+    next_of_kin_name: string | null;
+    next_of_kin_relationship: string | null;
+    next_of_kin_phone_number: string | null;
+    next_of_kin_email: string | null;
+    next_of_kin_address: string | null;
+    is_next_of_kin_primary_contact: boolean;
+    next_of_kin_alternate_phone_number: string | null;
+    next_of_kin_occupation: string | null;
+    next_of_kin_workplace: string | null;
+
+    // Program
+    program: string | null;
+    startTerm: string | null;
+    studyMode: 'online' | 'offline' | null;
+    academic_session: string | null;
+
+    // Terms
+    agreeToTerms: boolean;
+
+    // Timestamps
+    created_at: string;
+    updated_at: string;
+    deleted_at: string | null;
+}
+
+// ─── API: Submit Response ─────────────────────────────────────────────────────
+export interface SubmitApplicationResponse {
+    status: number;
+    response: string;
+    message: string;
+    application: ApplicationRecord;
+}
 
 // ─── Default Form Values ─────────────────────────────────────────────────────
 export const DEFAULT_FORM_VALUES: FormDefaultValues = {
@@ -199,7 +292,7 @@ export const STEP_FIELDS: Record<FormStep, string[]> = {
     ],
 };
 
-// ─── Per-Step Schema Types ───────────────────────────────────────────────────
+// ─── Per-Step Schema Types ────────────────────────────────────────────────────
 export type StepSchemaMap = {
     [FormStep.PERSONAL_INFO]: typeof personalInfoSchema;
     [FormStep.SPONSOR_INFO]: typeof sponsorInfoSchema;
@@ -212,7 +305,9 @@ export type StepSchemaMap = {
     [FormStep.REVIEW]: z.ZodObject<{ agreeToTerms: z.ZodBoolean }>;
 };
 
-// ─── Form Default Values Type ────────────────────────────────────────────────
+// ─── Form Default Values Type (client-side, Files not URLs) ──────────────────
+// This is what react-hook-form holds in memory. Files are `File` objects here;
+// after submission the server returns them as URL strings in `ApplicationRecord`.
 export interface FormDefaultValues {
     lga: string;
     religion: string;
@@ -265,7 +360,7 @@ export interface FormDefaultValues {
     agreeToTerms: boolean;
 }
 
-// ─── Step Component Props ────────────────────────────────────────────────────
+// ─── Step Component Props ─────────────────────────────────────────────────────
 export interface StepComponentProps {
     onNext: () => void;
     onPrev: () => void;

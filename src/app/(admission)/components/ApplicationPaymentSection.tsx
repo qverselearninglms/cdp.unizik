@@ -21,6 +21,7 @@ export function ApplicationPaymentSection({ student, fees }: StepSectionProps) {
             if (result.success && result.gateway_url) {
                 toast.success("Redirecting to payment gateway…");
                 // Small delay so toast is visible
+                console.log("Initiating payment, redirecting to:", result.gateway_url);
                 setTimeout(() => {
                     window.location.href = result.gateway_url;
                 }, 800);

@@ -16,7 +16,7 @@ import type {
     PaymentVerificationResponse,
 } from "../types/admission";
 import type { UserInterface } from "@/types/global";
-import { ACCEPTANCE_FEE_AMOUNT, APPLICATION_FEE_AMOUNT } from "@/config/global.config";
+import { ACCEPTANCE_FEE_AMOUNT, APPLICATION_FEE_AMOUNT, FULL_TUITION_FEE_AMOUNT } from "@/config/global.config";
 import { apiClient } from "@/core/client";
 
 /* ------------------------------------------------------------------ */
@@ -108,96 +108,97 @@ export const admissionService = {
 
     /* ---------- Initiate Application Payment ---------- */
     async initiateApplicationPayment(): Promise<PaymentInitiationResponse> {
-        // TODO: replace with → 
-        const ref = `QHUB-APP-${Date.now()}`;
-        const initData = apiClient.post<PaymentInitiationResponse>("/application/initialize-payment", { amount: APPLICATION_FEE_AMOUNT }, { access_token: true });
-        console.log("Initiating application payment with API, got response:", initData, { amount: APPLICATION_FEE_AMOUNT });
-        // return initData;
-        return {
-            success: true,
-            reference: ref,
-            gateway_url: `https://app.credodemo.com/pay?ref=${ref}&amount=${APPLICATION_FEE_AMOUNT}`,
-            message: "Payment initiated successfully",
-        };
+        const response = await apiClient.post<PaymentInitiationResponse>(
+            "/application/initialize-payment",
+            { amount: APPLICATION_FEE_AMOUNT },
+            { access_token: true }
+        );
+        return response.data;
     },
-    // async initiateApplicationPayment(): Promise<PaymentInitiationResponse> {
-    //     // TODO: replace with → apiClient.post<PaymentInitiationResponse>("/payments/application/initiate", {}, { access_token: true })
-    //     await delay(1200);
-    //     const ref = `QHUB-APP-${Date.now()}`;
-    //     return {
-    //         success: true,
-    //         reference: ref,
-    //         gateway_url: `https://app.credodemo.com/pay?ref=${ref}&amount=${APPLICATION_FEE_AMOUNT}`,
-    //         message: "Payment initiated successfully",
-    //     };
-    // },
 
     /* ---------- Verify Application Payment ---------- */
     async verifyApplicationPayment(reference: string): Promise<PaymentVerificationResponse> {
-        // TODO: replace with → apiClient.post<PaymentVerificationResponse>("/payments/application/verify", { reference }, { access_token: true })
-        await delay(1500);
+        const response = await apiClient.get<PaymentVerificationResponse>(
+            "/application/verify-payment",
+            {
+                params: { reference },
+                access_token: true
+            }
+        );
+        // Cast and assert the required properties exist
+        const result = response as unknown as PaymentVerificationResponse;
+
+        if (!result.success || !result.reference) {
+            throw new Error('Invalid payment verification response');
+        }
+
         // Simulate success — update mock state
         mockStudent = {
             ...mockStudent,
             application_payment_status: "paid",
         };
-        return {
-            success: true,
-            status: "paid",
-            reference,
-            amount: APPLICATION_FEE_AMOUNT,
-            message: "Application payment verified successfully",
-        };
+
+        return result;
     },
 
     /* ---------- Initiate Acceptance Fee Payment ---------- */
     async initiateAcceptanceFeePayment(): Promise<PaymentInitiationResponse> {
-        // TODO: replace with → apiClient.post<PaymentInitiationResponse>("/payments/acceptance/initiate", {}, { access_token: true })
-        await delay(1200);
-        const ref = `QHUB-ACC-${Date.now()}`;
-        return {
-            success: true,
-            reference: ref,
-            gateway_url: `https://app.credodemo.com/pay?ref=${ref}&amount=${ACCEPTANCE_FEE_AMOUNT}`,
-            message: "Payment initiated successfully",
-        };
+        const response = await apiClient.post<PaymentInitiationResponse>(
+            "/application/initialize-acceptance-payment",
+            { amount: ACCEPTANCE_FEE_AMOUNT },
+            { access_token: true }
+        );
+        return response.data;
     },
 
     /* ---------- Verify Acceptance Fee Payment ---------- */
     async verifyAcceptanceFeePayment(reference: string): Promise<PaymentVerificationResponse> {
-        // TODO: replace with → apiClient.post<PaymentVerificationResponse>("/payments/acceptance/verify", { reference }, { access_token: true })
-        await delay(1500);
+        const response = await apiClient.get<PaymentVerificationResponse>(
+            "/application/verify-acceptance-payment",
+            {
+                params: { reference },
+                access_token: true
+            }
+        );
+        // Cast and assert the required properties exist
+        const result = response as unknown as PaymentVerificationResponse;
+
+        if (!result.success || !result.reference) {
+            throw new Error('Invalid payment verification response');
+        }
         mockStudent = {
             ...mockStudent,
             acceptance_payment_status: "paid",
             admission_status: "accepted",
         };
-        return {
-            success: true,
-            status: "paid",
-            reference,
-            amount: 30_000,
-            message: "Acceptance fee payment verified successfully",
-        };
+        return result
     },
 
     /* ---------- Initiate Tuition Payment ---------- */
     async initiateTuitionPayment(amount: number): Promise<PaymentInitiationResponse> {
-        // TODO: replace with → apiClient.post<PaymentInitiationResponse>("/payments/tuition/initiate", { amount }, { access_token: true })
-        await delay(1200);
-        const ref = `QHUB-TUI-${Date.now()}`;
-        return {
-            success: true,
-            reference: ref,
-            gateway_url: `https://app.credodemo.com/pay?ref=${ref}&amount=${amount}`,
-            message: "Payment initiated successfully",
-        };
+        const response = await apiClient.post<PaymentInitiationResponse>(
+            "/application/initialize-tuition-payment",
+            { amount: amount },
+            { access_token: true }
+        );
+        return response.data;
     },
 
     /* ---------- Verify Tuition Payment ---------- */
     async verifyTuitionPayment(reference: string): Promise<PaymentVerificationResponse> {
-        // TODO: replace with → apiClient.post<PaymentVerificationResponse>("/payments/tuition/verify", { reference }, { access_token: true })
-        await delay(1500);
+        const response = await apiClient.get<PaymentVerificationResponse>(
+            "/application/verify-tuition-payment",
+            {
+                params: { reference },
+                access_token: true
+            }
+        );
+        // Cast and assert the required properties exist
+        const result = response as unknown as PaymentVerificationResponse;
+
+        if (!result.success || !result.reference) {
+            throw new Error('Invalid payment verification response');
+        }
         // Simulate: extract amount from reference URL or use a fixed mock amount
         const TUITION_TOTAL = 195_000;
         // For mock, assume each verify adds half if partial, or full
@@ -211,9 +212,9 @@ export const admissionService = {
             tuition_payment_status: newTotal >= TUITION_TOTAL ? "paid" : "partial",
         };
         return {
-            success: true,
+            success: result.success,
+            reference: result.reference,
             status: newTotal >= TUITION_TOTAL ? "paid" : "partial",
-            reference,
             amount: paymentAmount,
             message: newTotal >= TUITION_TOTAL
                 ? "Tuition payment completed"

@@ -65,7 +65,7 @@ export function useSignup(): UseSignupReturn {
         fn: (credentials: SignUpFormData) => authApi.signup(credentials),
         defaultOptions: {
             onSuccess: async (res: SignupResponse) => {
-                toast.success(`Welcome back!`)
+                toast.success(`Account Created Successfully!`)
                 const redirectUrl = (res.user) ? res.user.email : "";
 
                 router.push(`${baseUrl}/auth/signin?email=${redirectUrl}`);

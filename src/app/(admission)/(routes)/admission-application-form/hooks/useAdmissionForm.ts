@@ -24,6 +24,7 @@ import {
     STEP_FIELDS,
     type FormDefaultValues,
 } from '../types/form-types';
+import { submitAdmissionApplication } from '../services/admission-service';
 
 // ─── Per-step schema resolver map ────────────────────────────────────────────
 const STEP_SCHEMAS = {
@@ -278,12 +279,24 @@ export function useAdmissionForm(): UseAdmissionFormReturn {
             }
 
             // TODO: API call to submit the application
-            // await submitAdmissionApplication(result.data);
+            const { data: payload } = await submitAdmissionApplication(result.data);
+            console.log('Submission response:', payload);
+
+            if (payload.status !== 200 || !payload.application?.id) {
+                toast.error(payload.message ?? 'Submission failed. Please try again.');
+                return;
+            }
 
             await formStorage.clearFormData(FORM_STORAGE_KEY);
             localStorage.removeItem(STEP_STORAGE_KEY);
             localStorage.removeItem(`${STEP_STORAGE_KEY}_completed`);
             setIsSubmitted(true);
+            toast.success(payload.message ?? 'Application submitted successfully!');
+
+            // await formStorage.clearFormData(FORM_STORAGE_KEY);
+            // localStorage.removeItem(STEP_STORAGE_KEY);
+            // localStorage.removeItem(`${STEP_STORAGE_KEY}_completed`);
+            // setIsSubmitted(true);
         } catch (error) {
             console.error('Submission failed:', error);
             toast.error('Failed to submit application. Please try again.');
