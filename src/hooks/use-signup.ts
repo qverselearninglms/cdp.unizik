@@ -1,5 +1,3 @@
-
-
 import { baseUrl } from '@/config';
 import { SignUpFormData, signUpSchema } from '@/schema/sign-up-schema';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -18,7 +16,7 @@ interface UseSignupReturn extends UseFormReturn<SignUpFormData> {
     onSubmit: (data: SignUpFormData) => Promise<void>;
     isLoading: boolean;
 
-    getStepStatus: (stepIndex: number) => "completed" | "current" | "upcoming";
+    getStepStatus: (stepIndex: number) => 'completed' | 'current' | 'upcoming';
     goToStep: (stepIndex: number) => Promise<void>;
     STEPS: typeof STEPS;
     currentStep: number;
@@ -38,6 +36,7 @@ export function useSignup(): UseSignupReturn {
         defaultValues: {
             first_name: '',
             last_name: '',
+            other_name: '',
             email: '',
             username: '',
             gender: '',
@@ -45,6 +44,9 @@ export function useSignup(): UseSignupReturn {
             phone: '',
             password: '',
             confirm_password: '',
+            // program_id and program_name intentionally omitted so RHF treats it as undefined
+            // until the student actively selects a program — this makes the
+            // academic step's "Next" button correctly blocked until enrollment.
         },
     });
 
@@ -59,15 +61,13 @@ export function useSignup(): UseSignupReturn {
         delta,
     } = useSignupSteps(form);
 
-    // Create Account Mutation
     const signup = createMutation({
         key: 'signup-user',
         fn: (credentials: SignUpFormData) => authApi.signup(credentials),
         defaultOptions: {
             onSuccess: async (res: SignupResponse) => {
-                toast.success(`Account Created Successfully!`)
-                const redirectUrl = (res.user) ? res.user.email : "";
-
+                toast.success('Account Created Successfully!');
+                const redirectUrl = res.user ? res.user.email : '';
                 router.push(`${baseUrl}/auth/signin?email=${redirectUrl}`);
                 form.reset();
                 setCurrentStep(0);
@@ -80,7 +80,6 @@ export function useSignup(): UseSignupReturn {
         },
     });
 
-    // Call the hook to get the mutation object
     const signupMutation = signup();
 
     const onSubmit = async (data: SignUpFormData) => {

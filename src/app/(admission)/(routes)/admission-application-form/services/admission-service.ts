@@ -136,5 +136,5 @@ export async function submitAdmissionApplication(
     data: ODLApplication
 ): Promise<ApiResponse<SubmitApplicationResponse>> {
     const formData = buildFormData(data);
-    return apiClient.upload<SubmitApplicationResponse>('/application/update-application-form', formData);
+    return apiClient.put<SubmitApplicationResponse>('/application/update-application-form', formData);
 }

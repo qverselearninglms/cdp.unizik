@@ -1,3 +1,4 @@
+// components/features/signup/SignupForm.tsx
 'use client';
 
 import { Check, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -5,14 +6,13 @@ import { useSignup } from '@/hooks/use-signup';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { PersonalInformation } from './PersonalInformation';
-import { ParentInformation } from './ParenntInformation';
+import { AcademicInformation } from './AcademicInformation';
 import { AccountInformation } from './AccountInformation';
 import { ProgressStepper } from './ProgressStepper';
 import { FormErrorList } from '@/components/core/forms/errors';
-import { motion } from "framer-motion";
+import { motion } from 'framer-motion';
 
 export function SignupForm() {
-
     const {
         register,
         handleSubmit,
@@ -21,6 +21,7 @@ export function SignupForm() {
         setValue,
         getValues,
         watch,
+        trigger,
         // HELPERS
         getStepStatus,
         goToStep,
@@ -37,11 +38,15 @@ export function SignupForm() {
 
     return (
         <div className="block">
-
             {/* Progress Stepper */}
-            <ProgressStepper steps={steps} getStepStatus={getStepStatus} goToStep={goToStep} currentStep={currentStep} />
+            <ProgressStepper
+                steps={steps}
+                getStepStatus={getStepStatus}
+                goToStep={goToStep}
+                currentStep={currentStep}
+            />
 
-            {/* displaying error in the form */}
+            {/* Form-level field errors */}
             <FormErrorList errors={errors} />
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -50,30 +55,38 @@ export function SignupForm() {
                     <motion.div
                         initial={{ x: delta >= 1 ? '80%' : '-80%', opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
-                        transition={{ duration: 0.5, ease: "easeInOut" }}
+                        transition={{ duration: 0.5, ease: 'easeInOut' }}
                     >
-
-                        <PersonalInformation register={register} errors={errors} control={control} />
+                        <PersonalInformation
+                            register={register}
+                            errors={errors}
+                            control={control}
+                        />
                     </motion.div>
                 )}
 
-                {/* Step 2: Academic Information */}
-                {/* {currentStep === 1 && (
-                    <motion.div
-                        initial={{ x: delta >= 1 ? '80%' : '-80%', opacity: 0 }}
-                        animate={{ x: 0, opacity: 1 }}
-                        transition={{ duration: 0.5, ease: "easeInOut" }}
-                    >
-                        <ParentInformation register={register} errors={errors} control={control} setValue={setValue} getValues={getValues} watch={watch} />
-                    </motion.div>
-                )} */}
-
-                {/* Step 3: Account Information */}
+                {/* Step 2: Academic Information — program selection */}
                 {currentStep === 1 && (
                     <motion.div
                         initial={{ x: delta >= 1 ? '80%' : '-80%', opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
-                        transition={{ duration: 0.5, ease: "easeInOut" }}
+                        transition={{ duration: 0.5, ease: 'easeInOut' }}
+                    >
+                        <AcademicInformation
+                            register={register}
+                            errors={errors}
+                            setValue={setValue}
+                            trigger={trigger}
+                        />
+                    </motion.div>
+                )}
+
+                {/* Step 3: Account Information — fixed from currentStep === 1 */}
+                {currentStep === 2 && (
+                    <motion.div
+                        initial={{ x: delta >= 1 ? '80%' : '-80%', opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        transition={{ duration: 0.5, ease: 'easeInOut' }}
                     >
                         <AccountInformation register={register} errors={errors} />
                     </motion.div>
@@ -125,7 +138,10 @@ export function SignupForm() {
 
                 <div className="text-center text-sm text-gray-600">
                     Already have an account?{' '}
-                    <Link href="/auth/signin" className="text-blue-600 hover:underline font-medium">
+                    <Link
+                        href="/auth/signin"
+                        className="text-blue-600 hover:underline font-medium"
+                    >
                         Sign in here
                     </Link>
                 </div>

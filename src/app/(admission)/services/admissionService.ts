@@ -148,6 +148,7 @@ export const admissionService = {
             { amount: ACCEPTANCE_FEE_AMOUNT },
             { access_token: true }
         );
+        console.log("Initiating acceptance fee payment, response:", response);
         return response.data;
     },
 

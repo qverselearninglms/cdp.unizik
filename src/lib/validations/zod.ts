@@ -26,12 +26,44 @@ export const nameSchema = (label: string, optional: boolean = false) => {
         : schema;
 };
 
+// ------------------------------------------------------------------------------------------
+// Overloads for idNumberSchema to handle both string and number types with optionality
+export function idNumberSchema(
+    name: string,
+    optional?: boolean,
+    dataType?: "string"
+): z.ZodString | z.ZodOptional<z.ZodString>;
+
+export function idNumberSchema(
+    name: string,
+    optional: boolean,
+    dataType: "number"
+): z.ZodNumber | z.ZodOptional<z.ZodNumber>;
+
+export function idNumberSchema(
+    name: string,
+    optional = false,
+    dataType: "string" | "number" = "string"
+) {
+    const schema =
+        dataType === "number"
+            ? z.coerce.number()
+            : z
+                .string()
+                .min(2, `${name} must be at least 2 characters`)
+                .max(50, `${name} must not exceed 50 characters`)
+                .regex(/^[a-zA-Z0-9]+$/, `${name} can only contain letters and numbers`);
+
+    return optional ? schema.optional() : schema;
+}
+// ---------------------------------------------------------------------------------------------------
+
 export const usernameSchema = (name: string, optional: boolean = false) => {
     let schema = z
         .string()
         .min(2, `${name} must be at least 2 characters`)
         .max(50, `${name} must not exceed 50 characters`)
-        .regex(/^[a-zA-Z0-9!@#$%&*(),.:|_\-]+$/, `${name} can only contain letters and spaces`);
+        .regex(/^[a-zA-Z0-9!@#$%&*(),.:|_\-]+$/, `${name} can only contain letters, numbers, and special characters`);
 
     return optional ? schema.optional() : schema;
 }

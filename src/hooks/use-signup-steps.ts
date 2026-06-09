@@ -1,6 +1,11 @@
-import { useState } from 'react'
-import { FileText,  User } from "lucide-react";
-import { accouintInfoSchema, personalInfoSchema } from "@/schema/sign-up-schema";
+// hooks/use-signup-steps.ts
+import { useState } from 'react';
+import { FileText, GraduationCap, User } from 'lucide-react';
+import {
+    academicInfoSchema,
+    accountInfoSchema,
+    personalInfoSchema,
+} from '@/schema/sign-up-schema';
 import { UseFormReturn } from 'react-hook-form';
 
 // Step configuration
@@ -12,19 +17,19 @@ export const STEPS = [
         icon: User,
         schema: personalInfoSchema,
     },
-    // {
-    //     id: 'Academics',
-    //     title: 'Academic Information',
-    //     description: `course name, school registration number, Jamb registration number, school email ...`,
-    //     icon: GraduationCap,
-    //     schema: academicInfoSchema,
-    // },
+    {
+        id: 'Academics',
+        title: 'Academic Information',
+        description: 'Select your program of study',
+        icon: GraduationCap,
+        schema: academicInfoSchema,
+    },
     {
         id: 'Account',
         title: 'Account Information',
         description: 'Username, Email and password info',
         icon: FileText,
-        schema: accouintInfoSchema,
+        schema: accountInfoSchema,
     },
 ];
 
@@ -36,39 +41,37 @@ export const useSignupSteps = <T extends Record<string, unknown>>(
     const [completedSteps, setCompletedSteps] = useState<number[]>([]);
     const delta = currentStep - previousStep;
 
-
-    // Validate current step
-    const validateStep = async (stepIndex: number) => {
+    // Validate the fields belonging to the current step
+    const validateStep = async (stepIndex: number): Promise<boolean> => {
         const currentStepSchema = STEPS[stepIndex].schema;
         const currentValues = form.getValues();
 
         try {
             currentStepSchema.parse(currentValues);
             if (!completedSteps.includes(stepIndex)) {
-                setCompletedSteps([...completedSteps, stepIndex]);
+                setCompletedSteps((prev) => [...prev, stepIndex]);
             }
             return true;
         } catch (error) {
-            // Trigger validation to show errors
-            console.error('error', error)
+            console.error('Step validation error:', error);
+            // Trigger RHF to surface field-level error messages in the UI
             await form.trigger();
             return false;
         }
     };
 
-    // Navigation handlers
     const nextStep = async () => {
         if (await validateStep(currentStep)) {
-            if (currentStep < STEPS.length) {
+            if (currentStep < STEPS.length - 1) {
                 setPreviousStep(currentStep);
-                setCurrentStep(Math.min(currentStep + 1, STEPS.length - 1));
+                setCurrentStep((prev) => Math.min(prev + 1, STEPS.length - 1));
             }
         }
     };
 
     const prevStep = () => {
         setPreviousStep(currentStep);
-        setCurrentStep(Math.max(currentStep - 1, 0));
+        setCurrentStep((prev) => Math.max(prev - 1, 0));
     };
 
     const goToStep = async (stepIndex: number) => {
@@ -79,8 +82,7 @@ export const useSignupSteps = <T extends Record<string, unknown>>(
         }
     };
 
-    // Get step status
-    const getStepStatus = (stepIndex: number) => {
+    const getStepStatus = (stepIndex: number): 'completed' | 'current' | 'upcoming' => {
         if (completedSteps.includes(stepIndex)) return 'completed';
         if (stepIndex === currentStep) return 'current';
         if (stepIndex < currentStep) return 'completed';
@@ -99,5 +101,5 @@ export const useSignupSteps = <T extends Record<string, unknown>>(
         goToStep,
         getStepStatus,
         validateStep,
-    }
-}
+    };
+};
