@@ -12,6 +12,12 @@ export enum StatusType {
     UNPAID = "UNPAID"
 }
 
+export interface ProfileResponse {
+    status: number;
+    response: string;
+    user: UserInterface;
+}
+
 export interface UserInterface extends Record<string, unknown> {
     id: string;
     first_name: string;

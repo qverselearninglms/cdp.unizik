@@ -278,11 +278,11 @@ export function useAdmissionForm(): UseAdmissionFormReturn {
                 return;
             }
 
-            // TODO: API call to submit the application
-            const { data: payload } = await submitAdmissionApplication(result.data);
-            console.log('Submission response:', payload);
+            // 💡 FIX: Capture the returned response directly as payload
+            const payload = await submitAdmissionApplication(result.data);
 
-            if (payload.status !== 200 || !payload.application?.id) {
+            // Now payload.status will correctly be 200
+            if (payload.status !== 200) {
                 toast.error(payload.message ?? 'Submission failed. Please try again.');
                 return;
             }
@@ -293,17 +293,13 @@ export function useAdmissionForm(): UseAdmissionFormReturn {
             setIsSubmitted(true);
             toast.success(payload.message ?? 'Application submitted successfully!');
 
-            // await formStorage.clearFormData(FORM_STORAGE_KEY);
-            // localStorage.removeItem(STEP_STORAGE_KEY);
-            // localStorage.removeItem(`${STEP_STORAGE_KEY}_completed`);
-            // setIsSubmitted(true);
         } catch (error) {
             console.error('Submission failed:', error);
             toast.error('Failed to submit application. Please try again.');
         } finally {
             setIsSubmitting(false);
         }
-    }, [form]);
+    }, [form, odlProgramSchema]);
 
     // ─── Reset form ──────────────────────────────────────────────────────────
     const resetForm = useCallback(async () => {

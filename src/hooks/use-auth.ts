@@ -45,7 +45,10 @@ export function useAuth() {
         queryKey: QUERY_KEYS.auth.profile,
         queryFn: async () => {
             const response = await authApi.getProfile();
-            return response.data;
+
+            // Fix: Fall back to the response itself if response.user is missing, 
+            // and default to null instead of undefined if both are missing.
+            return response?.user ?? response ?? null;
         },
         enabled: !!accessToken,
         staleTime: 5 * 60 * 1000, // 5 minutes

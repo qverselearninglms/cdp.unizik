@@ -52,12 +52,27 @@ export const useAdmissionStore = create<AdmissionState>()(
             fees: null,
             currentStep: 0,
 
-            setStudent: (student) => {
-                set({ student });
-                // Recompute step whenever student data changes
-                set({ currentStep: deriveStep(student) });
-            },
+            // setStudent: (student) => {
+            //     set({ student });
+            //     // Recompute step whenever student data changes
+            //     set({ currentStep: deriveStep(student) });
+            // },
 
+            // Inside useAdmissionStore definition
+            setStudent: (newStudentData) => {
+                set((state) => {
+                    // 💡 Merge new data with current state to preserve existing fields
+                    const updatedStudent = state.student
+                        ? { ...state.student, ...newStudentData }
+                        : newStudentData;
+
+                    return {
+                        student: updatedStudent,
+                        currentStep: deriveStep(updatedStudent)
+                    };
+                });
+            },
+            
             setFees: (fees) => set({ fees }),
 
             computeStep: () => {

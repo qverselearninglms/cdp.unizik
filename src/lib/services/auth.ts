@@ -1,7 +1,7 @@
 import { SignUpFormData } from "@/schema/sign-up-schema";
 import { apiClient } from "../../core/client";
 import type { LoginResponse, SignupResponse } from "@/types/auth";
-import { UserInterface } from "@/types/global";
+import { ProfileResponse, UserInterface } from "@/types/global";
 import { forgotPasswordFormData, resetPasswordFormData, signInFormData } from "@/schema/auth-schema";
 
 export const authApi = {
@@ -31,7 +31,11 @@ export const authApi = {
             refreshToken,
         }),
 
-    getProfile: () => apiClient.get<UserInterface>("/application/profile"),
+    // inside authApi object...
+    getProfile: async (): Promise<ProfileResponse> => {
+        const response = await apiClient.get<unknown>("/application/profile");
+        return response as unknown as ProfileResponse;
+    },
 
     forgotPassword: (forgotCredention: forgotPasswordFormData) =>
         apiClient.post("/auth/password/forgot", { ...forgotCredention }),

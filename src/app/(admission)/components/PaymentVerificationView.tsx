@@ -35,6 +35,7 @@ export function PaymentVerificationView({
 }: PaymentVerificationViewProps) {
     const router = useRouter();
     const [countdown, setCountdown] = useState(countdownSeconds);
+    // console.log("PaymentVerificationView render:", { isLoading, error, data, countdown });
 
     const handleRedirect = useCallback(() => {
         router.push(redirectTo);

@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------ */
-/*  Admission Module — API Service (Mock-Ready)                        */
+/*  Admission Module — API Service                                     */
 /*                                                                     */
 /*  Replace the mock implementations with real apiClient calls when    */
 /*  connecting to the live backend. The interface stays the same.      */
@@ -10,9 +10,12 @@ import {
     createApiQueryOptions,
 } from "@/lib/clients/apiClient";
 import type {
+    AdmissionOfferStatus,
     AdmissionStudent,
+    ApplicationStatus,
     FeeSchedule,
     PaymentInitiationResponse,
+    PaymentStatus,
     PaymentVerificationResponse,
 } from "../types/admission";
 import type { UserInterface } from "@/types/global";
@@ -58,6 +61,41 @@ const MOCK_FEES: FeeSchedule = {
     ],
 };
 
+
+/* ------------------------------------------------------------------ */
+/*  Helper Functions                                                   */
+/* ------------------------------------------------------------------ */
+
+function mapPaymentStatus(apiStatus: string): PaymentStatus {
+    switch (apiStatus) {
+        case 'fully_paid': return 'paid';
+        case 'partially_paid': return 'partial';
+        case 'pending': return 'pending';
+        case 'failed': return 'failed';
+        default: return 'unpaid';
+    }
+}
+
+function mapAdmissionStatus(apiStatus: string): AdmissionOfferStatus {
+    switch (apiStatus) {
+        case 'admitted': return 'offered';
+        case 'accepted': return 'accepted';
+        case 'rejected': return 'rejected';
+        case 'declined': return 'declined';
+        case 'expired': return 'expired';
+        default: return 'pending';
+    }
+}
+
+function mapApplicationStatus(apiStatus: string): ApplicationStatus {
+    switch (apiStatus) {
+        case 'submitted': return 'submitted';
+        case 'under_review': return 'under_review';
+        default: return 'not_started';
+    }
+}
+
+
 // Module-level mock state — populated from the authenticated user on first fetch
 let mockStudent: AdmissionStudent;
 let initialMockStudent: AdmissionStudent;
@@ -82,6 +120,26 @@ function mapUserToAdmissionStudent(user: UserInterface): AdmissionStudent {
     };
 }
 
+function transformStudentData(apiData: AdmissionStudent): AdmissionStudent {
+    return {
+        id: String(apiData.id),
+        name: apiData.name,
+        email: apiData.email,
+        department: apiData.department,
+        faculty: apiData.faculty,
+        application_payment_status: mapPaymentStatus(apiData.application_payment_status),
+        application_status: mapApplicationStatus(apiData.application_status),
+        admission_status: mapAdmissionStatus(apiData.admission_status),
+        acceptance_payment_status: mapPaymentStatus(apiData.acceptance_payment_status),
+        tuition_payment_status: mapPaymentStatus(apiData.tuition_payment_status),
+        tuition_amount_paid: (apiData.tuition_amount_paid),
+        has_applied: apiData.has_applied,
+        is_admitted: apiData.is_admitted,
+        session: apiData.session,
+        offer_expiry_date: apiData.offer_expiry_date,
+    };
+}
+
 /* ------------------------------------------------------------------ */
 /*  Public API                                                          */
 /* ------------------------------------------------------------------ */
@@ -96,15 +154,22 @@ export const admissionService = {
 
     /* ---------- Student Data ---------- */
     async fetchStudentAdmission(user?: UserInterface): Promise<AdmissionStudent> {
-        // TODO: replace with → apiClient.get<AdmissionStudent>("/admission/student", { access_token: true })
-        await delay(600);
-        if (!mockStudent && user) {
-            mockStudent = mapUserToAdmissionStudent(user);
-            initialMockStudent = { ...mockStudent };
-        }
-        return { ...mockStudent! };
-    },
+        const response = await apiClient.get<AdmissionStudent>(
+            "/admission/student",
+            { access_token: true }
+        );
 
+        const studentData = response.data;
+        // 2. Seed mock states on the first fetch so simulations have base data
+        const transformed = transformStudentData(studentData);
+        if (!initialMockStudent) {
+            initialMockStudent = { ...transformed };
+        }
+        if (!mockStudent) {
+            mockStudent = { ...transformed };
+        }
+        return transformStudentData(studentData);
+    },
 
     /* ---------- Initiate Application Payment ---------- */
     async initiateApplicationPayment(): Promise<PaymentInitiationResponse> {
@@ -125,18 +190,12 @@ export const admissionService = {
                 access_token: true
             }
         );
-        // Cast and assert the required properties exist
+
         const result = response as unknown as PaymentVerificationResponse;
 
         if (!result.success || !result.reference) {
             throw new Error('Invalid payment verification response');
         }
-
-        // Simulate success — update mock state
-        mockStudent = {
-            ...mockStudent,
-            application_payment_status: "paid",
-        };
 
         return result;
     },
@@ -148,7 +207,6 @@ export const admissionService = {
             { amount: ACCEPTANCE_FEE_AMOUNT },
             { access_token: true }
         );
-        console.log("Initiating acceptance fee payment, response:", response);
         return response.data;
     },
 
@@ -161,18 +219,14 @@ export const admissionService = {
                 access_token: true
             }
         );
-        // Cast and assert the required properties exist
+
         const result = response as unknown as PaymentVerificationResponse;
 
         if (!result.success || !result.reference) {
             throw new Error('Invalid payment verification response');
         }
-        mockStudent = {
-            ...mockStudent,
-            acceptance_payment_status: "paid",
-            admission_status: "accepted",
-        };
-        return result
+
+        return result;
     },
 
     /* ---------- Initiate Tuition Payment ---------- */
@@ -194,36 +248,29 @@ export const admissionService = {
                 access_token: true
             }
         );
-        // Cast and assert the required properties exist
+
         const result = response as unknown as PaymentVerificationResponse;
 
         if (!result.success || !result.reference) {
             throw new Error('Invalid payment verification response');
         }
-        // Simulate: extract amount from reference URL or use a fixed mock amount
-        const TUITION_TOTAL = 195_000;
-        // For mock, assume each verify adds half if partial, or full
-        const paymentAmount = mockStudent.tuition_amount_paid === 0
-            ? (mockStudent.tuition_amount_paid + TUITION_TOTAL) // Will be overridden by actual gateway amount
-            : TUITION_TOTAL - mockStudent.tuition_amount_paid;
-        const newTotal = Math.min(mockStudent.tuition_amount_paid + paymentAmount, TUITION_TOTAL);
-        mockStudent = {
-            ...mockStudent,
-            tuition_amount_paid: newTotal,
-            tuition_payment_status: newTotal >= TUITION_TOTAL ? "paid" : "partial",
-        };
-        return {
-            success: result.success,
-            reference: result.reference,
-            status: newTotal >= TUITION_TOTAL ? "paid" : "partial",
-            amount: paymentAmount,
-            message: newTotal >= TUITION_TOTAL
-                ? "Tuition payment completed"
-                : `Partial payment received. ₦${(TUITION_TOTAL - newTotal).toLocaleString()} remaining.`,
-        };
+
+        return result;
     },
 
-    /* ---------- Dev-only: Simulate status changes ---------- */
+    /* ---------- Decline Admission ---------- */
+    async declineAdmission(): Promise<AdmissionStudent> {
+        const response = await apiClient.post<AdmissionStudent>(
+            "/admission/decline",
+            {},
+            { access_token: true }
+        );
+
+        return transformStudentData(response.data);
+    },
+
+
+    //     /* ---------- Dev-only: Simulate status changes ---------- */
     async devSimulateAppPaymentPaid(): Promise<AdmissionStudent> {
         await delay(500);
         mockStudent = {
@@ -272,20 +319,7 @@ export const admissionService = {
         mockStudent = {
             ...mockStudent,
             tuition_payment_status: "paid",
-            tuition_amount_paid: 195_000,
-        };
-        return { ...mockStudent };
-    },
-
-    /* ---------- Decline Admission ---------- */
-    async declineAdmission(): Promise<AdmissionStudent> {
-        // TODO: replace with → apiClient.post<AdmissionStudent>("/admission/decline", {}, { access_token: true })
-        await delay(800);
-        mockStudent = {
-            ...mockStudent,
-            admission_status: "declined",
-            is_admitted: false,
-            offer_expiry_date: null,
+            tuition_amount_paid: FULL_TUITION_FEE_AMOUNT,
         };
         return { ...mockStudent };
     },
@@ -319,8 +353,8 @@ export const admissionService = {
         mockStudent = { ...initialMockStudent };
         return { ...mockStudent };
     },
-};
 
+};
 export const admissionKeys = {
     all: ["admission"] as const,
     fees: () => [...admissionKeys.all, "fees"] as const,
@@ -350,18 +384,27 @@ export const admissionQueryOptions = {
         createApiQueryOptions({
             queryKey: admissionKeys.verifyAppPayment(reference),
             queryFn: () => admissionService.verifyApplicationPayment(reference),
+            enabled: !!reference,
+            retry: 2,
+            staleTime: Infinity,
         }),
 
     verifyAcceptanceFeePayment: (reference: string) =>
         createApiQueryOptions({
             queryKey: admissionKeys.verifyAccPayment(reference),
             queryFn: () => admissionService.verifyAcceptanceFeePayment(reference),
+            enabled: !!reference,
+            retry: 2,
+            staleTime: Infinity,
         }),
 
     verifyTuitionPayment: (reference: string) =>
         createApiQueryOptions({
             queryKey: admissionKeys.verifyTuiPayment(reference),
             queryFn: () => admissionService.verifyTuitionPayment(reference),
+            enabled: !!reference,
+            retry: 2,
+            staleTime: Infinity,
         }),
 };
 

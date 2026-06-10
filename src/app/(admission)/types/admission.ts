@@ -56,6 +56,7 @@ export interface PaymentVerificationResponse {
     reference: string;
     amount: number;
     message?: string;
+    data?: Record<string, unknown>; // Additional data from the payment gateway, if any
 }
 
 /** Admission workflow steps (ordered) */

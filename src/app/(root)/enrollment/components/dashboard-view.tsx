@@ -2,11 +2,12 @@ import { useCourseStore } from '../stores/course-store';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Plus, Award, Database } from 'lucide-react';
+import { Plus, Award, Database, Home } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useCourseQueries } from '../hooks/use-course-queries';
 import { courseService } from '../services/course-service';
 import { ConfirmModal } from '@/components/global/confirm-modal';
+import Link from 'next/link';
 
 export function DashboardView({ userId }: { userId: string }) {
     const { enrolledCourses, toggleShowAllCategories, clearCache } = useCourseStore();
@@ -144,7 +145,7 @@ export function DashboardView({ userId }: { userId: string }) {
                         <p className="text-primary-800 mt-2">Continue where you left off</p>
                     </div>
                     <div className="flex items-center space-x-5">
-                        <Button
+                        {/* <Button
                             type="button"
                             variant="secondary"
                             size="sm"
@@ -161,6 +162,16 @@ export function DashboardView({ userId }: { userId: string }) {
                         >
                             <Plus className="w-4 h-4 mr-2" />
                             Enroll in More Programs
+                        </Button> */}
+                        <Button
+                            variant="outline"
+                            className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-600 dark:border-yellow-200 dark:text-yellow-600 dark:hover:bg-yellow-50 dark:hover:text-yellow-600"
+                            asChild
+                        >
+                            <Link href="/student/dashboard">
+                                <Home className="w-4 h-4 mr-2" />
+                                View Dashboard
+                            </Link>
                         </Button>
                     </div>
                 </motion.div>

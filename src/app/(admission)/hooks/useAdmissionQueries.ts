@@ -21,15 +21,45 @@ import type { AdmissionStudent } from "../types/admission";
 import { useAuthContext } from "@/providers/AuthProvider";
 import type { UserInterface } from "@/types/global";
 
+// async function syncAdmissionStudent(
+//     queryClient: QueryClient,
+//     setStudent: (student: AdmissionStudent) => void,
+//     nextStudent?: AdmissionStudent,
+// ) {
+//     const student = nextStudent ?? await admissionService.fetchStudentAdmission();
+//     setStudent(student);
+//     queryClient.setQueryData(admissionKeys.student(), student);
+//     return student;
+// }
 async function syncAdmissionStudent(
     queryClient: QueryClient,
-    setStudent: (student: AdmissionStudent) => void,
-    nextStudent?: AdmissionStudent,
+    setStudent: (student: any) => void,
+    nextStudent?: any, // Can be partial data or a mutation response
 ) {
-    const student = nextStudent ?? await admissionService.fetchStudentAdmission();
-    setStudent(student);
-    queryClient.setQueryData(admissionKeys.student(), student);
-    return student;
+    let updatedData: Partial<AdmissionStudent> = {};
+
+    if (nextStudent) {
+        // If the backend returned a response envelope containing an application wrapper
+        if (nextStudent.application) {
+            updatedData = nextStudent.application;
+        } else {
+            updatedData = nextStudent;
+        }
+
+        // Get what's currently in React Query's cache and merge the delta
+        const currentCache = queryClient.getQueryData<AdmissionStudent>(admissionKeys.student()) || {};
+        const mergedStudent = { ...currentCache, ...updatedData } as AdmissionStudent;
+
+        setStudent(mergedStudent);
+        queryClient.setQueryData(admissionKeys.student(), mergedStudent);
+        return mergedStudent;
+    }
+
+    // Fallback: If no mutation data is passed, force a fresh, clean fetch of the full profile
+    const freshStudent = await admissionService.fetchStudentAdmission();
+    setStudent(freshStudent);
+    queryClient.setQueryData(admissionKeys.student(), freshStudent);
+    return freshStudent;
 }
 
 /* ------------------------------------------------------------------ */
