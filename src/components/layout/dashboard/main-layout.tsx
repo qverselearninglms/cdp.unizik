@@ -16,6 +16,8 @@ export function MainLayout({ children, requireAuth = false }: MainLayoutProps) {
     const router = useRouter();
     const pathname = usePathname();
     const { start, stop } = useProgress();
+    // console.log("Auth State:", user );
+    // console.log("User Role:", user?.role );
 
     useEffect(() => {
         if (!isLoading) {

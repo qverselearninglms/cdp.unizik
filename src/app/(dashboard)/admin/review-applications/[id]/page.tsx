@@ -59,7 +59,7 @@ export default function ApplicationDetailPage() {
    const { data: application, isLoading } = useQuery(
       applicationReviewQueryOptions.detail(id)
    );
-
+   console.log("Fetched application:", application);
    const updateMutation = useMutation({
       ...applicationReviewMutationOptions.update(),
       onSuccess: () => {

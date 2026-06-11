@@ -282,7 +282,7 @@ export interface ApplicantPersonalInfo {
    last_name: string;
    middle_name: string;
    date_of_birth: string;
-   gender: "male" | "female" | "other";
+   gender: "male" | "female";
    nationality: string;
    state_of_origin: string;
    lga: string;
@@ -291,6 +291,7 @@ export interface ApplicantPersonalInfo {
    address: string;
    passport_url: string;
 }
+export type ApplicationTransformer = (response: ApplicationDetailApiResponse) => AdmissionApplication;
 
 export interface ApplicantAcademicRecord {
    institution: string;
@@ -316,6 +317,120 @@ export interface ApplicantProgramChoice {
    entry_mode: "utme" | "direct_entry" | "transfer";
    jamb_reg_no: string;
    jamb_score: number;
+}
+
+// Add these new interfaces before the existing types
+
+// ── API Response for Application Detail ─────────────────
+
+export interface StudentInfoData {
+   id: number;
+   first_name: string;
+   last_name: string;
+   other_name: string | null;
+   username: string | null;
+   email: string;
+   phone_number: string;
+   role: string | null;
+   nationality: string;
+   state: string;
+   level: string | null;
+   faculty_id: string | null;
+   department_id: string | null;
+   program: string;
+   program_id: number;
+   academic_session: string;
+   academic_semester: string;
+   start_year: string;
+   amount: string;
+   reference: string;
+   is_applied: number;
+   admission_status: string;
+   application_payment_status: string;
+   acceptance_fee_payment_status: string;
+   tuition_payment_status: string;
+   tuition_amount_paid: string;
+   progress_status: string;
+   reg_number: string;
+   reason_for_denial: string | null;
+   disability: string | null;
+   images: string | null;
+   created_at: string;
+   updated_at: string;
+   deleted_at: string | null;
+}
+
+export interface ApplicationFormData {
+   id: number;
+   user_id: number;
+   gender: string;
+   lga: string;
+   hometown: string;
+   hometown_address: string;
+   contact_address: string;
+   religion: string;
+   disability: string;
+   other_disability: string | null;
+   dob: string;
+   sponsor_name: string | null;
+   sponsor_relationship: string | null;
+   sponsor_phone_number: string | null;
+   sponsor_email: string | null;
+   sponsor_contact_address: string | null;
+   has_sponsor: number;
+   awaiting_result: number;
+   first_sitting: string | null;
+   second_sitting: string | null;
+   passport: string | null;
+   undergraduateDegree: string | null;
+   university: string | null;
+   gpa: string | null;
+   graduationYear: string | null;
+   workExperience: string | null;
+   currentPosition: string | null;
+   company: string | null;
+   yearsOfExperience: string | null;
+   program: string | null;
+   startTerm: string;
+   studyMode: string;
+   personalStatement: string | null;
+   careerGoals: string | null;
+   agreeToTerms: number;
+   images: string | null;
+   other_documents: string | null;
+   next_of_kin_name: string;
+   next_of_kin_relationship: string;
+   next_of_kin_phone_number: string;
+   next_of_kin_email: string;
+   next_of_kin_address: string;
+   is_next_of_kin_primary_contact: number;
+   next_of_kin_alternate_phone_number: string | null;
+   next_of_kin_occupation: string;
+   next_of_kin_workplace: string;
+   first_school_leaving: string | null;
+   o_level: string | null;
+   degree: string | null;
+   college: string | null;
+   ond: string | null;
+   hnd: string | null;
+   masters: string | null;
+   phd: string | null;
+   professional: string | null;
+   degree_transcript: string | null;
+   academic_session: string | null;
+   others: string | null;
+   created_at: string;
+   updated_at: string;
+   deleted_at: string | null;
+}
+
+export interface ApplicationDetailApiResponse {
+   status: number;
+   response: string;
+   data: {
+      student_info: StudentInfoData;
+      application_info: ApplicationFormData;
+   };
 }
 
 export interface AdmissionApplication {
@@ -358,6 +473,8 @@ export interface ApiListResponse<T> {
 export interface ApiSingleResponse<T> {
    data: T;
    message?: string;
+   status?: number;
+   response?: string;
 }
 
 // ── Configuration / Settings ─────────────────

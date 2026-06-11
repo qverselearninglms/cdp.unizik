@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { ClipboardList, Eye, GraduationCap, Users } from "lucide-react";
 import DataTable, { type Column } from "@/components/custom/DataTable";
@@ -12,6 +12,7 @@ import EmptyState from "@/components/custom/EmptyState";
 import { applicationReviewQueryOptions } from "@/services/applicationReviewApi";
 import type { AdmissionApplication, ApplicationReviewStatus } from "@/types/school";
 
+// Update the status mapping to match your API
 const statusVariantMap: Record<ApplicationReviewStatus, "warning" | "info" | "success" | "destructive"> = {
    pending: "warning",
    under_review: "info",
@@ -37,19 +38,22 @@ const tabs = [
 export default function ReviewApplicationsPage() {
    const router = useRouter();
    const [statusFilter, setStatusFilter] = useState("all");
+   const pathname = usePathname();
 
-   const { data: applications = [], isLoading } = useQuery(
-      applicationReviewQueryOptions.list(
-         statusFilter !== "all" ? { status: statusFilter } : undefined
-      )
+   const { data: apiResponse, isLoading } = useQuery(
+      applicationReviewQueryOptions.list(statusFilter !== "all" ? { status: statusFilter } : undefined)
    );
 
+   // Extract applications from the nested response structure
+   const applicationsData = (apiResponse as any) || [];
+   // Transform API applications to your AdmissionApplication type
+   const applications = applicationsData
    const counts = {
       all: applications.length,
-      pending: applications.filter((a) => a.status === "pending").length,
-      under_review: applications.filter((a) => a.status === "under_review").length,
-      approved: applications.filter((a) => a.status === "approved").length,
-      denied: applications.filter((a) => a.status === "denied").length,
+      pending: applications.filter((a: AdmissionApplication) => a.status === "pending").length,
+      under_review: applications.filter((a: AdmissionApplication) => a.status === "under_review").length,
+      approved: applications.filter((a: AdmissionApplication) => a.status === "approved").length,
+      denied: applications.filter((a: AdmissionApplication) => a.status === "denied").length,
    };
 
    const tabsWithBadges = tabs.map((t) => ({
@@ -62,37 +66,50 @@ export default function ReviewApplicationsPage() {
          key: "applicant_name",
          header: "Applicant",
          sortable: true,
-         render: (row) => (
-            <div className="flex items-center gap-3">
-               <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <span className="text-xs font-bold text-primary">
-                     {row.personal_info.first_name[0]}{row.personal_info.last_name[0]}
-                  </span>
+         render: (row) => {
+            // Find original API data for this application
+            const originalApiData = applicationsData.find((app: any) => String(app.id) === row.id);
+            const fullName = originalApiData.personal_info?.first_name + " " + originalApiData.personal_info?.last_name || "Unknown Applicant";
+            const nameParts = fullName.split(" ");
+
+            return (
+               <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                     <span className="text-xs font-bold text-primary">
+                        {nameParts[0]?.[0] || ""}{nameParts[1]?.[0] || ""}
+                     </span>
+                  </div>
+                  <div>
+                     <p className="font-medium text-foreground">{fullName}</p>
+                     <p className="text-[11px] text-muted-foreground">{originalApiData?.email || ""}</p>
+                  </div>
                </div>
-               <div>
-                  <p className="font-medium text-foreground">
-                     {row.personal_info.last_name}, {row.personal_info.first_name}
-                  </p>
-                  <p className="text-[11px] text-muted-foreground">{row.personal_info.email}</p>
-               </div>
-            </div>
-         ),
+            );
+         },
       },
       {
          key: "program",
          header: "Program",
-         render: (row) => (
-            <span className="text-foreground">{row.program_choice.first_choice_program_name}</span>
-         ),
+         render: (row) => {
+            const originalApiData = applicationsData.find((app: any) => String(app.id) === row.id);
+            return (
+               <span className="text-foreground">
+                  {originalApiData?.program?.name || row.program_choice.first_choice_program_name || "Not specified"}
+               </span>
+            );
+         },
       },
       {
-         key: "jamb_score",
-         header: "JAMB",
-         sortable: true,
-         align: "center",
-         render: (row) => (
-            <span className="font-medium text-foreground">{row.program_choice.jamb_score}</span>
-         ),
+         key: "study_mode",
+         header: "Study Mode",
+         render: (row) => {
+            const originalApiData = applicationsData.find((app: any) => String(app.id) === row.id);
+            return (
+               <span className="capitalize text-foreground">
+                  {originalApiData?.studyMode || "online"}
+               </span>
+            );
+         },
       },
       {
          key: "submitted_at",
@@ -128,7 +145,8 @@ export default function ReviewApplicationsPage() {
             <button
                onClick={(e) => {
                   e.stopPropagation();
-                  router.push(`/manager/review-applications/${row.id}`);
+                  console.log(`Navigate to review page for application ID: ${row.id}`);
+                  router.push(`/${pathname}/${row.applicant_id}`);
                }}
                className="p-2 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
                title="Review"
@@ -202,23 +220,18 @@ export default function ReviewApplicationsPage() {
                      searchable
                      searchPlaceholder="Search by name, email, program…"
                      searchExtractor={(row) => {
-                        const a = row as unknown as AdmissionApplication;
+                        const originalApiData = applicationsData.find((app: any) => String(app.id) === row.id);
                         return [
-                           a.personal_info.first_name,
-                           a.personal_info.last_name,
-                           a.personal_info.middle_name,
-                           a.personal_info.email,
-                           a.personal_info.phone,
-                           a.program_choice.first_choice_program_name,
-                           a.program_choice.second_choice_program_name,
-                           a.program_choice.jamb_reg_no,
-                           String(a.program_choice.jamb_score),
-                           a.status,
-                           a.id,
+                           originalApiData?.name || "",
+                           originalApiData?.email || "",
+                           originalApiData?.program?.name || "",
+                           originalApiData?.next_of_kin_name || "",
+                           originalApiData?.next_of_kin_phone_number || "",
                         ].join(" ");
                      }}
                      rowKey="id"
-                     onRowClick={(row) => router.push(`/manager/review-applications/${row.id}`)}
+                     // onRowClick={(row) => router.push(`/admin/review-applications/${row.id}`)}
+                        onRowClick={(row) => router.push(`${pathname}/${row.applicant_id}`)}
                      pageSize={10}
                      emptyMessage="No applications match your search"
                   />

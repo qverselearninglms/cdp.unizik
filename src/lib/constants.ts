@@ -148,7 +148,8 @@ import {
     Globe,
     Microscope,
     LayoutDashboard,
-    BadgeDollarSign
+    BadgeDollarSign,
+    LucideSchool2
 } from "lucide-react";
 export interface SidebarNavItem {
     title: string;
@@ -180,6 +181,18 @@ export const AdminNavMain: SidebarNavConfig = {
                 {
                     title: "Statistics",
                     url: "/admin/dashboard",
+                },
+            ],
+            display: true,
+        },
+        {
+            title: "ADMISSIONS",
+            url: "#",
+            icon: LucideSchool2,
+            items: [
+                {
+                    title: "Review Applications",
+                    url: "/admin/review-applications",
                 },
             ],
             display: true,
@@ -333,6 +346,19 @@ export const StudentNavMain: SidebarNavConfig = {
             display: false,
         },
         {
+            title: "MY APPLICATION",
+            url: "#",
+            icon: School,
+            items: [
+                {
+                    title: "My Appplication",
+                    url: "/student/my-application",
+                },
+
+            ],
+            display: true,
+        },
+        {
             title: "MY COURSES",
             url: "#",
             icon: School,
@@ -362,7 +388,7 @@ export const StudentNavMain: SidebarNavConfig = {
             display: true,
         },
         {
-            title: "LEADERBOARD & PERFORMANCES",
+            title: "PERFORMANCES",
             url: "#",
             icon: Gamepad2,
             items: [

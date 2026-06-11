@@ -64,6 +64,7 @@ function appendFile(fd: FormData, key: string, value: File | null | undefined): 
 
 function buildFormData(data: ODLApplication): FormData {
     const fd = new FormData();
+    console.log('Building FormData with input data:', data); // Debug log to inspect input data structure
 
     // ── Step 1: Personal Information ─────────────────────────────────────────
     fd.append('lga', data.lga ?? '');
@@ -127,7 +128,10 @@ function buildFormData(data: ODLApplication): FormData {
     fd.append('startTerm', data.startTerm ?? '');
     fd.append('studyMode', data.studyMode ?? 'online');
     fd.append('agreeToTerms', String(data.agreeToTerms));
-
+    console.log('Final FormData entries before submission:');
+    for (const pair of fd.entries()) {
+        console.log(pair[0], pair[1]);
+    }
     return fd;
 }
 
@@ -136,5 +140,6 @@ export async function submitAdmissionApplication(
     data: ODLApplication
 ): Promise<ApiResponse<SubmitApplicationResponse>> {
     const formData = buildFormData(data);
-    return apiClient.put<SubmitApplicationResponse>('/application/update-application-form', formData);
+    return apiClient.upload<SubmitApplicationResponse>('/application/update-application-form', formData);
+    // return apiClient.upload<SubmitApplicationResponse>('/application/v2/update-application-form', formData);
 }

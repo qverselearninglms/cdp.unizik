@@ -69,6 +69,7 @@ const MOCK_FEES: FeeSchedule = {
 function mapPaymentStatus(apiStatus: string): PaymentStatus {
     switch (apiStatus) {
         case 'fully_paid': return 'paid';
+        case 'paid': return 'paid';
         case 'partially_paid': return 'partial';
         case 'pending': return 'pending';
         case 'failed': return 'failed';
@@ -168,7 +169,7 @@ export const admissionService = {
         if (!mockStudent) {
             mockStudent = { ...transformed };
         }
-        return transformStudentData(studentData);
+        return transformed;
     },
 
     /* ---------- Initiate Application Payment ---------- */

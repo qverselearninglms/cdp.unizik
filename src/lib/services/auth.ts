@@ -33,7 +33,7 @@ export const authApi = {
 
     // inside authApi object...
     getProfile: async (): Promise<ProfileResponse> => {
-        const response = await apiClient.get<unknown>("/application/profile");
+        const response = await apiClient.get<unknown>("/application/profile/me");
         return response as unknown as ProfileResponse;
     },
 
