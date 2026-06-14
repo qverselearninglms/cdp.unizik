@@ -12,6 +12,10 @@ import type {
    ApplicationReviewStatus,
    ApplicantAcademicRecord,
    ApplicantDocument,
+   StudentInfoData,
+   ApplicationFormData,
+   ProgramChoice,
+   ApplicantNextOfKin,
 } from "@/types/school";
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -81,9 +85,19 @@ export const applicationReviewApi = {
    /**
     * Update editable fields on an application.
     */
-   update: async (id: string, payload: UpdateApplicationPayload) => {
+   // update: async (id: string, payload: UpdateApplicationPayload) => {
+   //    return apiClient.put<ApiSingleResponse<AdmissionApplication>>(
+   //       "/application/update-application-form",
+   //       { id, ...payload }
+   //    );
+   // },
+   update: async (id: string, payload: UpdateApplicationPayload, asAdmin = false) => {
+      const endpoint = asAdmin
+         ? "/application/admin-update-application-form"
+         : "/application/update-application-form";
+
       return apiClient.put<ApiSingleResponse<AdmissionApplication>>(
-         "/application/update-application-form",
+         endpoint,
          { id, ...payload }
       );
    },
@@ -153,7 +167,7 @@ export const applicationReviewQueryOptions = {
             }
 
             // Pass structural objects directly to our data mapper transformer
-            return transformApiApplication(targetData.student_info, targetData.application_info);
+            return transformApiApplication(targetData.student_info, targetData.application_info, targetData.program_choice);
          },
       }),
 
@@ -176,61 +190,14 @@ export const applicationReviewQueryOptions = {
       }),
 };
 
-// export const applicationReviewQueryOptions = {
-//    list: (filters?: ListFilters, adminParams?: AdminApplicationParams) =>
-//       createApiQueryOptions({
-//          queryKey: applicationReviewKeys.list(filters, adminParams),
-//          queryFn: async () => {
-//             const res = await applicationReviewApi.list(filters, adminParams);
-//             // Normalise: some endpoints return { data: T[] }, others { data: { data: T[] } }
-//             const payload = res.data;
-//             if (Array.isArray(payload)) return payload;
-//             if ("data" in payload && Array.isArray((payload as ApiListResponse<AdmissionApplication>).data)) {
-//                return (payload as ApiListResponse<AdmissionApplication>).data;
-//             }
-//             return [] as AdmissionApplication[];
-//          },
-//       }),
-
-//    detail: (student_info: string) =>
-//       createApiQueryOptions({
-//          queryKey: applicationReviewKeys.detail(student_info),
-//          queryFn: async () => {
-//             const res = await applicationReviewApi.getById(student_info);
-//             return res.data as unknown as AdmissionApplication;
-//          },
-//       }),
-
-//    byApplicant: (userId: string | number) =>
-//       createApiQueryOptions({
-//          queryKey: applicationReviewKeys.byApplicant(userId),
-//          queryFn: async () => {
-//             const res = await applicationReviewApi.getByApplicantId(userId);
-//             return res.data as unknown as AdmissionApplication;
-//          },
-//       }),
-
-//    mine: () =>
-//       createApiQueryOptions({
-//          queryKey: applicationReviewKeys.mine(),
-//          queryFn: async () => {
-//             const res = await applicationReviewApi.getMyApplication();
-//             return res.data as unknown as AdmissionApplication;
-//          },
-//       }),
-// };
-
 // ── Mutation options ─────────────────────────────────────────────────────────
-
 export const applicationReviewMutationOptions = {
    update: () =>
-      createApiMutationOptions<
-         ApiSingleResponse<AdmissionApplication>,
-         { id: string; payload: UpdateApplicationPayload }
-      >({
+      createApiMutationOptions<ApiSingleResponse<AdmissionApplication>,
+         { id: string; payload: UpdateApplicationPayload; asAdmin?: boolean}>({
          mutationKey: [...applicationReviewKeys.all, "update"],
-         mutationFn: ({ id, payload }) =>
-            applicationReviewApi.update(id, payload) as unknown as Promise<ApiSingleResponse<AdmissionApplication>>,
+         mutationFn: ({ id, payload, asAdmin }) =>
+            applicationReviewApi.update(id, payload, asAdmin) as unknown as Promise<ApiSingleResponse<AdmissionApplication>>,
       }),
 
    review: () =>
@@ -245,95 +212,217 @@ export const applicationReviewMutationOptions = {
 };
 
 // Add this helper function
-export function transformApiApplication(student_info: any, application_info: any) {
-   // Normalize backend admission states to your application view review tokens
+export function transformApiApplication(
+   student_info: StudentInfoData,
+   application_info: ApplicationFormData,
+   program_choice?: ProgramChoice
+): AdmissionApplication {
+
+   // ── Status resolution ─────────────────────────────────────
    let status: ApplicationReviewStatus = "pending";
    if (student_info?.reason_for_denial) {
       status = "denied";
-   } else if (student_info?.progress_status === "accepted" || student_info?.admission_status === "offered") {
+   } else if (
+      student_info?.progress_status === "accepted" ||
+      student_info?.admission_status === "offered"
+   ) {
       status = "approved";
    } else if (student_info?.application_payment_status === "paid") {
       status = "under_review";
    }
 
-   // 1. Compile file uploads dynamically from incoming form object attributes
-   const documents: ApplicantDocument[] = [];
-   const documentProperties = [
+   // ── Documents ─────────────────────────────────────────────
+   // Named single-file document slots
+   const namedDocFields: Array<keyof ApplicationFormData> = [
       "first_school_leaving",
       "o_level",
       "degree",
+      "college",
       "ond",
       "hnd",
       "masters",
       "phd",
       "professional",
       "degree_transcript",
-      "others"
+      "others",
    ];
 
-   documentProperties.forEach((field) => {
-      if (application_info?.[field]) {
+   const documents: ApplicantDocument[] = [];
+
+   namedDocFields.forEach((field) => {
+      const val = application_info?.[field];
+      if (val && typeof val === "string") {
          documents.push({
             id: `${field}-${application_info.id}`,
-            name: field.replace(/_/g, " ").toUpperCase(),
-            type: field === "o_level" ? "o_level" : "other",
-            url: application_info[field],
-            uploaded_at: application_info.updated_at || new Date().toISOString(),
+            name: field.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+            type: field,
+            url: val,
+            uploaded_at: application_info.updated_at ?? new Date().toISOString(),
          });
       }
    });
 
-   // 2. Parse structural academic entries
-   const academic_records: ApplicantAcademicRecord[] = [];
-   if (application_info?.university || application_info?.undergraduateDegree) {
-      academic_records.push({
-         institution: application_info.university || "Not Specified",
-         qualification: application_info.undergraduateDegree || "N/A",
-         year_obtained: application_info.graduationYear || "N/A",
-         grade: application_info.gpa || "N/A",
-         certificate_url: application_info.degree || null,
+   // other_documents array (the 4 extra uploads)
+   const otherDocs = application_info?.other_documents;
+   if (Array.isArray(otherDocs)) {
+      otherDocs.forEach((url, i) => {
+         if (url) {
+            documents.push({
+               id: `other_doc_${i}-${application_info.id}`,
+               name: `Supporting Document ${i + 1}`,
+               type: "other",
+               url,
+               uploaded_at: application_info.updated_at ?? new Date().toISOString(),
+            });
+         }
       });
    }
 
-   // Append a fallback placeholder row to keep array bindings safe if empty
+   // ── Academic records ──────────────────────────────────────
+   const academic_records: ApplicantAcademicRecord[] = [];
+
+   // Undergraduate degree
+   if (application_info?.university || application_info?.undergraduateDegree) {
+      academic_records.push({
+         institution: application_info.university ?? "Not Specified",
+         qualification: application_info.undergraduateDegree ?? "N/A",
+         year_obtained: application_info.graduationYear ?? "N/A",
+         grade: application_info.gpa ?? "N/A",
+         certificate_url: application_info.degree ?? "",
+      });
+   }
+
+   // First sitting — use the granular fields the API actually returns
+   if (
+      application_info?.first_sitting_type ||
+      application_info?.first_sitting_result
+   ) {
+      academic_records.push({
+         institution: application_info.first_sitting_type ?? "N/A",
+         qualification: `${application_info.first_sitting_type ?? ""} — ${application_info.first_sitting_exam_number ?? ""}`.trim(),
+         year_obtained: String(application_info.first_sitting_year ?? "N/A"),
+         grade: "See certificate",
+         certificate_url: application_info.first_sitting_result ?? "",
+      });
+   }
+
+   // Second sitting
+   if (
+      application_info?.second_sitting_type ||
+      application_info?.second_sitting_result
+   ) {
+      academic_records.push({
+         institution: application_info.second_sitting_type ?? "N/A",
+         qualification: `${application_info.second_sitting_type ?? ""} — ${application_info.second_sitting_exam_number ?? ""}`.trim(),
+         year_obtained: String(application_info.second_sitting_year ?? "N/A"),
+         grade: "See certificate",
+         certificate_url: application_info.second_sitting_result ?? "",
+      });
+   }
+
+   // O-Level standalone (if not already captured in first/second sitting)
+   if (application_info?.o_level && academic_records.length === 0) {
+      academic_records.push({
+         institution: "Secondary School",
+         qualification: "O-Level",
+         year_obtained: "",
+         grade: "N/A",
+         certificate_url: application_info.o_level,
+      });
+   }
+
    if (academic_records.length === 0) {
       academic_records.push({
          institution: "No records captured",
          qualification: "N/A",
          year_obtained: "N/A",
          grade: "N/A",
-         certificate_url: '',
+         certificate_url: "",
       });
    }
 
-   // Return values matching your component layout expectations 
+   // ── Next of kin ───────────────────────────────────────────
+   const next_of_kin: ApplicantNextOfKin | null =
+      application_info?.next_of_kin_name
+         ? {
+            name: application_info.next_of_kin_name,
+            relationship: application_info.next_of_kin_relationship,
+            phone_number: application_info.next_of_kin_phone_number,
+            alternate_phone_number:
+               application_info.next_of_kin_alternate_phone_number ?? null,
+            email: application_info.next_of_kin_email,
+            address: application_info.next_of_kin_address,
+            occupation: application_info.next_of_kin_occupation,
+            workplace: application_info.next_of_kin_workplace,
+            is_primary_contact: Boolean(
+               application_info.is_next_of_kin_primary_contact
+            ),
+         }
+         : null;
+
+   // ── Passport URL ──────────────────────────────────────────
+   // Backend returns a PHP temp path for new uploads; prefer the stored images field
+   const passportUrl =
+      application_info?.images ||
+      (application_info?.passport &&
+         !application_info.passport.startsWith("/tmp/")
+         ? application_info.passport
+         : null) ||
+      "/avatars/default_result_image.jpg";
+
    return {
-      id: String(student_info?.id || application_info?.user_id || ""),
-      session: student_info?.academic_session || "N/A",
+      id: String(student_info?.id ?? application_info?.user_id ?? ""),
+      applicant_id: String(student_info?.id ?? application_info?.user_id ?? ""),
+      admission_cycle_id: student_info?.academic_session ?? "N/A",
+      submitted_at: student_info?.created_at ?? new Date().toISOString(),
+      created_at: student_info?.created_at ?? new Date().toISOString(),
+      updated_at: student_info?.updated_at ?? new Date().toISOString(),
+      session: student_info?.academic_session ?? "N/A",
       status,
-      denial_reason: student_info?.reason_for_denial || null,
+      denial_reason: student_info?.reason_for_denial ?? null,
       reviewed_by: "System Admin",
-      reviewed_at: student_info?.updated_at || null,
+      reviewed_at: student_info?.updated_at ?? null,
+      next_of_kin,
       personal_info: {
-         first_name: student_info?.first_name || "",
-         last_name: student_info?.last_name || "",
-         middle_name: student_info?.other_name || "",
-         passport_url: application_info?.passport || "/placeholder-avatar.png", // Provide fallback placeholder path
-         email: student_info?.email || "",
-         date_of_birth: application_info?.dob || "",
-         gender: (application_info?.gender || "other").toLowerCase() as "male" | "female" | "other",
-         nationality: student_info?.nationality || "Nigeria",
-         state_of_origin: student_info?.state || "",
-         lga: application_info?.lga || "",
-         phone: student_info?.phone_number || "",
-         address: application_info?.contact_address || application_info?.hometown_address || "No address supplied",
+         first_name: student_info?.first_name ?? "",
+         last_name: student_info?.last_name ?? "",
+         middle_name: student_info?.other_name ?? "",
+         passport_url: passportUrl,
+         email: student_info?.email ?? "",
+         date_of_birth: application_info?.dob ?? "",
+         gender: (application_info?.gender ?? "male").toLowerCase() as
+            | "male"
+            | "female",
+         nationality: student_info?.nationality ?? "Nigeria",
+         state_of_origin: student_info?.state ?? "",
+         lga: application_info?.lga ?? "",
+         phone: student_info?.phone_number ?? "",
+         address:
+            application_info?.contact_address ||
+            application_info?.hometown_address ||
+            "No address supplied",
       },
       program_choice: {
-         first_choice_program_name: student_info?.program || "N/A",
-         second_choice_program_name: "N/A",
-         entry_mode: (application_info?.studyMode || "utme") as "utme" | "direct_entry" | "transfer",
-         jamb_reg_no: student_info?.reg_number || "N/A",
-         jamb_score: 0, // Fallback if JAMB metrics aren't inside student_info schema
+         first_choice_program_id: String(
+            program_choice?.first_choice_program_id ??
+            student_info?.program_id ??
+            "N/A"
+         ),
+         first_choice_program_name:
+            program_choice?.first_choice_program_name ||
+            student_info?.program ||
+            `Program ID: ${student_info?.program_id ?? "N/A"}`,
+         second_choice_program_id: String(
+            program_choice?.second_choice_program_id ?? "N/A"
+         ),
+         second_choice_program_name:
+            program_choice?.second_choice_program_name ?? "N/A",
+         entry_mode: (program_choice?.entry_mode ?? "utme") as
+            | "utme"
+            | "direct_entry"
+            | "transfer",
+         jamb_reg_no: program_choice?.jamb_reg_no ?? "N/A",
+         jamb_score: program_choice?.jamb_score ?? 0,
       },
       academic_records,
       documents,
@@ -371,92 +460,3 @@ function extractAcademicRecords(apiApp: any): ApplicantAcademicRecord[] {
 
    return records;
 }
-
-
-
-
-
-
-
-
-
-
-// import {
-//    createApiMutationOptions,
-//    createApiQueryOptions,
-// } from "@/lib/clients/apiClient";
-// import { dummyAdmissionApplicationApi } from "@/services/dummyData";
-// import type {
-//    AdmissionApplication,
-//    ApiSingleResponse,
-//    UpdateApplicationPayload,
-//    ReviewApplicationPayload,
-// } from "@/types/school";
-
-// export const applicationReviewApi = {
-//    list: async (filters?: { status?: string }) => {
-//       return dummyAdmissionApplicationApi.list(filters);
-//       // return apiClient.get<ApiListResponse<AdmissionApplication>>(`/admission-applications`, AUTH, { params: filters })
-//    },
-
-//    getById: async (id: string) => {
-//       return dummyAdmissionApplicationApi.getById(id);
-//       // return apiClient.get<ApiSingleResponse<AdmissionApplication>>(`/admission-applications/${id}`, AUTH)
-//    },
-
-//    getByApplicantId: async (applicantId: string) => {
-//       return dummyAdmissionApplicationApi.getByApplicantId(applicantId);
-//       // return apiClient.get<ApiSingleResponse<AdmissionApplication>>(`/admission-applications/applicant/${applicantId}`, AUTH)
-//    },
-
-//    update: async (id: string, payload: UpdateApplicationPayload) => {
-//       return dummyAdmissionApplicationApi.update(id, payload);
-//       // return apiClient.put<ApiSingleResponse<AdmissionApplication>, UpdateApplicationPayload>(`/admission-applications/${id}`, payload, AUTH)
-//    },
-
-//    review: async (id: string, payload: ReviewApplicationPayload) => {
-//       return dummyAdmissionApplicationApi.review(id, payload);
-//       // return apiClient.patch<ApiSingleResponse<AdmissionApplication>, ReviewApplicationPayload>(`/admission-applications/${id}/review`, payload, AUTH)
-//    },
-// };
-
-// export const applicationReviewKeys = {
-//    all: ["admission-applications"] as const,
-//    list: (filters?: { status?: string }) => [...applicationReviewKeys.all, "list", filters ?? {}] as const,
-//    detail: (id: string) => [...applicationReviewKeys.all, "detail", id] as const,
-//    byApplicant: (applicantId: string) => [...applicationReviewKeys.all, "applicant", applicantId] as const,
-// };
-
-// export const applicationReviewQueryOptions = {
-//    list: (filters?: { status?: string }) =>
-//       createApiQueryOptions({
-//          queryKey: applicationReviewKeys.list(filters),
-//          queryFn: async () => (await applicationReviewApi.list(filters)).data,
-//       }),
-
-//    detail: (id: string) =>
-//       createApiQueryOptions({
-//          queryKey: applicationReviewKeys.detail(id),
-//          queryFn: async () => (await applicationReviewApi.getById(id)).data,
-//       }),
-
-//    byApplicant: (applicantId: string) =>
-//       createApiQueryOptions({
-//          queryKey: applicationReviewKeys.byApplicant(applicantId),
-//          queryFn: async () => (await applicationReviewApi.getByApplicantId(applicantId)).data,
-//       }),
-// };
-
-// export const applicationReviewMutationOptions = {
-//    update: () =>
-//       createApiMutationOptions<ApiSingleResponse<AdmissionApplication>, { id: string; payload: UpdateApplicationPayload }>({
-//          mutationKey: [...applicationReviewKeys.all, "update"],
-//          mutationFn: ({ id, payload }) => applicationReviewApi.update(id, payload),
-//       }),
-
-//    review: () =>
-//       createApiMutationOptions<ApiSingleResponse<AdmissionApplication>, { id: string; payload: ReviewApplicationPayload }>({
-//          mutationKey: [...applicationReviewKeys.all, "review"],
-//          mutationFn: ({ id, payload }) => applicationReviewApi.review(id, payload),
-//       }),
-// };

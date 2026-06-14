@@ -225,12 +225,12 @@ export function ProgramSelector({ setValue, trigger, error }: ProgramSelectorPro
         if (selectedProgram) {
             setValue('program_id', selectedProgram.id, { shouldValidate: true });
             trigger('program_id');
-            setValue('program_name', selectedProgram.name, { shouldValidate: true });
-            trigger('program_name');
+            setValue('program', selectedProgram.name, { shouldValidate: true });
+            trigger('program');
         } else {
             // Reset to empty; cast needed because zod schema accepts number
             setValue('program_id', undefined as unknown as number, { shouldValidate: true });
-            setValue('program_name', undefined as unknown as string, { shouldValidate: true });
+            setValue('program', undefined as unknown as string, { shouldValidate: true });
         }
     }, [selectedProgram, setValue, trigger]);
 
@@ -243,7 +243,7 @@ export function ProgramSelector({ setValue, trigger, error }: ProgramSelectorPro
             const newStack = navigationStack.slice(0, index + 1);
             useProgramStore.setState({ navigationStack: newStack, selectedProgram: null });
             setValue('program_id', undefined as unknown as number, { shouldValidate: true });
-            setValue('program_name', undefined as unknown as string, { shouldValidate: true });
+            setValue('program', undefined as unknown as string, { shouldValidate: true });
         }
     };
 

@@ -560,6 +560,17 @@ const admissionApplications: AdmissionApplication[] = [
          address: "12 Unity Road, Awka, Anambra State",
          passport_url: "/slides/slide-1.webp",
       },
+      next_of_kin: {
+         name: "Emmanuel Okafor",
+         relationship: "Father",
+         phone_number: "08023456789",
+         alternate_phone_number: "07034567890",
+         email: "emma.okafor@email.com",
+         address: "12 Unity Road, Awka, Anambra State",
+         occupation: "Civil Servant",
+         workplace: "Anambra State Ministry of Education",
+         is_primary_contact: true,
+      },
       academic_records: [
          {
             institution: "Federal Government College, Enugu",
@@ -617,6 +628,17 @@ const admissionApplications: AdmissionApplication[] = [
          address: "45 Wetheral Road, Owerri, Imo State",
          passport_url: "/slides/slide-2.webp",
       },
+      next_of_kin: {
+         name: "Patricia Nwosu",
+         relationship: "Mother",
+         phone_number: "08112345678",
+         alternate_phone_number: null,
+         email: "pat.nwosu@email.com",
+         address: "45 Wetheral Road, Owerri, Imo State",
+         occupation: "Trader",
+         workplace: "Eke Ukwu Market, Owerri",
+         is_primary_contact: true,
+      },
       academic_records: [
          {
             institution: "Holy Ghost College, Owerri",
@@ -673,6 +695,17 @@ const admissionApplications: AdmissionApplication[] = [
          address: "8 Ibrahim Taiwo Road, Kano",
          passport_url: "/slides/slide-3.webp",
       },
+      next_of_kin: {
+         name: "Musa Abdullahi",
+         relationship: "Brother",
+         phone_number: "07056789012",
+         alternate_phone_number: "08167890123",
+         email: "musa.abdullahi@email.com",
+         address: "8 Ibrahim Taiwo Road, Kano",
+         occupation: "Lecturer",
+         workplace: "Bayero University Kano",
+         is_primary_contact: false,
+      },
       academic_records: [
          {
             institution: "Queens College, Kano",
@@ -722,6 +755,17 @@ const admissionApplications: AdmissionApplication[] = [
          email: "seun.adeyemi@email.com",
          address: "22 Oba Adesoji Road, Ilesa, Osun State",
          passport_url: "/slides/slide-1.webp",
+      },
+      next_of_kin: {
+         name: "Adunola Adeyemi",
+         relationship: "Mother",
+         phone_number: "08045678901",
+         alternate_phone_number: "09056789012",
+         email: "adunola.adeyemi@email.com",
+         address: "22 Oba Adesoji Road, Ilesa, Osun State",
+         occupation: "Nurse",
+         workplace: "Wesley Guild Hospital, Ilesa",
+         is_primary_contact: true,
       },
       academic_records: [
          {
@@ -780,6 +824,17 @@ const admissionApplications: AdmissionApplication[] = [
          address: "5 Kawo Road, Kaduna",
          passport_url: "/slides/slide-2.webp",
       },
+      next_of_kin: {
+         name: "Usman Bello",
+         relationship: "Father",
+         phone_number: "07078901234",
+         alternate_phone_number: null,
+         email: "usman.bello@email.com",
+         address: "5 Kawo Road, Kaduna",
+         occupation: "Retired Military Officer",
+         workplace: "N/A",
+         is_primary_contact: true,
+      },
       academic_records: [
          {
             institution: "Government Girls College, Kaduna",
@@ -828,6 +883,17 @@ const admissionApplications: AdmissionApplication[] = [
          address: "15 University Road, Nsukka, Enugu State",
          passport_url: "/slides/slide-3.webp",
       },
+      next_of_kin: {
+         name: "Ngozi Okonkwo",
+         relationship: "Spouse",
+         phone_number: "08134567890",
+         alternate_phone_number: "07045678901",
+         email: "ngozi.okonkwo@email.com",
+         address: "15 University Road, Nsukka, Enugu State",
+         occupation: "Educator",
+         workplace: "University of Nigeria Secondary School, Nsukka",
+         is_primary_contact: true,
+      },
       academic_records: [
          {
             institution: "Community Secondary School, Nsukka",
@@ -864,7 +930,6 @@ const admissionApplications: AdmissionApplication[] = [
       denial_reason: null,
       created_at: "2024-06-08T14:00:00Z",
       updated_at: "2024-06-25T11:45:00Z",
-
    },
 ];
 
@@ -898,18 +963,46 @@ export const dummyAdmissionApplicationApi = {
       await delay(500);
       const app = admissionApplications.find((x) => x.id === id);
       if (!app) throw new Error("Application not found");
-      if (payload.personal_info) {
-         app.personal_info = { ...app.personal_info, ...payload.personal_info };
+
+      // Personal info fields — map flat backend keys back to the nested display shape
+      if (payload.first_name) app.personal_info.first_name = payload.first_name;
+      if (payload.last_name) app.personal_info.last_name = payload.last_name;
+      if (payload.other_name) app.personal_info.middle_name = payload.other_name;
+      if (payload.dob) app.personal_info.date_of_birth = payload.dob;
+      if (payload.gender) app.personal_info.gender = payload.gender as "male" | "female";
+      if (payload.nationality) app.personal_info.nationality = payload.nationality;
+      if (payload.state) app.personal_info.state_of_origin = payload.state;
+      if (payload.lga) app.personal_info.lga = payload.lga;
+      if (payload.phone_number) app.personal_info.phone = payload.phone_number;
+      if (payload.email) app.personal_info.email = payload.email;
+      if (payload.contact_address) app.personal_info.address = payload.contact_address;
+
+      // Program choice fields
+      if (payload.first_choice_program_name) app.program_choice.first_choice_program_name = payload.first_choice_program_name;
+      if (payload.second_choice_program_name) app.program_choice.second_choice_program_name = payload.second_choice_program_name;
+      if (payload.entry_mode) app.program_choice.entry_mode = payload.entry_mode as "utme" | "direct_entry" | "transfer";
+      if (payload.jamb_reg_no) app.program_choice.jamb_reg_no = payload.jamb_reg_no;
+      if (payload.jamb_score) app.program_choice.jamb_score = payload.jamb_score;
+
+      // Next of kin fields
+      if (app.next_of_kin) {
+         if (payload.next_of_kin_name) app.next_of_kin.name = payload.next_of_kin_name;
+         if (payload.next_of_kin_relationship) app.next_of_kin.relationship = payload.next_of_kin_relationship;
+         if (payload.next_of_kin_phone_number) app.next_of_kin.phone_number = payload.next_of_kin_phone_number;
+         if (payload.next_of_kin_alternate_phone_number) app.next_of_kin.alternate_phone_number = payload.next_of_kin_alternate_phone_number;
+         if (payload.next_of_kin_email) app.next_of_kin.email = payload.next_of_kin_email;
+         if (payload.next_of_kin_address) app.next_of_kin.address = payload.next_of_kin_address;
+         if (payload.next_of_kin_occupation) app.next_of_kin.occupation = payload.next_of_kin_occupation;
+         if (payload.next_of_kin_workplace) app.next_of_kin.workplace = payload.next_of_kin_workplace;
+         if (payload.is_next_of_kin_primary_contact !== undefined) {
+            app.next_of_kin.is_primary_contact = Boolean(payload.is_next_of_kin_primary_contact);
+         }
       }
-      if (payload.academic_records) {
-         app.academic_records = payload.academic_records;
-      }
-      if (payload.program_choice) {
-         app.program_choice = { ...app.program_choice, ...payload.program_choice };
-      }
-      if (payload.documents) {
-         app.documents = payload.documents;
-      }
+
+      // Composite array replacements
+      if (payload.academic_records) app.academic_records = payload.academic_records;
+      if (payload.documents) app.documents = payload.documents;
+
       app.updated_at = new Date().toISOString();
       return { data: { ...app }, message: "Application updated" };
    },

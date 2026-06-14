@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { useProgramStore, Category } from '@/store/useProgramStore';
+import { APP_CONFIG } from '@/config';
 
 interface PaginatedCategories {
     current_page: number;
@@ -13,7 +14,7 @@ interface PaginatedCategories {
 
 async function fetchCategories(): Promise<Category[]> {
     const res = await fetch(
-        'https://prep-school.qverselearning.org/api/v1/odl/categories',
+        `${APP_CONFIG.apiUrl}/api/v1/odl/categories`,
         { next: { revalidate: 3600 } } // ISR-friendly cache
     );
 

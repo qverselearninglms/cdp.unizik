@@ -12,6 +12,7 @@ import { GraduationCap, ExternalLink, Loader2, AlertCircle, CheckCircle, CreditC
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { StepSectionProps } from "../types/admission";
+import Link from "next/link";
 
 type PaymentPlan = "full" | "half" | "custom";
 
@@ -313,6 +314,16 @@ export function TuitionPaymentSection({ student, fees }: StepSectionProps) {
                                 <ExternalLink className="size-4" />
                             </>
                         )}
+                    </Button>
+                    <Button
+                        className="btn-glow w-full gap-2"
+                        size="default"
+                        variant="outline"
+                        asChild
+                    >
+                        <Link href="/enrollment">
+                            View your Enrolled courses
+                        </Link>
                     </Button>
 
                     {/* Dev toolbar */}

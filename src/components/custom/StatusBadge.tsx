@@ -32,7 +32,6 @@ export default function StatusBadge({
     dot = false,
     className,
 }: StatusBadgeProps) {
-    console.log("Rendering StatusBadge with props:", { label });
     return (
         <span
             className={cn(

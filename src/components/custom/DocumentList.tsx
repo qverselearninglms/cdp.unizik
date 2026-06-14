@@ -2,9 +2,34 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Eye, FileText, Trash2, Upload, X } from "lucide-react";
+import { Eye, FileText, FileType2, Trash2, Upload, X, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ApplicantDocument } from "@/types/school";
+
+// ─── helpers ────────────────────────────────────────────────────────────────
+
+type FileCategory = "image" | "pdf" | "other";
+
+function getFileCategory(doc: ApplicantDocument): FileCategory {
+   // Prefer explicit type field if present
+   const type = doc.type?.toLowerCase() ?? "";
+   if (type.startsWith("image")) return "image";
+   if (type === "pdf" || type === "application/pdf") return "pdf";
+
+   // Fall back to URL / name extension
+   const ext = (doc.url ?? doc.name ?? "").split(".").pop()?.toLowerCase() ?? "";
+   if (["jpg", "jpeg", "png", "gif", "webp", "svg", "avif"].includes(ext)) return "image";
+   if (ext === "pdf") return "pdf";
+
+   return "other";
+}
+
+function CategoryIcon({ category }: { category: FileCategory }) {
+   if (category === "image") return <FileType2 size={18} className="text-primary" />;
+   return <FileText size={18} className="text-primary" />;
+}
+
+// ─── DocumentCard ────────────────────────────────────────────────────────────
 
 interface DocumentCardProps {
    document: ApplicantDocument;
@@ -14,7 +39,20 @@ interface DocumentCardProps {
 }
 
 export function DocumentCard({ document, editable = false, onRemove, onReplace }: DocumentCardProps) {
-   const [preview, setPreview] = useState(false);
+   const [imagePreview, setImagePreview] = useState(false);
+   const category = getFileCategory(document);
+
+   function handlePreview() {
+      if (category === "image") {
+         setImagePreview(true);
+      } else {
+         // PDF and everything else — open in a new tab so the browser handles it natively
+         window.open(document.url, "_blank", "noopener,noreferrer");
+      }
+   }
+
+   const PreviewIcon = category === "image" ? Eye : ExternalLink;
+   const previewTitle = category === "image" ? "Preview image" : "Open in new tab";
 
    return (
       <>
@@ -25,28 +63,34 @@ export function DocumentCard({ document, editable = false, onRemove, onReplace }
             className="group relative bg-muted/50 border border-border rounded-xl p-3 flex items-center gap-3"
          >
             <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-               <FileText size={18} className="text-primary" />
+               <CategoryIcon category={category} />
             </div>
+
             <div className="flex-1 min-w-0">
                <p className="text-sm font-medium text-foreground truncate">{document.name}</p>
                <p className="text-[11px] text-muted-foreground capitalize">{document.type}</p>
             </div>
+
             <div className="flex items-center gap-1">
                <button
-                  onClick={() => setPreview(true)}
+                  onClick={handlePreview}
                   className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
-                  title="Preview"
+                  title={previewTitle}
                >
-                  <Eye size={14} />
+                  <PreviewIcon size={14} />
                </button>
+
                {editable && (
                   <>
-                     <label className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors cursor-pointer" title="Replace">
+                     <label
+                        className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                        title="Replace"
+                     >
                         <Upload size={14} />
                         <input
                            type="file"
                            className="hidden"
-                           accept="image/*,.pdf"
+                           accept="image/*,.pdf,.doc,.docx"
                            onChange={(e) => {
                               const file = e.target.files?.[0];
                               if (file) onReplace?.(document.id, file);
@@ -65,15 +109,15 @@ export function DocumentCard({ document, editable = false, onRemove, onReplace }
             </div>
          </motion.div>
 
-         {/* Image Preview Modal */}
+         {/* Image-only modal — never rendered for PDFs/other files */}
          <AnimatePresence>
-            {preview && (
+            {imagePreview && category === "image" && (
                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                   <motion.div
                      initial={{ opacity: 0 }}
                      animate={{ opacity: 1 }}
                      exit={{ opacity: 0 }}
-                     onClick={() => setPreview(false)}
+                     onClick={() => setImagePreview(false)}
                      className="absolute inset-0 bg-black/60 backdrop-blur-sm"
                   />
                   <motion.div
@@ -85,7 +129,7 @@ export function DocumentCard({ document, editable = false, onRemove, onReplace }
                      <div className="flex items-center justify-between p-4 border-b border-border">
                         <p className="font-semibold text-sm text-foreground">{document.name}</p>
                         <button
-                           onClick={() => setPreview(false)}
+                           onClick={() => setImagePreview(false)}
                            className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
                         >
                            <X size={16} />
@@ -107,6 +151,8 @@ export function DocumentCard({ document, editable = false, onRemove, onReplace }
    );
 }
 
+// ─── DocumentList ─────────────────────────────────────────────────────────────
+
 interface DocumentListProps {
    documents: ApplicantDocument[];
    editable?: boolean;
@@ -115,7 +161,13 @@ interface DocumentListProps {
    onAdd?: (file: File) => void;
 }
 
-export default function DocumentList({ documents, editable = false, onRemove, onReplace, onAdd }: DocumentListProps) {
+export default function DocumentList({
+   documents,
+   editable = false,
+   onRemove,
+   onReplace,
+   onAdd,
+}: DocumentListProps) {
    return (
       <div className="space-y-2">
          <AnimatePresence>
@@ -131,16 +183,18 @@ export default function DocumentList({ documents, editable = false, onRemove, on
          </AnimatePresence>
 
          {editable && (
-            <label className={cn(
-               "flex items-center justify-center gap-2 p-4 border-2 border-dashed border-border rounded-xl",
-               "hover:border-primary/40 hover:bg-primary/5 transition-colors cursor-pointer"
-            )}>
+            <label
+               className={cn(
+                  "flex items-center justify-center gap-2 p-4 border-2 border-dashed border-border rounded-xl",
+                  "hover:border-primary/40 hover:bg-primary/5 transition-colors cursor-pointer",
+               )}
+            >
                <Upload size={16} className="text-muted-foreground" />
                <span className="text-sm text-muted-foreground">Upload Document</span>
                <input
                   type="file"
                   className="hidden"
-                  accept="image/*,.pdf"
+                  accept="image/*,.pdf,.doc,.docx"
                   onChange={(e) => {
                      const file = e.target.files?.[0];
                      if (file) onAdd?.(file);

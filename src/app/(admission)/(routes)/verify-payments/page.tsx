@@ -17,7 +17,7 @@ import {
 } from "@/config/global.config";
 
 // ─── Payment Type Resolution ────────────────────────────────────────────────
-type PaymentType = "application" | "acceptance" | "tuition";
+type PaymentType = "application" | "acceptance" | "tuition" | "tuition-part";
 
 interface PaymentTypeConfig {
 	type: PaymentType;
@@ -30,27 +30,29 @@ const PAYMENT_TYPES: PaymentTypeConfig[] = [
 	{ type: "application", title: "Verifying Application Payment", baseAmount: APPLICATION_FEE_AMOUNT },
 	{ type: "acceptance", title: "Verifying Acceptance Fee Payment", baseAmount: ACCEPTANCE_FEE_AMOUNT },
 	{ type: "tuition", title: "Verifying Tuition Payment", baseAmount: FULL_TUITION_FEE_AMOUNT },
+	{ type: "tuition-part", title: "Verifying Partial Tuition Payment", baseAmount: FULL_TUITION_FEE_AMOUNT / 2 },
 ];
 
 /**
- * Resolve the payment type from the transaction amount.
- * Credo's `transAmount` includes the processor fee, so we compare
- * against each base amount with a tolerance to absorb gateway charges.
+ * Credo returns transAmount in the same unit as your payment initiation.
+ * If amounts don't match, also try dividing by 100 (kobo → naira fallback).
  */
 function resolvePaymentType(transAmount: string | null): PaymentTypeConfig | null {
 	if (!transAmount) return null;
 
-	const amount = parseFloat(transAmount);
-	if (isNaN(amount)) return null;
+	const raw = parseFloat(transAmount);
+	if (isNaN(raw)) return null;
 
-	// Sort descending so a higher amount can't accidentally match a lower tier
+	// Try both the raw value and kobo-divided value
+	const candidates = [raw, raw / 100];
+
 	const sorted = [...PAYMENT_TYPES].sort((a, b) => b.baseAmount - a.baseAmount);
 
-	for (const config of sorted) {
-		// transAmount >= baseAmount (processor fee makes it slightly higher)
-		// and within a reasonable upper bound (base + 5 % cap)
-		if (amount >= config.baseAmount && amount <= config.baseAmount * 1.05) {
-			return config;
+	for (const amount of candidates) {
+		for (const config of sorted) {
+			if (amount >= config.baseAmount && amount <= config.baseAmount * 1.05) {
+				return config;
+			}
 		}
 	}
 
@@ -105,8 +107,10 @@ function VerifyPaymentContent() {
 	const searchParams = useSearchParams();
 	const reference = searchParams.get("transRef") ?? searchParams.get("reference") ?? "";
 	const transAmount = searchParams.get("transAmount");
+	console.log("Payment verification params", { reference, transAmount });
 
 	const paymentType = useMemo(() => resolvePaymentType(transAmount), [transAmount]);
+	console.log("paymentType", paymentType);
 
 	if (!reference) {
 		return (
@@ -138,6 +142,8 @@ function VerifyPaymentContent() {
 		case "acceptance":
 			return <VerifyAcceptance reference={reference} />;
 		case "tuition":
+			return <VerifyTuition reference={reference} />;
+		case "tuition-part":
 			return <VerifyTuition reference={reference} />;
 	}
 }

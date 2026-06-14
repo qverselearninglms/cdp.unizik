@@ -48,6 +48,7 @@ export default function ReviewApplicationsPage() {
    const applicationsData = (apiResponse as any) || [];
    // Transform API applications to your AdmissionApplication type
    const applications = applicationsData
+   console.log("Raw API applications data:", applicationsData);
    const counts = {
       all: applications.length,
       pending: applications.filter((a: AdmissionApplication) => a.status === "pending").length,
@@ -129,13 +130,15 @@ export default function ReviewApplicationsPage() {
          key: "status",
          header: "Status",
          sortable: true,
-         render: (row) => (
+         render: (row) => {
+            console.log("row.status", row.status)
+            return(
             <StatusBadge
                label={statusLabelMap[row.status]}
                variant={statusVariantMap[row.status]}
                dot
             />
-         ),
+         )},
       },
       {
          key: "actions",

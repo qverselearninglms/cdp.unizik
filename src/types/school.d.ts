@@ -360,6 +360,18 @@ export interface StudentInfoData {
    deleted_at: string | null;
 }
 
+export interface ApplicantNextOfKin {
+  name: string;
+  relationship: string;
+  phone_number: string;
+  alternate_phone_number: string | null;
+  email: string;
+  address: string;
+  occupation: string;
+  workplace: string;
+  is_primary_contact: boolean;
+}
+
 export interface ApplicationFormData {
    id: number;
    user_id: number;
@@ -397,7 +409,7 @@ export interface ApplicationFormData {
    careerGoals: string | null;
    agreeToTerms: number;
    images: string | null;
-   other_documents: string | null;
+   other_documents: string[] | null;
    next_of_kin_name: string;
    next_of_kin_relationship: string;
    next_of_kin_phone_number: string;
@@ -408,6 +420,14 @@ export interface ApplicationFormData {
    next_of_kin_occupation: string;
    next_of_kin_workplace: string;
    first_school_leaving: string | null;
+   first_sitting_type: string | null;
+   first_sitting_year: number | null;
+   first_sitting_exam_number: string | null;
+   first_sitting_result: string | null;
+   second_sitting_type: string | null;
+   second_sitting_year: number | null;
+   second_sitting_exam_number: string | null;
+   second_sitting_result: string | null;
    o_level: string | null;
    degree: string | null;
    college: string | null;
@@ -424,12 +444,23 @@ export interface ApplicationFormData {
    deleted_at: string | null;
 }
 
+export interface ProgramChoice {
+   first_choice_program_id: string;
+   first_choice_program_name: string;
+   second_choice_program_id: string;
+   second_choice_program_name: string;
+   entry_mode: "utme" | "direct_entry" | "transfer";
+   jamb_reg_no: string;
+   jamb_score: number;
+}
+
 export interface ApplicationDetailApiResponse {
    status: number;
    response: string;
    data: {
       student_info: StudentInfoData;
       application_info: ApplicationFormData;
+      program_choice: ProgramChoice;
    };
 }
 
@@ -440,6 +471,7 @@ export interface AdmissionApplication {
    session: string;
    status: ApplicationReviewStatus;
    personal_info: ApplicantPersonalInfo;
+   next_of_kin: ApplicantNextOfKin | null;
    academic_records: ApplicantAcademicRecord[];
    program_choice: ApplicantProgramChoice;
    documents: ApplicantDocument[];
@@ -451,12 +483,46 @@ export interface AdmissionApplication {
    updated_at: string;
 }
 
-export type UpdateApplicationPayload = {
-   personal_info?: Partial<ApplicantPersonalInfo>;
-   academic_records?: ApplicantAcademicRecord[];
-   program_choice?: Partial<ApplicantProgramChoice>;
-   documents?: ApplicantDocument[];
-};
+// export type UpdateApplicationPayload = {
+//    personal_info?: Partial<ApplicantPersonalInfo>;
+//    academic_records?: ApplicantAcademicRecord[];
+//    program_choice?: Partial<ApplicantProgramChoice>;
+//    documents?: ApplicantDocument[];
+// };
+// One field at a time — id is passed separately at the call site
+export type UpdateApplicationPayload = Partial<{
+   // Personal info
+   first_name: string;
+   last_name: string;
+   other_name: string;
+   dob: string;
+   gender: string;
+   nationality: string;
+   state: string;
+   lga: string;
+   phone_number: string;
+   email: string;
+   contact_address: string;
+   // Next of kin
+   next_of_kin_name: string;
+   next_of_kin_relationship: string;
+   next_of_kin_phone_number: string;
+   next_of_kin_alternate_phone_number: string;
+   next_of_kin_email: string;
+   next_of_kin_address: string;
+   next_of_kin_occupation: string;
+   next_of_kin_workplace: string;
+   is_next_of_kin_primary_contact: number;
+   // Program choice
+   first_choice_program_name: string;
+   second_choice_program_name: string;
+   entry_mode: string;
+   jamb_reg_no: string;
+   jamb_score: number;
+   // Composite fields (full array replace)
+   academic_records: ApplicantAcademicRecord[];
+   documents: ApplicantDocument[];
+}>;
 
 export type ReviewApplicationPayload = {
    status: "approved" | "denied";

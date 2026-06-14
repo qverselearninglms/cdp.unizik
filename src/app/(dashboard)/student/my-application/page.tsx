@@ -11,6 +11,7 @@ import {
    Loader2,
    Save,
    User,
+   Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import EditableField from "@/components/custom/EditableField";
@@ -44,59 +45,51 @@ const statusLabelMap: Record<ApplicationReviewStatus, string> = {
    denied: "Denied",
 };
 
-// Using a fixed applicant ID for the logged-in student (dummy)
-const CURRENT_APPLICANT_ID = "applicant-1";
-
 export default function MyApplicationPage() {
    const queryClient = useQueryClient();
    const [lastSaved, setLastSaved] = useState<string | null>(null);
 
    const { data: application, isLoading } = useQuery(
-      applicationReviewQueryOptions.byApplicant(CURRENT_APPLICANT_ID)
+      applicationReviewQueryOptions.mine()
    );
 
    const updateMutation = useMutation({
       ...applicationReviewMutationOptions.update(),
       onSuccess: () => {
-         queryClient.invalidateQueries({ queryKey: applicationReviewKeys.byApplicant(CURRENT_APPLICANT_ID) });
+         queryClient.invalidateQueries({ queryKey: applicationReviewKeys.mine() });
          setLastSaved(new Date().toLocaleTimeString());
          toast.success("Changes saved");
       },
       onError: () => toast.error("Failed to save changes"),
    });
 
-   const handleFieldSave = (section: keyof UpdateApplicationPayload, key: string, value: string) => {
+   // Flat handler — key is the backend field name, always student endpoint
+   const handleFieldSave = (key: keyof UpdateApplicationPayload, value: string | number) => {
       if (!application) return;
-      const payload: UpdateApplicationPayload = {};
-
-      if (section === "personal_info") {
-         payload.personal_info = { [key]: value } as UpdateApplicationPayload["personal_info"];
-      } else if (section === "program_choice") {
-         payload.program_choice = { [key]: key === "jamb_score" ? Number(value) : value } as UpdateApplicationPayload["program_choice"];
-      }
-
-      updateMutation.mutate({ id: application.id, payload });
+      updateMutation.mutate({ id: application.id, payload: { [key]: value }, asAdmin: false });
    };
 
    const handleAcademicRecordSave = (index: number, key: keyof ApplicantAcademicRecord, value: string) => {
       if (!application) return;
       const updated = [...application.academic_records];
       updated[index] = { ...updated[index], [key]: value };
-      updateMutation.mutate({ id: application.id, payload: { academic_records: updated } });
+      updateMutation.mutate({ id: application.id, payload: { academic_records: updated }, asAdmin: false });
    };
 
    const handleDocumentRemove = (docId: string) => {
       if (!application) return;
       const updated = application.documents.filter((d) => d.id !== docId);
-      updateMutation.mutate({ id: application.id, payload: { documents: updated } });
+      updateMutation.mutate({ id: application.id, payload: { documents: updated }, asAdmin: false });
    };
 
    const handleDocumentReplace = (docId: string, file: File) => {
       if (!application) return;
       const updated = application.documents.map((d) =>
-         d.id === docId ? { ...d, url: URL.createObjectURL(file), name: file.name, uploaded_at: new Date().toISOString() } : d
+         d.id === docId
+            ? { ...d, url: URL.createObjectURL(file), name: file.name, uploaded_at: new Date().toISOString() }
+            : d
       );
-      updateMutation.mutate({ id: application.id, payload: { documents: updated } });
+      updateMutation.mutate({ id: application.id, payload: { documents: updated }, asAdmin: false });
       toast.success("Document replaced");
    };
 
@@ -109,7 +102,11 @@ export default function MyApplicationPage() {
          url: URL.createObjectURL(file),
          uploaded_at: new Date().toISOString(),
       };
-      updateMutation.mutate({ id: application.id, payload: { documents: [...application.documents, newDoc] } });
+      updateMutation.mutate({
+         id: application.id,
+         payload: { documents: [...application.documents, newDoc] },
+         asAdmin: false,
+      });
       toast.success("Document uploaded");
    };
 
@@ -137,6 +134,7 @@ export default function MyApplicationPage() {
    return (
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
          <div className="space-y-6 max-w-4xl">
+
             {/* Header */}
             <motion.div
                initial={{ opacity: 0, y: -12 }}
@@ -176,7 +174,7 @@ export default function MyApplicationPage() {
                )}
             </motion.div>
 
-            {/* Info banner */}
+            {/* Editable info banner */}
             {isEditable && (
                <motion.div
                   initial={{ opacity: 0, y: 8 }}
@@ -195,7 +193,7 @@ export default function MyApplicationPage() {
                </motion.div>
             )}
 
-            {/* Denial reason */}
+            {/* Denial banner */}
             <AnimatePresence>
                {application.status === "denied" && application.denial_reason && (
                   <motion.div
@@ -251,10 +249,10 @@ export default function MyApplicationPage() {
                         <p className="text-sm text-muted-foreground">{personal_info.email}</p>
                      </div>
                   </div>
-                  <EditableField label="First Name" value={personal_info.first_name} editable={isEditable} onSave={(v) => handleFieldSave("personal_info", "first_name", v)} />
-                  <EditableField label="Last Name" value={personal_info.last_name} editable={isEditable} onSave={(v) => handleFieldSave("personal_info", "last_name", v)} />
-                  <EditableField label="Middle Name" value={personal_info.middle_name} editable={isEditable} onSave={(v) => handleFieldSave("personal_info", "middle_name", v)} />
-                  <EditableField label="Date of Birth" value={personal_info.date_of_birth} type="date" editable={isEditable} onSave={(v) => handleFieldSave("personal_info", "date_of_birth", v)} />
+                  <EditableField label="First Name" value={personal_info.first_name} editable={isEditable} onSave={(v) => handleFieldSave("first_name", v)} />
+                  <EditableField label="Last Name" value={personal_info.last_name} editable={isEditable} onSave={(v) => handleFieldSave("last_name", v)} />
+                  <EditableField label="Middle Name" value={personal_info.middle_name} editable={isEditable} onSave={(v) => handleFieldSave("other_name", v)} />
+                  <EditableField label="Date of Birth" value={personal_info.date_of_birth} type="date" editable={isEditable} onSave={(v) => handleFieldSave("dob", v)} />
                   <EditableField
                      label="Gender"
                      value={personal_info.gender}
@@ -264,22 +262,43 @@ export default function MyApplicationPage() {
                         { value: "female", label: "Female" },
                         { value: "other", label: "Other" },
                      ]}
-                     onSave={(v) => handleFieldSave("personal_info", "gender", v)}
+                     onSave={(v) => handleFieldSave("gender", v)}
                   />
-                  <EditableField label="Nationality" value={personal_info.nationality} editable={isEditable} onSave={(v) => handleFieldSave("personal_info", "nationality", v)} />
-                  <EditableField label="State of Origin" value={personal_info.state_of_origin} editable={isEditable} onSave={(v) => handleFieldSave("personal_info", "state_of_origin", v)} />
-                  <EditableField label="LGA" value={personal_info.lga} editable={isEditable} onSave={(v) => handleFieldSave("personal_info", "lga", v)} />
-                  <EditableField label="Phone" value={personal_info.phone} type="tel" editable={isEditable} onSave={(v) => handleFieldSave("personal_info", "phone", v)} />
-                  <EditableField label="Email" value={personal_info.email} type="email" editable={isEditable} onSave={(v) => handleFieldSave("personal_info", "email", v)} />
-                  <EditableField label="Address" value={personal_info.address} type="textarea" editable={isEditable} onSave={(v) => handleFieldSave("personal_info", "address", v)} className="sm:col-span-2 lg:col-span-3" />
+                  <EditableField label="Nationality" value={personal_info.nationality} editable={isEditable} onSave={(v) => handleFieldSave("nationality", v)} />
+                  <EditableField label="State of Origin" value={personal_info.state_of_origin} editable={isEditable} onSave={(v) => handleFieldSave("state", v)} />
+                  <EditableField label="LGA" value={personal_info.lga} editable={isEditable} onSave={(v) => handleFieldSave("lga", v)} />
+                  <EditableField label="Phone" value={personal_info.phone} type="tel" editable={isEditable} onSave={(v) => handleFieldSave("phone_number", v)} />
+                  <EditableField label="Email" value={personal_info.email} type="email" editable={isEditable} onSave={(v) => handleFieldSave("email", v)} />
+                  <EditableField label="Address" value={personal_info.address} type="textarea" editable={isEditable} onSave={(v) => handleFieldSave("contact_address", v)} className="sm:col-span-2 lg:col-span-3" />
                </div>
             </SectionCard>
+
+            {/* Next of Kin */}
+            {application.next_of_kin && (
+               <SectionCard title="Next of Kin" icon={Users}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
+                     <EditableField label="Full Name" value={application.next_of_kin.name} editable={isEditable} onSave={(v) => handleFieldSave("next_of_kin_name", v)} />
+                     <EditableField label="Relationship" value={application.next_of_kin.relationship} editable={isEditable} onSave={(v) => handleFieldSave("next_of_kin_relationship", v)} />
+                     <EditableField label="Phone" value={application.next_of_kin.phone_number} type="tel" editable={isEditable} onSave={(v) => handleFieldSave("next_of_kin_phone_number", v)} />
+                     <EditableField label="Alt. Phone" value={application.next_of_kin.alternate_phone_number ?? ""} type="tel" editable={isEditable} onSave={(v) => handleFieldSave("next_of_kin_alternate_phone_number", v)} />
+                     <EditableField label="Email" value={application.next_of_kin.email} type="email" editable={isEditable} onSave={(v) => handleFieldSave("next_of_kin_email", v)} />
+                     <EditableField label="Occupation" value={application.next_of_kin.occupation} editable={isEditable} onSave={(v) => handleFieldSave("next_of_kin_occupation", v)} />
+                     <EditableField label="Workplace" value={application.next_of_kin.workplace} editable={isEditable} onSave={(v) => handleFieldSave("next_of_kin_workplace", v)} />
+                     <EditableField label="Address" value={application.next_of_kin.address} type="textarea" editable={isEditable} onSave={(v) => handleFieldSave("next_of_kin_address", v)} className="sm:col-span-2 lg:col-span-3" />
+                     {application.next_of_kin.is_primary_contact && (
+                        <p className="text-xs text-emerald-600 font-medium sm:col-span-2 lg:col-span-3">
+                           ✓ This person is the primary contact
+                        </p>
+                     )}
+                  </div>
+               </SectionCard>
+            )}
 
             {/* Program Choice */}
             <SectionCard title="Program Choice" icon={GraduationCap}>
                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
-                  <EditableField label="First Choice" value={program_choice.first_choice_program_name} editable={isEditable} onSave={(v) => handleFieldSave("program_choice", "first_choice_program_name", v)} />
-                  <EditableField label="Second Choice" value={program_choice.second_choice_program_name} editable={isEditable} onSave={(v) => handleFieldSave("program_choice", "second_choice_program_name", v)} />
+                  <EditableField label="First Choice" value={program_choice.first_choice_program_name} editable={isEditable} onSave={(v) => handleFieldSave("first_choice_program_name", v)} />
+                  <EditableField label="Second Choice" value={program_choice.second_choice_program_name} editable={isEditable} onSave={(v) => handleFieldSave("second_choice_program_name", v)} />
                   <EditableField
                      label="Entry Mode"
                      value={program_choice.entry_mode}
@@ -289,10 +308,10 @@ export default function MyApplicationPage() {
                         { value: "direct_entry", label: "Direct Entry" },
                         { value: "transfer", label: "Transfer" },
                      ]}
-                     onSave={(v) => handleFieldSave("program_choice", "entry_mode", v)}
+                     onSave={(v) => handleFieldSave("entry_mode", v)}
                   />
-                  <EditableField label="JAMB Reg No." value={program_choice.jamb_reg_no} editable={isEditable} onSave={(v) => handleFieldSave("program_choice", "jamb_reg_no", v)} />
-                  <EditableField label="JAMB Score" value={String(program_choice.jamb_score)} type="number" editable={isEditable} onSave={(v) => handleFieldSave("program_choice", "jamb_score", v)} />
+                  <EditableField label="JAMB Reg No." value={program_choice.jamb_reg_no} editable={isEditable} onSave={(v) => handleFieldSave("jamb_reg_no", v)} />
+                  <EditableField label="JAMB Score" value={String(program_choice.jamb_score)} type="number" editable={isEditable} onSave={(v) => handleFieldSave("jamb_score", Number(v))} />
                </div>
             </SectionCard>
 
@@ -337,6 +356,7 @@ export default function MyApplicationPage() {
                   onAdd={handleDocumentAdd}
                />
             </SectionCard>
+
          </div>
       </div>
    );

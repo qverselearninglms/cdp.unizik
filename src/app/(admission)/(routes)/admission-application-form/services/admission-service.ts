@@ -62,6 +62,9 @@ function appendFile(fd: FormData, key: string, value: File | null | undefined): 
     }
 }
 
+const boolToInt = (value: boolean | null | undefined): string =>
+    value ? '1' : '0';
+
 function buildFormData(data: ODLApplication): FormData {
     const fd = new FormData();
     console.log('Building FormData with input data:', data); // Debug log to inspect input data structure
@@ -74,11 +77,11 @@ function buildFormData(data: ODLApplication): FormData {
     fd.append('hometown', data.hometown ?? '');
     fd.append('hometown_address', data.hometown_address ?? '');
     fd.append('contact_address', data.contact_address ?? '');
-    fd.append('has_disability', String(data.has_disability));
+    fd.append('has_disability', boolToInt(data.has_disability));
     fd.append('disability', data.disability ?? 'None');
 
     // ── Step 2: Sponsor Information ──────────────────────────────────────────
-    fd.append('has_sponsor', String(data.has_sponsor));
+    fd.append('has_sponsor', boolToInt(data.has_sponsor));
     if (data.has_sponsor) {
         fd.append('sponsor_name', data.sponsor_name ?? '');
         fd.append('sponsor_relationship', data.sponsor_relationship ?? '');
@@ -93,7 +96,10 @@ function buildFormData(data: ODLApplication): FormData {
     fd.append('next_of_kin_phone_number', data.next_of_kin_phone_number ?? '');
     fd.append('next_of_kin_address', data.next_of_kin_address ?? '');
     fd.append('next_of_kin_email', data.next_of_kin_email ?? '');
-    fd.append('is_next_of_kin_primary_contact', String(data.is_next_of_kin_primary_contact ?? false));
+    fd.append(
+        'is_next_of_kin_primary_contact',
+        boolToInt(data.is_next_of_kin_primary_contact)
+    );
     fd.append('next_of_kin_alternate_phone_number', data.next_of_kin_alternate_phone_number ?? '');
     fd.append('next_of_kin_occupation', data.next_of_kin_occupation ?? '');
     fd.append('next_of_kin_workplace', data.next_of_kin_workplace ?? '');
@@ -110,7 +116,7 @@ function buildFormData(data: ODLApplication): FormData {
 
     // ── Step 5: Qualification Fields ─────────────────────────────────────────
     fd.append('combined_result', data.combined_result ?? '');
-    fd.append('awaiting_result', String(data.awaiting_result));
+    fd.append('awaiting_result', boolToInt(data.awaiting_result));
 
     // ── Step 6: Exam Sitting ─────────────────────────────────────────────────
     fd.append('first_sitting_type', data.first_sitting_type ?? '');
@@ -127,7 +133,7 @@ function buildFormData(data: ODLApplication): FormData {
     // ── Step 8: Program Selection ────────────────────────────────────────────
     fd.append('startTerm', data.startTerm ?? '');
     fd.append('studyMode', data.studyMode ?? 'online');
-    fd.append('agreeToTerms', String(data.agreeToTerms));
+    fd.append('agreeToTerms', boolToInt(data.agreeToTerms));
     console.log('Final FormData entries before submission:');
     for (const pair of fd.entries()) {
         console.log(pair[0], pair[1]);

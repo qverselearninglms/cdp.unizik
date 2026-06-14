@@ -24,7 +24,7 @@ export const personalInfoSchema = z.object({
 
 export const academicInfoSchema = z.object({
     program_id: idNumberSchema('Program ID', true, 'number'),
-    program_name: z.string().optional(), // This will be populated on the client side based on the selected 
+    program: z.string().optional(), // This will be populated on the client side based on the selected 
 });
 
 export const accountInfoSchema = z.object({

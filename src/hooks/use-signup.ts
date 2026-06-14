@@ -44,7 +44,7 @@ export function useSignup(): UseSignupReturn {
             phone: '',
             password: '',
             confirm_password: '',
-            // program_id and program_name intentionally omitted so RHF treats it as undefined
+            // program_id and program intentionally omitted so RHF treats it as undefined
             // until the student actively selects a program — this makes the
             // academic step's "Next" button correctly blocked until enrollment.
         },

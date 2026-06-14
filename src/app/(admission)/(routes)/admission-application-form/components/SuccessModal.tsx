@@ -24,16 +24,25 @@ export default function SuccessModal({ isOpen }: SuccessModalProps) {
     useEffect(() => {
         if (!isOpen) return;
 
+        // Reset in case modal re-opens
+        setCountdown(COUNTDOWN_SECONDS);
+
         const interval = setInterval(() => {
-            setCountdown(prev => prev - 1);
+            setCountdown(prev => {
+                if (prev <= 1) {
+                    clearInterval(interval); // ✅ stop ticking
+                    return 0;               // ✅ never go negative
+                }
+                return prev - 1;
+            });
         }, 1000);
 
-        return () => clearInterval(interval);
+        return () => clearInterval(interval); // ✅ cleanup on unmount / isOpen change
     }, [isOpen]);
 
-    // Redirect when countdown finishes
+    // Redirect only when countdown has settled at exactly 0
     useEffect(() => {
-        if (isOpen && countdown <= 0) {
+        if (isOpen && countdown === 0) {
             handleRedirect();
         }
     }, [isOpen, countdown, handleRedirect]);
@@ -54,7 +63,7 @@ export default function SuccessModal({ isOpen }: SuccessModalProps) {
                         exit={{ scale: 0.8, opacity: 0, y: 20 }}
                         transition={{ type: 'spring', stiffness: 300, damping: 25 }}
                     >
-                        {/* Success icon area */}
+                        {/* Success icon */}
                         <div className="flex flex-col items-center gap-4 px-8 pt-10">
                             <motion.div
                                 className="flex size-20 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950/50"
@@ -87,34 +96,22 @@ export default function SuccessModal({ isOpen }: SuccessModalProps) {
 
                         {/* Countdown + Button */}
                         <div className="flex flex-col items-center gap-4 px-8 pb-8 pt-6">
-                            {/* Countdown ring */}
                             <div className="relative flex size-16 items-center justify-center">
                                 <svg className="absolute inset-0 -rotate-90" viewBox="0 0 64 64">
                                     <circle
-                                        cx="32"
-                                        cy="32"
-                                        r="28"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="3"
+                                        cx="32" cy="32" r="28"
+                                        fill="none" stroke="currentColor" strokeWidth="3"
                                         className="text-muted/30"
                                     />
                                     <motion.circle
-                                        cx="32"
-                                        cy="32"
-                                        r="28"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="3"
+                                        cx="32" cy="32" r="28"
+                                        fill="none" stroke="currentColor" strokeWidth="3"
                                         strokeLinecap="round"
                                         className="text-primary"
                                         strokeDasharray={2 * Math.PI * 28}
                                         initial={{ strokeDashoffset: 0 }}
                                         animate={{ strokeDashoffset: 2 * Math.PI * 28 }}
-                                        transition={{
-                                            duration: COUNTDOWN_SECONDS,
-                                            ease: 'linear',
-                                        }}
+                                        transition={{ duration: COUNTDOWN_SECONDS, ease: 'linear' }}
                                     />
                                 </svg>
                                 <span className="text-lg font-bold tabular-nums">{countdown}</span>
@@ -124,11 +121,7 @@ export default function SuccessModal({ isOpen }: SuccessModalProps) {
                                 Redirecting in {countdown} second{countdown !== 1 ? 's' : ''}...
                             </p>
 
-                            <Button
-                                onClick={handleRedirect}
-                                className="w-full"
-                                size="default"
-                            >
+                            <Button onClick={handleRedirect} className="w-full" size="default">
                                 Continue to Admission Process
                                 <ArrowRight className="ml-2 size-4" />
                             </Button>
