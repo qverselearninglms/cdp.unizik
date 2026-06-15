@@ -79,7 +79,7 @@ function mapPaymentStatus(apiStatus: string): PaymentStatus {
 
 function mapAdmissionStatus(apiStatus: string): AdmissionOfferStatus {
     switch (apiStatus) {
-        case 'admitted': return 'offered';
+        case 'offered': return 'offered';
         case 'accepted': return 'accepted';
         case 'rejected': return 'rejected';
         case 'declined': return 'declined';
@@ -259,11 +259,23 @@ export const admissionService = {
         return result;
     },
 
+    /* ---------- Accept Admission ---------- */
+    async acceptAdmission(): Promise<AdmissionStudent> {
+        const response = await apiClient.post<AdmissionStudent>(
+            // "/admission/accept",
+            `/admission/respond`,
+            { status: "accepted" },
+            { access_token: true }
+        );
+
+        return transformStudentData(response.data);
+    },
+
     /* ---------- Decline Admission ---------- */
     async declineAdmission(): Promise<AdmissionStudent> {
         const response = await apiClient.post<AdmissionStudent>(
-            "/admission/decline",
-            {},
+            `/admission/respond`,
+            { status: "declined" },
             { access_token: true }
         );
 
@@ -426,6 +438,12 @@ export const admissionMutationOptions = {
         createApiMutationOptions<PaymentInitiationResponse, number>({
             mutationKey: [...admissionKeys.all, "payments", "tuition", "initiate"],
             mutationFn: admissionService.initiateTuitionPayment,
+        }),
+
+    acceptAdmission: () =>
+        createApiMutationOptions<AdmissionStudent, void>({
+            mutationKey: [...admissionKeys.all, "accept"],
+            mutationFn: () => admissionService.acceptAdmission(),
         }),
 
     simulateAppPaymentPaid: () =>

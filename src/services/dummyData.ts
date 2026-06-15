@@ -32,6 +32,7 @@ import type {
    CreateSettingPayload,
    UpdateSettingPayload,
    SettingsQueryParams,
+   ApplicationReviewStatus,
 } from "@/types/school";
 
 // ── helpers ─────────────────────────────────
@@ -1011,13 +1012,29 @@ export const dummyAdmissionApplicationApi = {
       await delay(600);
       const app = admissionApplications.find((x) => x.id === id);
       if (!app) throw new Error("Application not found");
-      app.status = payload.status;
-      app.denial_reason = payload.status === "denied" ? (payload.denial_reason ?? null) : null;
+
+      // Map payload status to ApplicationReviewStatus
+      const statusMap: Record<ReviewApplicationPayload['application_status'], ApplicationReviewStatus> = {
+         'offered': 'approved',     // or whatever 'offered' maps to
+         'accepted': 'approved',    // or whatever 'accepted' maps to  
+         'rejected': 'denied'       // or whatever 'rejected' maps to
+      };
+
+      const mappedStatus = statusMap[payload.application_status];
+
+      app.status = mappedStatus;  // ✅ Now matches ApplicationReviewStatus
+      app.denial_reason = payload.application_status === "rejected"
+         ? (payload.denial_reason ?? null)
+         : null;
       app.reviewed_at = new Date().toISOString();
       app.reviewed_by = "Current Manager";
       app.updated_at = new Date().toISOString();
-      return { data: { ...app }, message: `Application ${payload.status}` };
-   },
+
+      return {
+         data: { ...app },
+         message: `Application ${payload.application_status}`
+      };
+   }
 };
 
 // ─────────────────────────────────────────────

@@ -5,19 +5,25 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Eye, FileText, FileType2, Trash2, Upload, X, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ApplicantDocument } from "@/types/school";
+import { formatImageUrl } from "@/lib/imageUrl";
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
 type FileCategory = "image" | "pdf" | "other";
 
 function getFileCategory(doc: ApplicantDocument): FileCategory {
-   // Prefer explicit type field if present
    const type = doc.type?.toLowerCase() ?? "";
    if (type.startsWith("image")) return "image";
    if (type === "pdf" || type === "application/pdf") return "pdf";
 
-   // Fall back to URL / name extension
-   const ext = (doc.url ?? doc.name ?? "").split(".").pop()?.toLowerCase() ?? "";
+   // Strip query params before extracting extension
+   const urlPath = (doc.url ?? "").split("?")[0];
+   const urlExt = urlPath.split(".").pop()?.toLowerCase() ?? "";
+   const nameExt = (doc.name ?? "").split(".").pop()?.toLowerCase() ?? "";
+   const ext = urlExt || nameExt;
+
+   console.log("getFileCategory", { name: doc.name, type: doc.type, urlExt, nameExt, ext }); // ← add temporarily
+
    if (["jpg", "jpeg", "png", "gif", "webp", "svg", "avif"].includes(ext)) return "image";
    if (ext === "pdf") return "pdf";
 
@@ -47,7 +53,7 @@ export function DocumentCard({ document, editable = false, onRemove, onReplace }
          setImagePreview(true);
       } else {
          // PDF and everything else — open in a new tab so the browser handles it natively
-         window.open(document.url, "_blank", "noopener,noreferrer");
+         window.open(formatImageUrl(document.url), "_blank", "noopener,noreferrer");
       }
    }
 
@@ -138,7 +144,7 @@ export function DocumentCard({ document, editable = false, onRemove, onReplace }
                      <div className="p-4">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
-                           src={document.url}
+                           src={formatImageUrl(document.url)}
                            alt={document.name}
                            className="w-full h-auto rounded-lg object-contain max-h-[60vh]"
                         />

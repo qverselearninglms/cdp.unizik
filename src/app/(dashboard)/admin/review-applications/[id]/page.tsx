@@ -33,7 +33,7 @@ import type {
    ApplicantDocument,
    UpdateApplicationPayload,
 } from "@/types/school";
-import { useAuth } from "@/hooks/use-auth";
+import { CertificateViewer } from "@/components/custom/ImageLightbox";
 
 const statusVariantMap: Record<ApplicationReviewStatus, "warning" | "info" | "success" | "destructive"> = {
    pending: "warning",
@@ -53,9 +53,7 @@ export default function ApplicationDetailPage() {
    const { id } = useParams<{ id: string }>();
    const router = useRouter();
    const queryClient = useQueryClient();
-   const auth = useAuth();
-   const user = auth.user;
-   const isAdmin = (user?.role.toLowerCase() === "ADMIN");//hasRole("admin");
+   const isAdmin = true; // True because this is the admin review page. You can adjust this based on your auth logic.
 
    const [denyModalOpen, setDenyModalOpen] = useState(false);
    const [denyReason, setDenyReason] = useState("");
@@ -78,9 +76,11 @@ export default function ApplicationDetailPage() {
 
    const reviewMutation = useMutation({
       ...applicationReviewMutationOptions.review(),
-      onSuccess: (res) => {
-         queryClient.invalidateQueries({ queryKey: applicationReviewKeys.detail(id) });
-         queryClient.invalidateQueries({ queryKey: applicationReviewKeys.all });
+      onSuccess: async (res) => {
+         // Force fresh fetch — the review endpoint returns no data so we must re-fetch
+         await queryClient.invalidateQueries({ queryKey: applicationReviewKeys.detail(id) });
+         await queryClient.invalidateQueries({ queryKey: applicationReviewKeys.all });
+         await queryClient.refetchQueries({ queryKey: applicationReviewKeys.detail(id) }); // ← add this
          toast.success(res.message ?? "Decision submitted");
          setDenyModalOpen(false);
          setConfirmApproveOpen(false);
@@ -88,54 +88,6 @@ export default function ApplicationDetailPage() {
       onError: () => toast.error("Failed to submit decision"),
    });
 
-   // const handleFieldSave = (section: keyof UpdateApplicationPayload, key: string, value: string) => {
-   //    if (!application) return;
-   //    const payload: UpdateApplicationPayload = {};
-
-   //    if (section === "personal_info") {
-   //       payload.personal_info = { [key]: value } as UpdateApplicationPayload["personal_info"];
-   //    } else if (section === "program_choice") {
-   //       payload.program_choice = { [key]: key === "jamb_score" ? Number(value) : value } as UpdateApplicationPayload["program_choice"];
-   //    }
-
-   //    updateMutation.mutate({ id, payload });
-   // };
-
-   // const handleAcademicRecordSave = (index: number, key: keyof ApplicantAcademicRecord, value: string) => {
-   //    if (!application) return;
-   //    const updated = [...application.academic_records];
-   //    updated[index] = { ...updated[index], [key]: value };
-   //    updateMutation.mutate({ id, payload: { academic_records: updated } });
-   // };
-
-   // const handleDocumentRemove = (docId: string) => {
-   //    if (!application) return;
-   //    const updated = application.documents.filter((d) => d.id !== docId);
-   //    updateMutation.mutate({ id, payload: { documents: updated } });
-   // };
-
-   // const handleDocumentReplace = (docId: string, _file: File) => {
-   //    if (!application) return;
-   //    // In a real app, upload the file first, then update the URL
-   //    const updated = application.documents.map((d) =>
-   //       d.id === docId ? { ...d, url: URL.createObjectURL(_file), name: _file.name, uploaded_at: new Date().toISOString() } : d
-   //    );
-   //    updateMutation.mutate({ id, payload: { documents: updated } });
-   //    toast.success("Document replaced");
-   // };
-
-   // const handleDocumentAdd = (_file: File) => {
-   //    if (!application) return;
-   //    const newDoc: ApplicantDocument = {
-   //       id: `doc-${Date.now()}`,
-   //       name: _file.name,
-   //       type: "other",
-   //       url: URL.createObjectURL(_file),
-   //       uploaded_at: new Date().toISOString(),
-   //    };
-   //    updateMutation.mutate({ id, payload: { documents: [...application.documents, newDoc] } });
-   //    toast.success("Document added");
-   // };
    const handleFieldSave = (key: keyof UpdateApplicationPayload, value: string | number) => {
       if (!application) return;
       updateMutation.mutate({ id, payload: { [key]: value }, asAdmin: isAdmin });
@@ -179,7 +131,7 @@ export default function ApplicationDetailPage() {
    };
 
    const handleApprove = () => {
-      reviewMutation.mutate({ id, payload: { status: "approved" } });
+      reviewMutation.mutate({ id, payload: { application_status: "offered" } });
    };
 
    const handleDeny = () => {
@@ -187,7 +139,7 @@ export default function ApplicationDetailPage() {
          toast.error("Please provide a reason for denial");
          return;
       }
-      reviewMutation.mutate({ id, payload: { status: "denied", denial_reason: denyReason } });
+      reviewMutation.mutate({ id, payload: { application_status: "rejected", denial_reason: denyReason } });
    };
 
    const isEditable = application?.status === "pending" || application?.status === "under_review";
@@ -391,15 +343,17 @@ export default function ApplicationDetailPage() {
                            <EditableField label="Grade" value={record.grade} editable={isEditable} onSave={(v) => handleAcademicRecordSave(idx, "grade", v)} />
                         </div>
                         {record.certificate_url && (
-                           <div className="mt-2">
-                              <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Certificate</p>
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img
-                                 src={record.certificate_url}
-                                 alt={`${record.qualification} Certificate`}
-                                 className="w-full max-w-sm h-auto rounded-xl border border-border object-cover"
-                              />
-                           </div>
+                           <CertificateViewer
+                              url={record.certificate_url}
+                              label={`${record.qualification} Certificate`}
+                              editable={isEditable}
+                              onDelete={() => handleAcademicRecordSave(idx, "certificate_url", "")}
+                              onReplace={(file) => {
+                                 // Upload the file first, then save the returned URL
+                                 const previewUrl = URL.createObjectURL(file);
+                                 handleAcademicRecordSave(idx, "certificate_url", previewUrl);
+                              }}
+                           />
                         )}
                      </div>
                   ))}

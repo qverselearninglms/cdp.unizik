@@ -525,7 +525,7 @@ export type UpdateApplicationPayload = Partial<{
 }>;
 
 export type ReviewApplicationPayload = {
-   status: "approved" | "denied";
+   application_status: "offered" | "rejected" | "accepted" //AdmissionOfferStatus //"approved" | "denied";
    denial_reason?: string;
 };
 

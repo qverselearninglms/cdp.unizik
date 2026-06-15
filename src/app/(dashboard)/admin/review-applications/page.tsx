@@ -66,13 +66,9 @@ export default function ReviewApplicationsPage() {
       {
          key: "applicant_name",
          header: "Applicant",
-         sortable: true,
          render: (row) => {
-            // Find original API data for this application
-            const originalApiData = applicationsData.find((app: any) => String(app.id) === row.id);
-            const fullName = originalApiData.personal_info?.first_name + " " + originalApiData.personal_info?.last_name || "Unknown Applicant";
+            const fullName = `${row.personal_info.first_name} ${row.personal_info.last_name}`.trim() || "Unknown Applicant";
             const nameParts = fullName.split(" ");
-
             return (
                <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
@@ -82,7 +78,7 @@ export default function ReviewApplicationsPage() {
                   </div>
                   <div>
                      <p className="font-medium text-foreground">{fullName}</p>
-                     <p className="text-[11px] text-muted-foreground">{originalApiData?.email || ""}</p>
+                     <p className="text-[11px] text-muted-foreground">{row.personal_info.email}</p>
                   </div>
                </div>
             );
@@ -91,26 +87,20 @@ export default function ReviewApplicationsPage() {
       {
          key: "program",
          header: "Program",
-         render: (row) => {
-            const originalApiData = applicationsData.find((app: any) => String(app.id) === row.id);
-            return (
-               <span className="text-foreground">
-                  {originalApiData?.program?.name || row.program_choice.first_choice_program_name || "Not specified"}
-               </span>
-            );
-         },
+         render: (row) => (
+            <span className="text-foreground">
+               {row.program_choice.first_choice_program_name || "Not specified"}
+            </span>
+         ),
       },
       {
          key: "study_mode",
          header: "Study Mode",
-         render: (row) => {
-            const originalApiData = applicationsData.find((app: any) => String(app.id) === row.id);
-            return (
-               <span className="capitalize text-foreground">
-                  {originalApiData?.studyMode || "online"}
-               </span>
-            );
-         },
+         render: (row) => (
+            <span className="capitalize text-foreground">
+               {row.program_choice.entry_mode || "online"}
+            </span>
+         ),
       },
       {
          key: "submitted_at",
@@ -225,6 +215,10 @@ export default function ReviewApplicationsPage() {
                      searchExtractor={(row) => {
                         const originalApiData = applicationsData.find((app: any) => String(app.id) === row.id);
                         return [
+                           row.personal_info.first_name,
+                           row.personal_info.last_name,
+                           row.personal_info.email,
+                           row.program_choice.first_choice_program_name,
                            originalApiData?.name || "",
                            originalApiData?.email || "",
                            originalApiData?.program?.name || "",

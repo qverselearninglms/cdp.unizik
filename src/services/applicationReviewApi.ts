@@ -98,7 +98,7 @@ export const applicationReviewApi = {
 
       return apiClient.put<ApiSingleResponse<AdmissionApplication>>(
          endpoint,
-         { id, ...payload }
+         { user_id: id, ...payload }
       );
    },
 
@@ -108,9 +108,9 @@ export const applicationReviewApi = {
     */
    review: async (id: string, payload: ReviewApplicationPayload) => {
       return apiClient.post<ApiSingleResponse<AdmissionApplication>>(
-         // `/application/all-applications/${id}/review`,
-         `/admission/respond`,
-         payload
+         // `/admission/respond`,
+         `/application/update-admission-status`,
+         { user_id: id, ...payload }
       );
    },
 };
@@ -149,8 +149,74 @@ export const applicationReviewQueryOptions = {
          queryKey: applicationReviewKeys.list(filters, adminParams),
          queryFn: async () => {
             const res = await applicationReviewApi.list(filters, adminParams);
-            // Return the data array directly
-            return (res.data as any) || [];
+            const raw = (res.data as any) || [];
+
+            // Transform each item exactly like the detail query does
+            return raw.map((item: any) => {
+               // The list endpoint may return a flat structure or a nested one —
+               // handle both shapes
+               if (item.student_info && item.application_info) {
+                  // Nested shape (same as detail)
+                  return transformApiApplication(
+                     item.student_info,
+                     item.application_info,
+                     item.program_choice
+                  );
+               }
+
+               // Flat shape — build minimal student_info and application_info from the flat object
+               // so mapToReviewStatus can do its job
+               const synthetic_student_info: Partial<StudentInfoData> = {
+                  id: item.id,
+                  first_name: item.first_name ?? item.personal_info?.first_name ?? "",
+                  last_name: item.last_name ?? item.personal_info?.last_name ?? "",
+                  other_name: item.other_name ?? item.personal_info?.middle_name ?? null,
+                  email: item.email ?? item.personal_info?.email ?? "",
+                  phone_number: item.phone_number ?? item.personal_info?.phone ?? "",
+                  admission_status: item.admission_status ?? "",
+                  application_payment_status: item.application_payment_status ?? "",
+                  progress_status: item.progress_status ?? "",
+                  reason_for_denial: item.reason_for_denial ?? null,
+                  academic_session: item.session ?? item.academic_session ?? "",
+                  created_at: item.created_at ?? new Date().toISOString(),
+                  updated_at: item.updated_at ?? new Date().toISOString(),
+                  program: item.program ?? "",
+                  program_id: item.program_id ?? 0,
+                  nationality: item.nationality ?? "Nigeria",
+                  state: item.state ?? "",
+                  images: item.images ?? null,
+               };
+
+               const synthetic_application_info: Partial<ApplicationFormData> = {
+                  id: item.application_id ?? item.id,
+                  user_id: item.id,
+                  gender: item.gender ?? "male",
+                  lga: item.lga ?? "",
+                  contact_address: item.contact_address ?? "",
+                  hometown_address: item.hometown_address ?? "",
+                  dob: item.dob ?? "",
+                  images: item.images ?? null,
+                  passport: item.passport ?? null,
+                  other_documents: item.other_documents ?? null,
+                  next_of_kin_name: item.next_of_kin_name ?? "",
+                  next_of_kin_relationship: item.next_of_kin_relationship ?? "",
+                  next_of_kin_phone_number: item.next_of_kin_phone_number ?? "",
+                  next_of_kin_email: item.next_of_kin_email ?? "",
+                  next_of_kin_address: item.next_of_kin_address ?? "",
+                  next_of_kin_occupation: item.next_of_kin_occupation ?? "",
+                  next_of_kin_workplace: item.next_of_kin_workplace ?? "",
+                  is_next_of_kin_primary_contact: item.is_next_of_kin_primary_contact ?? 0,
+                  next_of_kin_alternate_phone_number: item.next_of_kin_alternate_phone_number ?? null,
+                  updated_at: item.updated_at ?? new Date().toISOString(),
+                  created_at: item.created_at ?? new Date().toISOString(),
+               };
+
+               return transformApiApplication(
+                  synthetic_student_info as StudentInfoData,
+                  synthetic_application_info as ApplicationFormData,
+                  item.program_choice
+               );
+            });
          },
       }),
 
@@ -194,11 +260,11 @@ export const applicationReviewQueryOptions = {
 export const applicationReviewMutationOptions = {
    update: () =>
       createApiMutationOptions<ApiSingleResponse<AdmissionApplication>,
-         { id: string; payload: UpdateApplicationPayload; asAdmin?: boolean}>({
-         mutationKey: [...applicationReviewKeys.all, "update"],
-         mutationFn: ({ id, payload, asAdmin }) =>
-            applicationReviewApi.update(id, payload, asAdmin) as unknown as Promise<ApiSingleResponse<AdmissionApplication>>,
-      }),
+         { id: string; payload: UpdateApplicationPayload; asAdmin?: boolean }>({
+            mutationKey: [...applicationReviewKeys.all, "update"],
+            mutationFn: ({ id, payload, asAdmin }) =>
+               applicationReviewApi.update(id, payload, asAdmin) as unknown as Promise<ApiSingleResponse<AdmissionApplication>>,
+         }),
 
    review: () =>
       createApiMutationOptions<
@@ -211,40 +277,41 @@ export const applicationReviewMutationOptions = {
       }),
 };
 
-// Add this helper function
+
+function mapToReviewStatus(student_info: StudentInfoData): ApplicationReviewStatus {
+   // Denial takes precedence — backend sets reason_for_denial on reject
+   if (student_info?.reason_for_denial) {
+      return "denied";
+   }
+   // Backend sends "admitted" when admin approves
+   if (
+      student_info?.progress_status === "accepted" ||
+      student_info?.admission_status === "offered" ||   // ← was "admitted", backend actually sends "offered"
+      student_info?.admission_status === "admitted"
+   ) {
+      return "approved";
+   }
+   // Application fee paid → in the queue for review
+   if (student_info?.application_payment_status === "paid") {
+      return "under_review";
+   }
+   return "pending";
+}
+
+// ── Transform ────────────────────────────────────────────────────────────────
+
 export function transformApiApplication(
    student_info: StudentInfoData,
    application_info: ApplicationFormData,
    program_choice?: ProgramChoice
 ): AdmissionApplication {
 
-   // ── Status resolution ─────────────────────────────────────
-   let status: ApplicationReviewStatus = "pending";
-   if (student_info?.reason_for_denial) {
-      status = "denied";
-   } else if (
-      student_info?.progress_status === "accepted" ||
-      student_info?.admission_status === "offered"
-   ) {
-      status = "approved";
-   } else if (student_info?.application_payment_status === "paid") {
-      status = "under_review";
-   }
+   const status = mapToReviewStatus(student_info);
 
    // ── Documents ─────────────────────────────────────────────
-   // Named single-file document slots
    const namedDocFields: Array<keyof ApplicationFormData> = [
-      "first_school_leaving",
-      "o_level",
-      "degree",
-      "college",
-      "ond",
-      "hnd",
-      "masters",
-      "phd",
-      "professional",
-      "degree_transcript",
-      "others",
+      "first_school_leaving", "o_level", "degree", "college", "ond",
+      "hnd", "masters", "phd", "professional", "degree_transcript", "others",
    ];
 
    const documents: ApplicantDocument[] = [];
@@ -262,7 +329,6 @@ export function transformApiApplication(
       }
    });
 
-   // other_documents array (the 4 extra uploads)
    const otherDocs = application_info?.other_documents;
    if (Array.isArray(otherDocs)) {
       otherDocs.forEach((url, i) => {
@@ -281,7 +347,6 @@ export function transformApiApplication(
    // ── Academic records ──────────────────────────────────────
    const academic_records: ApplicantAcademicRecord[] = [];
 
-   // Undergraduate degree
    if (application_info?.university || application_info?.undergraduateDegree) {
       academic_records.push({
          institution: application_info.university ?? "Not Specified",
@@ -292,11 +357,7 @@ export function transformApiApplication(
       });
    }
 
-   // First sitting — use the granular fields the API actually returns
-   if (
-      application_info?.first_sitting_type ||
-      application_info?.first_sitting_result
-   ) {
+   if (application_info?.first_sitting_type || application_info?.first_sitting_result) {
       academic_records.push({
          institution: application_info.first_sitting_type ?? "N/A",
          qualification: `${application_info.first_sitting_type ?? ""} — ${application_info.first_sitting_exam_number ?? ""}`.trim(),
@@ -306,11 +367,7 @@ export function transformApiApplication(
       });
    }
 
-   // Second sitting
-   if (
-      application_info?.second_sitting_type ||
-      application_info?.second_sitting_result
-   ) {
+   if (application_info?.second_sitting_type || application_info?.second_sitting_result) {
       academic_records.push({
          institution: application_info.second_sitting_type ?? "N/A",
          qualification: `${application_info.second_sitting_type ?? ""} — ${application_info.second_sitting_exam_number ?? ""}`.trim(),
@@ -320,7 +377,6 @@ export function transformApiApplication(
       });
    }
 
-   // O-Level standalone (if not already captured in first/second sitting)
    if (application_info?.o_level && academic_records.length === 0) {
       academic_records.push({
          institution: "Secondary School",
@@ -342,30 +398,24 @@ export function transformApiApplication(
    }
 
    // ── Next of kin ───────────────────────────────────────────
-   const next_of_kin: ApplicantNextOfKin | null =
-      application_info?.next_of_kin_name
-         ? {
-            name: application_info.next_of_kin_name,
-            relationship: application_info.next_of_kin_relationship,
-            phone_number: application_info.next_of_kin_phone_number,
-            alternate_phone_number:
-               application_info.next_of_kin_alternate_phone_number ?? null,
-            email: application_info.next_of_kin_email,
-            address: application_info.next_of_kin_address,
-            occupation: application_info.next_of_kin_occupation,
-            workplace: application_info.next_of_kin_workplace,
-            is_primary_contact: Boolean(
-               application_info.is_next_of_kin_primary_contact
-            ),
-         }
-         : null;
+   const next_of_kin: ApplicantNextOfKin | null = application_info?.next_of_kin_name
+      ? {
+         name: application_info.next_of_kin_name,
+         relationship: application_info.next_of_kin_relationship,
+         phone_number: application_info.next_of_kin_phone_number,
+         alternate_phone_number: application_info.next_of_kin_alternate_phone_number ?? null,
+         email: application_info.next_of_kin_email,
+         address: application_info.next_of_kin_address,
+         occupation: application_info.next_of_kin_occupation,
+         workplace: application_info.next_of_kin_workplace,
+         is_primary_contact: Boolean(application_info.is_next_of_kin_primary_contact),
+      }
+      : null;
 
    // ── Passport URL ──────────────────────────────────────────
-   // Backend returns a PHP temp path for new uploads; prefer the stored images field
    const passportUrl =
       application_info?.images ||
-      (application_info?.passport &&
-         !application_info.passport.startsWith("/tmp/")
+      (application_info?.passport && !application_info.passport.startsWith("/tmp/")
          ? application_info.passport
          : null) ||
       "/avatars/default_result_image.jpg";
@@ -378,7 +428,7 @@ export function transformApiApplication(
       created_at: student_info?.created_at ?? new Date().toISOString(),
       updated_at: student_info?.updated_at ?? new Date().toISOString(),
       session: student_info?.academic_session ?? "N/A",
-      status,
+      status,                                              // ← ApplicationReviewStatus
       denial_reason: student_info?.reason_for_denial ?? null,
       reviewed_by: "System Admin",
       reviewed_at: student_info?.updated_at ?? null,
@@ -390,9 +440,7 @@ export function transformApiApplication(
          passport_url: passportUrl,
          email: student_info?.email ?? "",
          date_of_birth: application_info?.dob ?? "",
-         gender: (application_info?.gender ?? "male").toLowerCase() as
-            | "male"
-            | "female",
+         gender: (application_info?.gender ?? "male").toLowerCase() as "male" | "female",
          nationality: student_info?.nationality ?? "Nigeria",
          state_of_origin: student_info?.state ?? "",
          lga: application_info?.lga ?? "",
@@ -404,23 +452,15 @@ export function transformApiApplication(
       },
       program_choice: {
          first_choice_program_id: String(
-            program_choice?.first_choice_program_id ??
-            student_info?.program_id ??
-            "N/A"
+            program_choice?.first_choice_program_id ?? student_info?.program_id ?? "N/A"
          ),
          first_choice_program_name:
             program_choice?.first_choice_program_name ||
             student_info?.program ||
             `Program ID: ${student_info?.program_id ?? "N/A"}`,
-         second_choice_program_id: String(
-            program_choice?.second_choice_program_id ?? "N/A"
-         ),
-         second_choice_program_name:
-            program_choice?.second_choice_program_name ?? "N/A",
-         entry_mode: (program_choice?.entry_mode ?? "utme") as
-            | "utme"
-            | "direct_entry"
-            | "transfer",
+         second_choice_program_id: String(program_choice?.second_choice_program_id ?? "N/A"),
+         second_choice_program_name: program_choice?.second_choice_program_name ?? "N/A",
+         entry_mode: (program_choice?.entry_mode ?? "utme") as "utme" | "direct_entry" | "transfer",
          jamb_reg_no: program_choice?.jamb_reg_no ?? "N/A",
          jamb_score: program_choice?.jamb_score ?? 0,
       },

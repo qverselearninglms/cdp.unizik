@@ -30,6 +30,8 @@ import type {
    ApplicantDocument,
    UpdateApplicationPayload,
 } from "@/types/school";
+import { formatImageUrl } from "@/lib/imageUrl";
+import { CertificateViewer } from "@/components/custom/ImageLightbox";
 
 const statusVariantMap: Record<ApplicationReviewStatus, "warning" | "info" | "success" | "destructive"> = {
    pending: "warning",
@@ -331,15 +333,17 @@ export default function MyApplicationPage() {
                            <EditableField label="Grade" value={record.grade} editable={isEditable} onSave={(v) => handleAcademicRecordSave(idx, "grade", v)} />
                         </div>
                         {record.certificate_url && (
-                           <div className="mt-2">
-                              <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">Certificate</p>
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img
-                                 src={record.certificate_url}
-                                 alt={`${record.qualification} Certificate`}
-                                 className="w-full max-w-sm h-auto rounded-xl border border-border object-cover"
-                              />
-                           </div>
+                           <CertificateViewer
+                              url={record.certificate_url}
+                              label={`${record.qualification} Certificate`}
+                              editable={isEditable}
+                              onDelete={() => handleAcademicRecordSave(idx, "certificate_url", "")}
+                              onReplace={(file) => {
+                                 // Upload the file first, then save the returned URL
+                                 const previewUrl = URL.createObjectURL(file);
+                                 handleAcademicRecordSave(idx, "certificate_url", previewUrl);
+                              }}
+                           />
                         )}
                      </div>
                   ))}

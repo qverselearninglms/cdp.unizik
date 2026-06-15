@@ -22,8 +22,30 @@ interface AdmissionState {
  * Derives the current step from the student's data.
  * This is the single source of truth for which section to display.
  */
+// function deriveStep(student: AdmissionStudent | null): AdmissionStep {
+//     if (!student) return 0; // APPLICATION_PAYMENT
+
+//     // Step 0 → Application payment not done
+//     if (student.application_payment_status !== "paid") return 0;
+
+//     // Step 1 → Paid but has not applied yet
+//     if (!student.has_applied) return 1;
+
+//     // Step 2 → Applied but admission not yet offered/accepted
+//     if (student.admission_status === "pending" || student.admission_status === "rejected"
+//         || student.admission_status === "declined" || student.admission_status === "expired") return 2;
+
+//     // Step 3 → Admission offered or accepted, needs acceptance fee payment
+//     if (student.acceptance_payment_status !== "paid") return 3;
+
+//     // Step 4 → Acceptance fee paid, tuition not paid
+//     if (student.acceptance_payment_status === "paid" && student.tuition_payment_status !== "paid") return 4;
+
+//     // Step 5 → Everything done
+//     return 5;
+// }
 function deriveStep(student: AdmissionStudent | null): AdmissionStep {
-    if (!student) return 0; // APPLICATION_PAYMENT
+    if (!student) return 0;
 
     // Step 0 → Application payment not done
     if (student.application_payment_status !== "paid") return 0;
@@ -31,15 +53,21 @@ function deriveStep(student: AdmissionStudent | null): AdmissionStep {
     // Step 1 → Paid but has not applied yet
     if (!student.has_applied) return 1;
 
-    // Step 2 → Applied but admission not yet offered/accepted
-    if (student.admission_status === "pending" || student.admission_status === "rejected"
-        || student.admission_status === "declined" || student.admission_status === "expired") return 2;
+    // Step 2 → Applied but admission not yet decided, or offered but not yet accepted
+    if (
+        student.admission_status === "pending"  ||
+        student.admission_status === "offered"  ||  // ← was missing; student must accept/decline first
+        student.admission_status === "rejected" ||
+        student.admission_status === "declined" ||
+        student.admission_status === "expired"
+    ) return 2;
 
-    // Step 3 → Admission offered or accepted, needs acceptance fee payment
+    // Step 3 → Admission accepted, acceptance fee not yet paid
+    // Only reachable when admission_status === "accepted"
     if (student.acceptance_payment_status !== "paid") return 3;
 
-    // Step 4 → Acceptance fee paid, tuition not paid
-    if (student.acceptance_payment_status === "paid" && student.tuition_payment_status !== "paid") return 4;
+    // Step 4 → Acceptance fee paid, tuition not yet paid
+    if (student.tuition_payment_status !== "paid") return 4;
 
     // Step 5 → Everything done
     return 5;

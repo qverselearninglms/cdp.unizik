@@ -63,6 +63,22 @@ async function syncAdmissionStudent(
 }
 
 /* ------------------------------------------------------------------ */
+/*  Accept Admission                                                     */
+/* ------------------------------------------------------------------ */
+
+export function useAcceptAdmission() {
+    const setStudent = useAdmissionStore((s) => s.setStudent);
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        ...admissionMutationOptions.acceptAdmission(),
+        onSuccess: async (data) => {
+            await syncAdmissionStudent(queryClient, setStudent, data);
+        },
+    });
+}
+
+/* ------------------------------------------------------------------ */
 /*  Fetch Fees                                                          */
 /* ------------------------------------------------------------------ */
 
@@ -94,6 +110,7 @@ export function useStudentAdmission() {
         staleTime: 1000 * 60,
         queryFn: async () => {
             const data = await admissionService.fetchStudentAdmission(user as UserInterface);
+            console.log("Fetched student admission data:", data);
             setStudent(data);
             return data;
         },

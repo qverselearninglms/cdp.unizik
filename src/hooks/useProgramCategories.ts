@@ -14,7 +14,7 @@ interface PaginatedCategories {
 
 async function fetchCategories(): Promise<Category[]> {
     const res = await fetch(
-        `${APP_CONFIG.apiUrl}/api/v1/odl/categories`,
+        `${APP_CONFIG.apiUrl}/odl/categories`,
         { next: { revalidate: 3600 } } // ISR-friendly cache
     );
 
