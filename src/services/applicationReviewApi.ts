@@ -29,6 +29,25 @@ interface AdminApplicationParams {
    application_payment_id?: string | number;
 }
 
+// Maps the list endpoint's status strings → ApplicationReviewStatus
+// The list backend sends mixed case and different values than the detail endpoint
+function mapListStatus(rawStatus: string): ApplicationReviewStatus {
+   switch (rawStatus) {
+      case "offered":
+      case "accepted":
+      case "admitted":
+         return "approved";
+      case "rejected":
+      case "denied":
+         return "denied";
+      case "under_review":
+         return "under_review";
+      case "pending":
+      default:
+         return "pending";
+   }
+}
+
 // ── Raw API functions ────────────────────────────────────────────────────────
 
 export const applicationReviewApi = {
@@ -149,8 +168,61 @@ export const applicationReviewQueryOptions = {
          queryKey: applicationReviewKeys.list(filters, adminParams),
          queryFn: async () => {
             const res = await applicationReviewApi.list(filters, adminParams);
-            // Return the data array directly
-            return (res.data as any) || [];
+            const raw = (res.data as any) || [];
+
+            return raw.map((item: any): AdmissionApplication => {
+               // Normalize status — backend sends mixed case ("ACCEPTED", "pending")
+               const rawStatus = (item.status ?? item.admission_status ?? "pending").toLowerCase();
+               const status = mapListStatus(rawStatus);
+
+               return {
+                  id: item.id,
+                  applicant_id: item.applicant_id,   // ← correct: used for navigation
+                  admission_cycle_id: item.admission_cycle_id ?? "N/A",
+                  session: item.session ?? "N/A",
+                  status,
+                  personal_info: {
+                     first_name: item.personal_info?.first_name ?? "",
+                     last_name: item.personal_info?.last_name ?? "",
+                     middle_name: item.personal_info?.middle_name ?? "",
+                     date_of_birth: item.personal_info?.date_of_birth ?? "",
+                     gender: (item.personal_info?.gender ?? "male").toLowerCase() as "male" | "female",
+                     nationality: item.personal_info?.nationality ?? "Nigeria",
+                     state_of_origin: item.personal_info?.state_of_origin ?? "",
+                     lga: item.personal_info?.lga ?? "",
+                     phone: item.personal_info?.phone ?? "",
+                     email: item.personal_info?.email ?? "",
+                     address: item.personal_info?.address ?? "",
+                     passport_url: item.personal_info?.passport_url ?? "/avatars/default_result_image.jpg",
+                  },
+                  next_of_kin: null,
+                  academic_records: item.academic_records ?? [],
+                  program_choice: {
+                     first_choice_program_id: String(item.program_choice?.first_choice_program_id ?? "N/A"),
+                     first_choice_program_name: item.program_choice?.first_choice_program_name ?? "Not specified",
+                     second_choice_program_id: String(item.program_choice?.second_choice_program_id ?? "N/A"),
+                     second_choice_program_name: item.program_choice?.second_choice_program_name ?? "N/A",
+                     entry_mode: (item.program_choice?.entry_mode ?? "utme") as "utme" | "direct_entry" | "transfer",
+                     jamb_reg_no: item.program_choice?.jamb_reg_no ?? "N/A",
+                     jamb_score: item.program_choice?.jamb_score ?? 0,
+                  },
+                  documents: Array.isArray(item.documents)
+                     ? item.documents
+                        .filter((d: any) => typeof d === "string" ? d : d?.url)
+                        .map((d: any, i: number) =>
+                           typeof d === "string"
+                              ? { id: `doc-${i}`, name: `Document ${i + 1}`, type: "other", url: d, uploaded_at: item.updated_at }
+                              : d
+                        )
+                     : [],
+                  submitted_at: item.submitted_at ?? item.created_at ?? new Date().toISOString(),
+                  reviewed_at: item.reviewed_at ?? null,
+                  reviewed_by: item.reviewed_by ?? null,
+                  denial_reason: item.denial_reason ?? null,
+                  created_at: item.created_at ?? new Date().toISOString(),
+                  updated_at: item.updated_at ?? new Date().toISOString(),
+               };
+            });
          },
       }),
 
