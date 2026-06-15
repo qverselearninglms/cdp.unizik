@@ -135,10 +135,18 @@ export const phoneSchema = (optional: boolean = false) => {
 }
 
 export const shortStringSchema = (label: string, optional: boolean = false, minLength: number = 2, maxLength: number = 100) => {
-    let schema = z.string()
-        .min(minLength, `${label} must be at least 2 characters`)
-        .max(maxLength, `${label} must be at most 100 characters`);
-    return optional ? schema.optional() : schema;
+    const schema = z.string()
+        .max(maxLength, `${label} must be at most ${maxLength} characters`);
+
+    if (optional) {
+        return z.union([
+            z.literal(""),
+            z.undefined(),
+            schema.min(minLength, `${label} must be at least ${minLength} characters`),
+        ]);
+    }
+
+    return schema.min(minLength, `${label} must be at least ${minLength} characters`);
 }
 
 export const longStringSchema = (label: string, optional: boolean = false) => {
