@@ -149,74 +149,8 @@ export const applicationReviewQueryOptions = {
          queryKey: applicationReviewKeys.list(filters, adminParams),
          queryFn: async () => {
             const res = await applicationReviewApi.list(filters, adminParams);
-            const raw = (res.data as any) || [];
-
-            // Transform each item exactly like the detail query does
-            return raw.map((item: any) => {
-               // The list endpoint may return a flat structure or a nested one —
-               // handle both shapes
-               if (item.student_info && item.application_info) {
-                  // Nested shape (same as detail)
-                  return transformApiApplication(
-                     item.student_info,
-                     item.application_info,
-                     item.program_choice
-                  );
-               }
-
-               // Flat shape — build minimal student_info and application_info from the flat object
-               // so mapToReviewStatus can do its job
-               const synthetic_student_info: Partial<StudentInfoData> = {
-                  id: item.id,
-                  first_name: item.first_name ?? item.personal_info?.first_name ?? "",
-                  last_name: item.last_name ?? item.personal_info?.last_name ?? "",
-                  other_name: item.other_name ?? item.personal_info?.middle_name ?? null,
-                  email: item.email ?? item.personal_info?.email ?? "",
-                  phone_number: item.phone_number ?? item.personal_info?.phone ?? "",
-                  admission_status: item.admission_status ?? "",
-                  application_payment_status: item.application_payment_status ?? "",
-                  progress_status: item.progress_status ?? "",
-                  reason_for_denial: item.reason_for_denial ?? null,
-                  academic_session: item.session ?? item.academic_session ?? "",
-                  created_at: item.created_at ?? new Date().toISOString(),
-                  updated_at: item.updated_at ?? new Date().toISOString(),
-                  program: item.program ?? "",
-                  program_id: item.program_id ?? 0,
-                  nationality: item.nationality ?? "Nigeria",
-                  state: item.state ?? "",
-                  images: item.images ?? null,
-               };
-
-               const synthetic_application_info: Partial<ApplicationFormData> = {
-                  id: item.application_id ?? item.id,
-                  user_id: item.id,
-                  gender: item.gender ?? "male",
-                  lga: item.lga ?? "",
-                  contact_address: item.contact_address ?? "",
-                  hometown_address: item.hometown_address ?? "",
-                  dob: item.dob ?? "",
-                  images: item.images ?? null,
-                  passport: item.passport ?? null,
-                  other_documents: item.other_documents ?? null,
-                  next_of_kin_name: item.next_of_kin_name ?? "",
-                  next_of_kin_relationship: item.next_of_kin_relationship ?? "",
-                  next_of_kin_phone_number: item.next_of_kin_phone_number ?? "",
-                  next_of_kin_email: item.next_of_kin_email ?? "",
-                  next_of_kin_address: item.next_of_kin_address ?? "",
-                  next_of_kin_occupation: item.next_of_kin_occupation ?? "",
-                  next_of_kin_workplace: item.next_of_kin_workplace ?? "",
-                  is_next_of_kin_primary_contact: item.is_next_of_kin_primary_contact ?? 0,
-                  next_of_kin_alternate_phone_number: item.next_of_kin_alternate_phone_number ?? null,
-                  updated_at: item.updated_at ?? new Date().toISOString(),
-                  created_at: item.created_at ?? new Date().toISOString(),
-               };
-
-               return transformApiApplication(
-                  synthetic_student_info as StudentInfoData,
-                  synthetic_application_info as ApplicationFormData,
-                  item.program_choice
-               );
-            });
+            // Return the data array directly
+            return (res.data as any) || [];
          },
       }),
 
@@ -400,16 +334,16 @@ export function transformApiApplication(
    // ── Next of kin ───────────────────────────────────────────
    const next_of_kin: ApplicantNextOfKin | null = application_info?.next_of_kin_name
       ? {
-         name: application_info.next_of_kin_name,
-         relationship: application_info.next_of_kin_relationship,
-         phone_number: application_info.next_of_kin_phone_number,
-         alternate_phone_number: application_info.next_of_kin_alternate_phone_number ?? null,
-         email: application_info.next_of_kin_email,
-         address: application_info.next_of_kin_address,
-         occupation: application_info.next_of_kin_occupation,
-         workplace: application_info.next_of_kin_workplace,
-         is_primary_contact: Boolean(application_info.is_next_of_kin_primary_contact),
-      }
+           name: application_info.next_of_kin_name,
+           relationship: application_info.next_of_kin_relationship,
+           phone_number: application_info.next_of_kin_phone_number,
+           alternate_phone_number: application_info.next_of_kin_alternate_phone_number ?? null,
+           email: application_info.next_of_kin_email,
+           address: application_info.next_of_kin_address,
+           occupation: application_info.next_of_kin_occupation,
+           workplace: application_info.next_of_kin_workplace,
+           is_primary_contact: Boolean(application_info.is_next_of_kin_primary_contact),
+        }
       : null;
 
    // ── Passport URL ──────────────────────────────────────────
