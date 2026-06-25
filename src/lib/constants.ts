@@ -1,13 +1,29 @@
 import { NavItem, Feature, Program, Stat, FooterSection, CampusHighlights } from "../types";
 
+
+export const ADMIN_SUBPAGES = [
+    { href: '/administration/directors-office', label: "Director's Office" },
+    { href: '/administration/administrative-structure', label: 'Administrative Structure' },
+    { href: '/administration/units-and-functions', label: 'Units and Functions' },
+    { href: '/administration/policies-and-procedures', label: 'Policies and Procedures' },
+    { href: '/administration/staff-directory', label: 'Staff Directory' },
+    { href: '/administration/committees', label: 'Committees' },
+    { href: '/administration/service-charter', label: 'Service Charter' },
+     { href: '/administration/contact-administration', label: 'Contact Administration' }
+];
+
 export const NAV_ITEMS: NavItem[] = [
     { href: '#home', label: 'Home' },
-    { href: '#features', label: 'features' },
+    { href: '#features', label: 'Features' },
     { href: '#programs', label: 'Programs' },
     { href: '#calender_view', label: 'Updates' },
     { href: '#campus_highlight', label: 'Highlights' },
-    // { href: '#about', label: 'About' },
-    // { href: '#contact', label: 'Contact' },
+    { 
+        href: '#administration', 
+        label: 'Administration',
+        isDropdown: true,
+        subItems: ADMIN_SUBPAGES 
+    },
 ];
 
 export const FEATURES: Feature[] = [

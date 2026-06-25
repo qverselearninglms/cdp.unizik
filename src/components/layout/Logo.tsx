@@ -1,37 +1,65 @@
-import { SITE_TITLE } from '@/config';
-import Image from 'next/image';
-import Link from 'next/link';
-import React from 'react';
+import { SITE_TITLE } from "@/config";
+import Image from "next/image";
+import Link from "next/link";
+import React from "react";
 
 interface LogoProps {
-    showText?: boolean;
-    size?: 'sm' | 'md' | 'lg';
+  showText?: boolean;
+  size?: "sm" | "md" | "lg";
 }
 
-export const Logo: React.FC<LogoProps> = ({ showText = true, size = 'md' }) => {
-    const sizes = {
-        sm: { icon: 'w-8 h-8 text-xs', text: 'text-sm' },
-        md: { icon: 'w-12 h-12 text-sm', text: 'text-lg' },
-        lg: { icon: 'w-20 h-20 text-base', text: 'text-xl' },
-    };
+export const Logo: React.FC<LogoProps> = ({
+  showText = true,
+  size = "md",
+}) => {
+  const sizes = {
+    sm: "w-7 h-7",
+    md: "w-9 h-9",
+    lg: "w-12 h-12",
+  };
 
-    return (
-        <Link href="/" className="flex items-center gap-3 text-inherit no-underline">
-            <div
-                className={`relative ${sizes[size].icon} bg-gradient-to-br from-blue-800 to-blue-600 rounded-lg flex items-center justify-center text-white font-bold`}
-            >
-                <Image
-                    src={`/logo/logo.jpg`}
-                    alt="LOGO IMAGE"
-                    fill
-                    className="object-contain"
-                />
-            </div>
-            {showText && (
-                <span className={`${sizes[size].text} font-bold text-gray-800 dark:text-white`}>
-                    {SITE_TITLE}
-                </span>
-            )}
-        </Link>
-    );
+  const textSizes = {
+    sm: "text-sm",
+    md: "text-base",
+    lg: "text-lg",
+  };
+
+  return (
+    <Link
+      href="/"
+      className="flex items-center gap-2 sm:gap-3 no-underline"
+    >
+      {/* LOGO BOX */}
+      <div
+        className={`
+          relative flex-shrink-0
+          ${sizes[size]}
+          rounded-md overflow-hidden
+          bg-gradient-to-br from-blue-800 to-blue-600
+        `}
+      >
+        <Image
+          src="/logo/logo.jpg"
+          alt="Logo"
+          fill
+          priority
+          className="object-cover"
+        />
+      </div>
+
+      {/* TEXT */}
+      {showText && (
+        <span
+          className={`
+            font-bold text-gray-900 dark:text-white
+            leading-none
+            ${textSizes[size]}
+            max-sm:text-sm
+          `}
+        >
+          {SITE_TITLE}
+        </span>
+      )}
+    </Link>
+  );
 };

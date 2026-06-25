@@ -17,7 +17,7 @@ export const Slide = ({ data, isActive, slideRef }: SlideProps) => {
             style={{
                 backgroundImage: `url(${data.image})`,
                 backgroundSize: 'cover',
-                backgroundPosition: 'center',
+                backgroundPosition: 'top',
             }}
         >
             {/* Gradient Overlays */}

@@ -3,6 +3,8 @@ import { LucideIcon } from "lucide-react";
 export interface NavItem {
   href: string;
   label: string;
+  isDropdown?: boolean;
+  subItems?: { href: string; label: string }[];
 }
 
 export interface Feature {

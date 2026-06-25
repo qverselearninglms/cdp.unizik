@@ -41,12 +41,12 @@ export default function UpcomingEvents() {
                         key={index}
                         className="flex items-start border-l-2 border-[#d25400] dark:border-orange-400 pl-4 py-2"
                     >
-                        <div className="mr-4 text-center">
+                        <div className="mr-4">
                             <div className="bg-[#23608c] dark:bg-blue-600 text-white font-bold rounded px-3 py-1">
                                 {event.date}
                             </div>
                         </div>
-                        <div>
+                        <div className="text-start">
                             <h3 className="font-semibold dark:text-white">{event.title}</h3>
                             <p className="text-sm text-gray-500 dark:text-gray-400">{event.time}</p>
                             <p className="text-sm text-gray-600 dark:text-gray-300">{event.location}</p>
