@@ -27,6 +27,7 @@ on:
 #   NEXT_PUBLIC_*           — any public env vars baked into the build
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 env:
   # ── App identity (change these for each application) ────────────────────────
   APP_NAME: cdp.unizik.edu.ng    # PM2 process name — must be unique per app on the server
