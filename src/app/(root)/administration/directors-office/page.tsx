@@ -56,8 +56,8 @@ export default function DirectorsOfficePage() {
             <Image
               src="/avatars/director1.jpeg"
               alt="Director"
-              width={800}
-              height={800}
+              width={900}
+              height={900}
               className="w-full  object-cover"
             />
           </div>
