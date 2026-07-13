@@ -1,18 +1,27 @@
+"use client";
+
 // import ProtectedRoute from "@/components/ProtectedRoute";
 import { Navigation } from "@/components/navigation/Navigation";
 // import { UserRole } from "@/config";
 import type { Metadata } from "next";
+import { useAdmissionStore } from "./store/admissionStore";
+import { useEffect } from "react";
 
-export const metadata: Metadata = {
-    title: "Admission Process | QHUB University Portal",
-    description: "Complete your admission process — pay fees, submit forms, and get enrolled.",
-};
+// export const metadata: Metadata = {
+//     title: "Admission Process | QHUB University Portal",
+//     description: "Complete your admission process — pay fees, submit forms, and get enrolled.",
+// };
 
 export default function AdmissionLayout({
     children,
 }: {
     children: React.ReactNode;
-}) {
+    }) {
+    const fetchFeatureData = useAdmissionStore((s) => s.fetchFeatureData);
+    useEffect(() => {
+        fetchFeatureData(); // called once on mount
+    }, []);
+
     return (
         // <ProtectedRoute allowedRoles={[UserRole.STUDENT]}>
             <div className="relative min-h-screen bg-background">

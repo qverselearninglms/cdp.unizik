@@ -17,6 +17,7 @@ import type {
     PaymentInitiationResponse,
     PaymentStatus,
     PaymentVerificationResponse,
+    TuitionPaymentPayload,
 } from "../types/admission";
 import type { UserInterface } from "@/types/global";
 import { ACCEPTANCE_FEE_AMOUNT, APPLICATION_FEE_AMOUNT, FULL_TUITION_FEE_AMOUNT } from "@/config/global.config";
@@ -231,10 +232,10 @@ export const admissionService = {
     },
 
     /* ---------- Initiate Tuition Payment ---------- */
-    async initiateTuitionPayment(amount: number): Promise<PaymentInitiationResponse> {
+    async initiateTuitionPayment(payload: TuitionPaymentPayload): Promise<PaymentInitiationResponse> {
         const response = await apiClient.post<PaymentInitiationResponse>(
             "/application/initialize-tuition-payment",
-            { amount: amount },
+            payload,
             { access_token: true }
         );
         return response.data;
@@ -435,7 +436,7 @@ export const admissionMutationOptions = {
         }),
 
     initiateTuitionPayment: () =>
-        createApiMutationOptions<PaymentInitiationResponse, number>({
+        createApiMutationOptions<PaymentInitiationResponse, TuitionPaymentPayload>({
             mutationKey: [...admissionKeys.all, "payments", "tuition", "initiate"],
             mutationFn: admissionService.initiateTuitionPayment,
         }),

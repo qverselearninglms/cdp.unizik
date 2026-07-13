@@ -1,0 +1,44 @@
+{
+    "current_page": 1,
+    "data": [
+        {
+            "id": 1,
+            "name": "CERTIFICATE PROGRAMS",
+            "parent": 0,
+            "sortorder": 10000
+        },
+        {
+            "id": 2,
+            "name": "DIPLOMA PROGRAMS",
+            "parent": 0,
+            "sortorder": 20000
+        }
+    ],
+    "first_page_url": "https://cdp.api.unizik.qverselearning.org/api/v1/odl/categories?page=1",
+    "from": 1,
+    "last_page": 1,
+    "last_page_url": "https://cdp.api.unizik.qverselearning.org/api/v1/odl/categories?page=1",
+    "links": [
+        {
+            "url": null,
+            "label": "&laquo; Previous",
+            "active": false
+        },
+        {
+            "url": "https://cdp.api.unizik.qverselearning.org/api/v1/odl/categories?page=1",
+            "label": "1",
+            "active": true
+        },
+        {
+            "url": null,
+            "label": "Next &raquo;",
+            "active": false
+        }
+    ],
+    "next_page_url": null,
+    "path": "https://cdp.api.unizik.qverselearning.org/api/v1/odl/categories",
+    "per_page": 50,
+    "prev_page_url": null,
+    "to": 2,
+    "total": 2
+}

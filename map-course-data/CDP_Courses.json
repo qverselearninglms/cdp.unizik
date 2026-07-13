@@ -1,0 +1,829 @@
+{
+	"programme_categories": [{
+			"category": "Certificate Programmes",
+			"total_courses": 102,
+			"courses": [{
+					"s_n": 1,
+					"course_code": null,
+					"course_title": "Financial Management Program.",
+					"credit_unit": null,
+					"duration": "1 Month Period",
+					"tuition_fee": 50000
+				},
+				{
+					"s_n": 2,
+					"course_code": null,
+					"course_title": "Human Resource Management Program",
+					"credit_unit": null,
+					"duration": "10 days/2 Month Period",
+					"tuition_fee": 100000
+				},
+				{
+					"s_n": 3,
+					"course_code": null,
+					"course_title": "Sales Management Program",
+					"credit_unit": null,
+					"duration": "10 days/2 Month Period",
+					"tuition_fee": 50000
+				},
+				{
+					"s_n": 4,
+					"course_code": null,
+					"course_title": "Digital Marketing (e-commerce) Program",
+					"credit_unit": null,
+					"duration": "10 days/2 Month Period",
+					"tuition_fee": 100000
+				},
+				{
+					"s_n": 5,
+					"course_code": null,
+					"course_title": "The Business of Fashion Program",
+					"credit_unit": null,
+					"duration": "10 days/2 Month Period",
+					"tuition_fee": 100000
+				},
+				{
+					"s_n": 6,
+					"course_code": null,
+					"course_title": "Business Emotional Intelligence (BEI) Program",
+					"credit_unit": 20,
+					"duration": "10 days/2 Month Period",
+					"tuition_fee": 100000
+				},
+				{
+					"s_n": 7,
+					"course_code": null,
+					"course_title": "Graphic Design Essentials for Business and Creatives Program",
+					"credit_unit": 20,
+					"duration": "10 days/2 Month Period",
+					"tuition_fee": 100000
+				},
+				{
+					"s_n": 8,
+					"course_code": null,
+					"course_title": "Associate Certificate in Human Resources Administration",
+					"credit_unit": 20,
+					"duration": "3 Months Period",
+					"tuition_fee": 100000
+				},
+				{
+					"s_n": 9,
+					"course_code": null,
+					"course_title": "Advanced Certificate in Human Resources Administration",
+					"credit_unit": 20,
+					"duration": "6 Months Period",
+					"tuition_fee": 100000
+				},
+				{
+					"s_n": 10,
+					"course_code": null,
+					"course_title": "Certificate in Trade Policy & Economic Integration",
+					"credit_unit": 20,
+					"duration": "3-6 Months Period",
+					"tuition_fee": null
+				},
+				{
+					"s_n": 11,
+					"course_code": null,
+					"course_title": "Certificate in Trade Negotiation Skills for Business & Merchants",
+					"credit_unit": 20,
+					"duration": "3-6 Months Period",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 12,
+					"course_code": null,
+					"course_title": "Certificate in Trade Ethics & Business Etiquettes",
+					"credit_unit": 20,
+					"duration": "3-6 Months Period",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 13,
+					"course_code": null,
+					"course_title": "Certificate in Foreign Trade Assistance",
+					"credit_unit": 20,
+					"duration": "3-6 Months Period",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 14,
+					"course_code": null,
+					"course_title": "Certificate in Foreign Trade Management",
+					"credit_unit": 20,
+					"duration": "3-6 Months Period",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 15,
+					"course_code": null,
+					"course_title": "Certificate in Non-Tariff Measures to Trade",
+					"credit_unit": 20,
+					"duration": "3-6 Months Period",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 16,
+					"course_code": null,
+					"course_title": "Professional Certificate in Research Skills, Academic Writing and Data Analysis",
+					"credit_unit": 20,
+					"duration": "3 Months Period",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 17,
+					"course_code": null,
+					"course_title": "Certificate in Investment Analysis and Portfolio Management",
+					"credit_unit": 20,
+					"duration": "2 Months Period",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 18,
+					"course_code": null,
+					"course_title": "Certificate in Fintech and Digital Banking",
+					"credit_unit": 20,
+					"duration": "2 Months Period",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 19,
+					"course_code": null,
+					"course_title": "Certificate in Data Analytics for Finance and Investment",
+					"credit_unit": 20,
+					"duration": "2 Months Period",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 20,
+					"course_code": null,
+					"course_title": "Certificate in Financial Modelling and Valuation",
+					"credit_unit": 20,
+					"duration": "2 Months Period",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 21,
+					"course_code": null,
+					"course_title": "Cerificate in Corporate Governance and Regulatory Compliance",
+					"credit_unit": 20,
+					"duration": "2 Months Period",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 22,
+					"course_code": null,
+					"course_title": "Certificate in SME Financing and Entrereneurial Finance",
+					"credit_unit": 20,
+					"duration": "2 Months Period",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 23,
+					"course_code": null,
+					"course_title": "Certificate in Finacial Market and Capital Market Operation",
+					"credit_unit": 20,
+					"duration": "2 Months Period",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 24,
+					"course_code": null,
+					"course_title": "Certificate in Risk management and Financial Intelligence",
+					"credit_unit": 20,
+					"duration": "2 Months Period",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 25,
+					"course_code": null,
+					"course_title": "Japanese Language",
+					"credit_unit": 20,
+					"duration": "2-6 Months Period",
+					"tuition_fee": 200000
+				},
+				{
+					"s_n": 26,
+					"course_code": null,
+					"course_title": "German Language",
+					"credit_unit": 20,
+					"duration": "2-6 Months Period",
+					"tuition_fee": 200000
+				},
+				{
+					"s_n": 27,
+					"course_code": null,
+					"course_title": "Chinese Language",
+					"credit_unit": 20,
+					"duration": "2-6 Months Period",
+					"tuition_fee": 200000
+				},
+				{
+					"s_n": 28,
+					"course_code": null,
+					"course_title": "Spanish Language",
+					"credit_unit": 20,
+					"duration": "2-6 Months Period",
+					"tuition_fee": 200000
+				},
+				{
+					"s_n": 29,
+					"course_code": null,
+					"course_title": "Italian Language",
+					"credit_unit": 20,
+					"duration": "2-6 Months Period",
+					"tuition_fee": 200000
+				},
+				{
+					"s_n": 30,
+					"course_code": null,
+					"course_title": "Artificial Intelligence for Administrators and Executives",
+					"credit_unit": 20,
+					"duration": "1 Week",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 31,
+					"course_code": null,
+					"course_title": "Artificial Intelligence and Supply Chain Management",
+					"credit_unit": 20,
+					"duration": "1 Week",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 32,
+					"course_code": null,
+					"course_title": "Artificial Intelligence for Customs",
+					"credit_unit": 20,
+					"duration": "1 Week",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 33,
+					"course_code": null,
+					"course_title": "Strategic Civil Defence, Emergency, Fire and AI-Enabled Public Safety Management",
+					"credit_unit": 20,
+					"duration": "1 Week",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 34,
+					"course_code": null,
+					"course_title": "Artificial Intelligence in Law Practice",
+					"credit_unit": 20,
+					"duration": "1 Week",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 35,
+					"course_code": null,
+					"course_title": "Artificial Intelligence in Pharmacy",
+					"credit_unit": 20,
+					"duration": "1 Week",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 36,
+					"course_code": null,
+					"course_title": "Artificial Intelligence for Drug Discovery",
+					"credit_unit": 20,
+					"duration": "1 Week",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 37,
+					"course_code": null,
+					"course_title": "Artificial Intelligence in Psychology",
+					"credit_unit": 20,
+					"duration": "1 Week",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 38,
+					"course_code": null,
+					"course_title": "Artificial Intelligence in Creative Arts",
+					"credit_unit": 20,
+					"duration": "1 Week",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 39,
+					"course_code": null,
+					"course_title": "Artificial Intelligence for Fashion Designers",
+					"credit_unit": 20,
+					"duration": "1 Week",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 40,
+					"course_code": null,
+					"course_title": "Executive Certificate in Public Policy and Strategic Governance",
+					"credit_unit": null,
+					"duration": "1 Week",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 41,
+					"course_code": null,
+					"course_title": "Advanced Executive Certificate in Public Policy and Strategic Governance",
+					"credit_unit": null,
+					"duration": "2-3 Months",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 42,
+					"course_code": null,
+					"course_title": "Executive Certificate in Regulatory Excellence",
+					"credit_unit": null,
+					"duration": "1 Week",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 43,
+					"course_code": null,
+					"course_title": "Advanced Executive Certificate in Regulatory Excellence",
+					"credit_unit": null,
+					"duration": "2-3 Months",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 44,
+					"course_code": null,
+					"course_title": "Executive Certificate in Strategic Leadership and Executive Management",
+					"credit_unit": null,
+					"duration": "1 Week",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 45,
+					"course_code": null,
+					"course_title": "Advanced Executive Certificate in Strategic Leadership and Executive Management",
+					"credit_unit": null,
+					"duration": "2-3 Months",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 46,
+					"course_code": null,
+					"course_title": "Executive Certificate in Public Financial Management",
+					"credit_unit": null,
+					"duration": "1 Week",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 47,
+					"course_code": null,
+					"course_title": "Advanced Executive Certificate in Public Financial Management",
+					"credit_unit": null,
+					"duration": "2-3 Months",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 48,
+					"course_code": null,
+					"course_title": "Executive Certificate in Project Management for Public Sector Organizations",
+					"credit_unit": null,
+					"duration": "1 Week",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 49,
+					"course_code": null,
+					"course_title": "Advanced Executive Certificate in Project Management for Public Sector Organizations",
+					"credit_unit": null,
+					"duration": "2-3 Months",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 50,
+					"course_code": null,
+					"course_title": "Executive Certificate in Organisational Culture and Performance Management",
+					"credit_unit": null,
+					"duration": "1 Week",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 51,
+					"course_code": null,
+					"course_title": "Advanced Executive Certificate in Organisational Culture and Performance Management",
+					"credit_unit": null,
+					"duration": "2-3 Months",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 52,
+					"course_code": null,
+					"course_title": "Executive Certificate in Procurement and Contract Management",
+					"credit_unit": null,
+					"duration": "1 Week",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 53,
+					"course_code": null,
+					"course_title": "Advanced Executive Certificate in Procurement and Contract Management",
+					"credit_unit": null,
+					"duration": "2-3 Months",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 54,
+					"course_code": null,
+					"course_title": "Executive Certificate in Monitoring, Evaluation and Impact Assesment",
+					"credit_unit": null,
+					"duration": "1 Week",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 55,
+					"course_code": null,
+					"course_title": "Advanced Executive Certificate in Monitoring, Evaluation and Impact Assesment",
+					"credit_unit": null,
+					"duration": "2-3 Months",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 56,
+					"course_code": null,
+					"course_title": "Executive Certificate in Digital Transformation and Artificial Intelligence for Government",
+					"credit_unit": null,
+					"duration": "1 Week",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 57,
+					"course_code": null,
+					"course_title": "Advanced Executive Certificate in Digital Transformation and Artificial Intelligence for Government",
+					"credit_unit": null,
+					"duration": "2-3 Months",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 58,
+					"course_code": null,
+					"course_title": "Executive Certificate in Corporate Governance and Board Leadership",
+					"credit_unit": null,
+					"duration": "1 Week",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 59,
+					"course_code": null,
+					"course_title": "Advanced Executive Certificate in Corporate Governance and Board Leadership",
+					"credit_unit": null,
+					"duration": "2-3 Months",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 60,
+					"course_code": null,
+					"course_title": "Executive Certificate in Capital Market Regulation and Securities Administration",
+					"credit_unit": null,
+					"duration": "1 Week",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 61,
+					"course_code": null,
+					"course_title": "Advanced Executive Certificate in Capital Market Regulation and Securities Administration",
+					"credit_unit": null,
+					"duration": "2-3 Months",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 62,
+					"course_code": null,
+					"course_title": "Executive Certificate in Infrastructure Finance and Public-Private Partnerships (PPP)",
+					"credit_unit": null,
+					"duration": "1 Week",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 63,
+					"course_code": null,
+					"course_title": "Advanced Executive Certificate in Infrastructure Finance and Public-Private Partnerships (PPP)",
+					"credit_unit": null,
+					"duration": "2-3 Months",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 64,
+					"course_code": null,
+					"course_title": "Executive Certificate in Enterprise Risk Management and Compliance",
+					"credit_unit": null,
+					"duration": "1 Week",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 65,
+					"course_code": null,
+					"course_title": "Advanced Executive Certificate in Enterprise Risk Management and Compliance",
+					"credit_unit": null,
+					"duration": "2-3 Months",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 66,
+					"course_code": null,
+					"course_title": "Executive Certificate in Sustainability, ESG and Climate Governance",
+					"credit_unit": null,
+					"duration": "1 Week",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 67,
+					"course_code": null,
+					"course_title": "Advanced Executive Certificate in Sustainability, ESG and Climate Governance",
+					"credit_unit": null,
+					"duration": "2-3 Months",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 68,
+					"course_code": null,
+					"course_title": "Executive Certificate in Artificial Intelligence, Public Policy and Digital Governance",
+					"credit_unit": null,
+					"duration": "1 Week",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 69,
+					"course_code": null,
+					"course_title": "Advanced Executive Certificate in Artificial Intelligence, Public Policy and Digital Governance",
+					"credit_unit": null,
+					"duration": "2-3 Months",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 70,
+					"course_code": null,
+					"course_title": "Executive Certificate in Legislative Studies and Parliamentary Administration",
+					"credit_unit": null,
+					"duration": "1 Week",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 71,
+					"course_code": null,
+					"course_title": "Advanced Executive Certificate in Legislative Studies and Parliamentary Administration",
+					"credit_unit": null,
+					"duration": "2-3 Months",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 72,
+					"course_code": null,
+					"course_title": "Executive Certificate in Local Government Administration and Development",
+					"credit_unit": null,
+					"duration": "1 Week",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 73,
+					"course_code": null,
+					"course_title": "Advanced Executive Certificate in Local Government Administration and Development",
+					"credit_unit": null,
+					"duration": "2-3 Months",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 74,
+					"course_code": null,
+					"course_title": "Executive Certificate in Treasury and Cash Management",
+					"credit_unit": null,
+					"duration": "1 Week",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 75,
+					"course_code": null,
+					"course_title": "Advanced Executive Certificate in Treasury and Cash Management",
+					"credit_unit": null,
+					"duration": "2-3 Months",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 76,
+					"course_code": null,
+					"course_title": "EXECUTIVE CERTIFICATE IN FINTECH AND DIGITAL FINANCE",
+					"credit_unit": null,
+					"duration": "1 Week",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 77,
+					"course_code": null,
+					"course_title": "ADVANCED EXECUTIVE CERTIFICATE IN FINTECH AND DIGITAL FINANCE",
+					"credit_unit": null,
+					"duration": "2-3 Months",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 78,
+					"course_code": null,
+					"course_title": "EXECUTIVE CERTIFICATE IN ISLAMIC FINANCE AND NON-INTEREST BANKING",
+					"credit_unit": null,
+					"duration": "1 Week",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 79,
+					"course_code": null,
+					"course_title": "ADVANCED EXECUTIVE CERTIFICATE IN ISLAMIC FINANCE AND NON-INTEREST BANKING",
+					"credit_unit": null,
+					"duration": "2-3 Months",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 80,
+					"course_code": null,
+					"course_title": "EXECUTIVE CERTIFICATE IN HUMAN RESOURCE MANAGEMENT AND TALENT DEVELOPMENT",
+					"credit_unit": null,
+					"duration": "1 Week",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 81,
+					"course_code": null,
+					"course_title": "ADVANCED EXECUTIVE CERTIFICATE IN HUMAN RESOURCE MANAGEMENT AND TALENT DEVELOPMENT",
+					"credit_unit": null,
+					"duration": "2-3 Months",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 82,
+					"course_code": null,
+					"course_title": "EXECUTIVE CERTIFICATE IN CHANGE MANAGEMENT AND ORGANIZATIONAL TRANSFORMATION",
+					"credit_unit": null,
+					"duration": "1 Week",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 83,
+					"course_code": null,
+					"course_title": "ADVANCED EXECUTIVE CERTIFICATE IN CHANGE MANAGEMENT AND ORGANIZATIONAL TRANSFORMATION",
+					"credit_unit": null,
+					"duration": "2-3 Months",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 84,
+					"course_code": null,
+					"course_title": "EXECUTIVE CERTIFICATE IN DATA ANALYTICS AND BUSINESS INTELLIGENCE",
+					"credit_unit": null,
+					"duration": "1 Week",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 85,
+					"course_code": null,
+					"course_title": "ADVANCED EXECUTIVE CERTIFICATE IN DATA ANALYTICS AND BUSINESS INTELLIGENCE",
+					"credit_unit": null,
+					"duration": "2-3 Months",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 86,
+					"course_code": null,
+					"course_title": "EXECUTIVE CERTIFICATE IN CYBERSECURITY AND INFORMATION ASSURANCE",
+					"credit_unit": null,
+					"duration": "1 Week",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 87,
+					"course_code": null,
+					"course_title": "ADVANCED EXECUTIVE CERTIFICATE IN CYBERSECURITY AND INFORMATION ASSURANCE",
+					"credit_unit": null,
+					"duration": "2-3 Months",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 88,
+					"course_code": null,
+					"course_title": "EXECUTIVE CERTIFICATE IN DATA PROTECTION AND PRIVACY MANAGEMENT",
+					"credit_unit": null,
+					"duration": "1 Week",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 89,
+					"course_code": null,
+					"course_title": "ADVANCED EXECUTIVE CERTIFICATE IN DATA PROTECTION AND PRIVACY MANAGEMENT",
+					"credit_unit": null,
+					"duration": "2-3 Months",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 90,
+					"course_code": null,
+					"course_title": "EXECUTIVE CERTIFICATE IN ENERGY TRANSITION AND SUSTAINABLE DEVELOPMENT",
+					"credit_unit": null,
+					"duration": "1 Week",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 91,
+					"course_code": null,
+					"course_title": "ADVANCED EXECUTIVE CERTIFICATE IN ENERGY TRANSITION AND SUSTAINABLE DEVELOPMENT",
+					"credit_unit": null,
+					"duration": "2-3 Months",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 92,
+					"course_code": null,
+					"course_title": "EXECUTIVE CERTIFICATE IN BLUE ECONOMY AND MARITIME ADMINISTRATION",
+					"credit_unit": null,
+					"duration": "1 Week",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 93,
+					"course_code": null,
+					"course_title": "ADVANCED EXECUTIVE CERTIFICATE IN BLUE ECONOMY AND MARITIME ADMINISTRATION",
+					"credit_unit": null,
+					"duration": "2-3 Months",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 94,
+					"course_code": null,
+					"course_title": "EXECUTIVE CERTIFICATE IN DISASTER RISK MANAGEMENT AND EMERGENCY PREPAREDNESS",
+					"credit_unit": null,
+					"duration": "1 Week",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 95,
+					"course_code": null,
+					"course_title": "ADVANCED EXECUTIVE CERTIFICATE IN DISASTER RISK MANAGEMENT AND EMERGENCY PREPAREDNESS",
+					"credit_unit": null,
+					"duration": "2-3 Months",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 96,
+					"course_code": null,
+					"course_title": "EXECUTIVE CERTIFICATE IN HEALTH POLICY AND HEALTH SYSTEMS MANAGEMENT",
+					"credit_unit": null,
+					"duration": "1 Week",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 97,
+					"course_code": null,
+					"course_title": "ADVANCED EXECUTIVE CERTIFICATE IN HEALTH POLICY AND HEALTH SYSTEMS MANAGEMENT",
+					"credit_unit": null,
+					"duration": "2-3 Months",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 98,
+					"course_code": null,
+					"course_title": "EXECUTIVE CERTIFICATE IN EDUCATION POLICY AND ADMINISTRATION",
+					"credit_unit": null,
+					"duration": "1 Week",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 99,
+					"course_code": null,
+					"course_title": "ADVANCED EXECUTIVE CERTIFICATE IN EDUCATION POLICY AND ADMINISTRATION",
+					"credit_unit": null,
+					"duration": "2-3 Months",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 100,
+					"course_code": null,
+					"course_title": "Executive Certificate in Capital Markets and Investment Management",
+					"credit_unit": null,
+					"duration": "1 Week",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 101,
+					"course_code": null,
+					"course_title": "Advanced Executive Certificate in Capital Markets and Investment Management",
+					"credit_unit": null,
+					"duration": "2-3 Months",
+					"tuition_fee": 500000
+				},
+				{
+					"s_n": 102,
+					"course_code": null,
+					"course_title": "Certificate in Hospitality and Customer Service",
+					"credit_unit": null,
+					"duration": "3 Months Period",
+					"tuition_fee": 100000
+				}
+			]
+		},
+		{
+			"category": "Diploma Programmes",
+			"total_courses": 0,
+			"courses": []
+		}
+	]
+}

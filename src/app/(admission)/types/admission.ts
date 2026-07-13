@@ -41,6 +41,13 @@ export interface AdmissionStudent {
     offer_expiry_date: string | null;
 }
 
+/** Payload for initiating a tuition payment */
+export interface TuitionPaymentPayload {
+    amount: number;
+    course_title: string;
+    course_slug?: string;
+}
+
 /** Payment initiation response from the backend */
 export interface PaymentInitiationResponse {
     success: boolean;
