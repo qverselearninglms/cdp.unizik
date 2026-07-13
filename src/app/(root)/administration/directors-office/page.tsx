@@ -54,10 +54,10 @@ export default function DirectorsOfficePage() {
         <aside className="lg:sticky lg:top-10 h-fit space-y-6">
           <div className="rounded-2xl border overflow-hidden">
             <Image
-              src="/avatars/avatar-man.jpg"
+              src="/avatars/director1.jpeg"
               alt="Director"
-              width={800}
-              height={800}
+              width={900}
+              height={900}
               className="w-full  object-cover"
             />
           </div>
