@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import type { StepSectionProps, TuitionPaymentPayload } from "../types/admission";
 import Link from "next/link";
 import coursesData from "../../../../map-course-data/CDP_Courses.json";
+import { useAdmissionStore } from "../store/admissionStore";
 
 /* ── Local types ────────────────────────────────────────────────────── */
 interface CourseItem {
@@ -46,6 +47,8 @@ const fadeSlide = {
 export function TuitionPaymentSection({ student }: StepSectionProps) {
     const initPayment = useInitiateTuitionPayment();
     const { simulateTuitionPaid } = useDevSimulate();
+    const shouldSkipPayment = useAdmissionStore((s) => s.shouldSkipAcceptancePayment());
+    const currentStep = useAdmissionStore((s) => s.currentStep);
 
     const [activeCategory, setActiveCategory] = useState(0);
     const [searchQuery, setSearchQuery] = useState("");
@@ -116,7 +119,7 @@ export function TuitionPaymentSection({ student }: StepSectionProps) {
                     {/* Status badges */}
                     <div className="flex flex-wrap items-center gap-2">
                         <StatusBadgeWidget label="Admission Confirmed" status="success" />
-                        <StatusBadgeWidget label="Acceptance Fee Paid" status="success" />
+                        {!shouldSkipPayment && <StatusBadgeWidget label="Acceptance Fee Paid" status="success" />}
                         <StatusBadgeWidget
                             label={
                                 student.tuition_payment_status === "paid"
@@ -402,9 +405,9 @@ export function TuitionPaymentSection({ student }: StepSectionProps) {
                             )}
                         </Button>
 
-                        <Button className="w-full gap-2" size="default" variant="outline" asChild>
+                        {currentStep === 5 && <Button className="w-full gap-2" size="default" variant="outline" asChild>
                             <Link href="/enrollment">View your Enrolled Courses</Link>
-                        </Button>
+                        </Button>}
                     </div>
 
                     {/* ── Dev toolbar ───────────────────────────────────── */}

@@ -50,7 +50,7 @@ interface AdmissionState {
     fetchFeatureData: () => Promise<void>;
 
     // NEW: computed getter (optional)
-    shouldSkipApplicationPayment: () => boolean;
+    shouldSkipAcceptancePayment: () => boolean;
 }
 
 /**
@@ -81,17 +81,12 @@ interface AdmissionState {
 // }
 function deriveStep(
     student: AdmissionStudent | null,
-    shouldSkipApplicationPayment: boolean = false
+    shouldSkipAcceptancePayment: boolean = false
 ): AdmissionStep {
     if (!student) return 0;
 
     // // Step 0 → Application payment not done
-    // if (student.application_payment_status !== "paid") return 0;
-    // Override: treat application as paid if skip flag is true
-    const appPaid = shouldSkipApplicationPayment || student.application_payment_status === "paid";
-
-    // Step 0 → Application payment not done (only if not skipped)
-    if (!appPaid) return 0;
+    if (student.application_payment_status !== "paid") return 0;
 
     // Step 1 → Paid but has not applied yet
     if (!student.has_applied) return 1;
@@ -107,7 +102,10 @@ function deriveStep(
 
     // Step 3 → Admission accepted, acceptance fee not yet paid
     // Only reachable when admission_status === "accepted"
-    if (student.acceptance_payment_status !== "paid") return 3;
+    // if (student.acceptance_payment_status !== "paid") return 3;
+    // Override: treat acceptance as paid if skip flag is true
+    const acceptPaid = shouldSkipAcceptancePayment || student.acceptance_payment_status === "paid";
+    if (!acceptPaid) return 3;
 
     // Step 4 → Acceptance fee paid, tuition not yet paid
     if (student.tuition_payment_status !== "paid") return 4;
@@ -156,7 +154,7 @@ export const useAdmissionStore = create<AdmissionState>()(
                     );
                     return {
                         student: updatedStudent,
-                        currentStep: deriveStep(updatedStudent, skip),
+                        currentStep: deriveStep(updatedStudent, skip), // skip now means acceptance
                     };
                 });
             },
@@ -229,7 +227,7 @@ export const useAdmissionStore = create<AdmissionState>()(
             },
 
             // NEW: helper to compute skip flag from featureData
-            shouldSkipApplicationPayment: () => {
+            shouldSkipAcceptancePayment: () => {
                 const { featureData } = get();
                 return !!featureData?.choice_programs.some(
                     (p) => p.name === 'CERTIFICATE PROGRAMS'

@@ -41,7 +41,7 @@ export function AdmissionStatusSection({ student, onRefresh }: StepSectionProps)
    const declineAdmission = useDeclineAdmission();
    const acceptAdmission = useAcceptAdmission(); // ← was missing; "Accept Offer" was calling onRefresh
    const [showDeclineConfirm, setShowDeclineConfirm] = useState(false);
-   console.log("Rendering AdmissionStatusSection with student:", student);
+   // console.log("Rendering AdmissionStatusSection with student:", student);
 
    // Derived booleans — all keyed to AdmissionOfferStatus
    const isPending = student.admission_status === "pending";
