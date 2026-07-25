@@ -240,7 +240,7 @@ export default function MyApplicationPage() {
                   <div className="sm:col-span-2 lg:col-span-3 flex items-center gap-4 mb-2">
                      {/* eslint-disable-next-line @next/next/no-img-element */}
                      <img
-                        src={personal_info.passport_url}
+                        src={formatImageUrl(personal_info.passport_url)}
                         alt="Passport"
                         className="w-20 h-20 rounded-xl object-cover border border-border"
                      />

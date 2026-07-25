@@ -141,7 +141,7 @@ export default function ReviewApplicationsPage() {
                onClick={(e) => {
                   e.stopPropagation();
                   console.log(`Navigate to review page for application ID: ${row.id}`);
-                  router.push(`/${pathname}/${row.applicant_id}`);
+                  router.push(`${pathname}/${row.applicant_id}`);
                }}
                className="p-2 rounded-lg hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
                title="Review"

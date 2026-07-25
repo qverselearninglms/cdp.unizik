@@ -34,6 +34,7 @@ import type {
    UpdateApplicationPayload,
 } from "@/types/school";
 import { CertificateViewer } from "@/components/custom/ImageLightbox";
+import { formatImageUrl } from "@/lib/imageUrl";
 
 const statusVariantMap: Record<ApplicationReviewStatus, "warning" | "info" | "success" | "destructive"> = {
    pending: "warning",
@@ -250,7 +251,7 @@ export default function ApplicationDetailPage() {
                   <div className="sm:col-span-2 lg:col-span-3 flex items-center gap-4 mb-2">
                      {/* eslint-disable-next-line @next/next/no-img-element */}
                      <img
-                        src={personal_info.passport_url}
+                        src={formatImageUrl(personal_info.passport_url)}
                         alt="Passport"
                         className="w-20 h-20 rounded-xl object-cover border border-border"
                      />

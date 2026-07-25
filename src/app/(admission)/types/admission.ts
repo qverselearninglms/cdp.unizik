@@ -46,6 +46,7 @@ export interface TuitionPaymentPayload {
     amount: number;
     course_title: string;
     course_slug?: string;
+    course_id?: string;
 }
 
 /** Payment initiation response from the backend */

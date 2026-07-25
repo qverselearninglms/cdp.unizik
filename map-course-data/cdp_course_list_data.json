@@ -1,0 +1,724 @@
+{
+    "courses": [{
+            "course_id": 2,
+            "course_name": "Financial Management Program",
+            "short_name": "FMP",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 3,
+            "course_name": "Human Resource Management Program",
+            "short_name": "HRMP",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 4,
+            "course_name": "Sales Management Program",
+            "short_name": "SMP",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 5,
+            "course_name": "Digital Marketing (e-commerce) Program",
+            "short_name": "DM-E-P",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 6,
+            "course_name": "The Business of Fashion Program",
+            "short_name": "BFP",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 7,
+            "course_name": "Business Emotional Intelligence (BEI) Program",
+            "short_name": "BEI",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 8,
+            "course_name": "Graphic Design Essentials for Business and Creatives Program",
+            "short_name": "GDEBCP",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 9,
+            "course_name": "Associate Certificate in Human Resources Administration",
+            "short_name": "ACHRA",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 10,
+            "course_name": "Associate Certificate in Human Resources",
+            "short_name": "ACHR",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 11,
+            "course_name": "Certificate in Trade Policy & Economic Integration",
+            "short_name": "CTPEI",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 12,
+            "course_name": "Certificate in Trade Negotiation Skills for Business & Merchants",
+            "short_name": "CTNSBM",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 13,
+            "course_name": "Certificate in Trade Ethics & Business Etiquettes",
+            "short_name": "CTEBE",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 14,
+            "course_name": "Certificate in Foreign Trade Assistance",
+            "short_name": "CFTA",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 15,
+            "course_name": "Certificate in Foreign Trade Management",
+            "short_name": "CIFTM",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 16,
+            "course_name": "Certificate in Non-Tariff Measures to Trade",
+            "short_name": "CINTMTT",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 17,
+            "course_name": "Professional Certificate in Research Skills, Academic Writing and Data Analysis",
+            "short_name": "PCIRSAWADA",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 18,
+            "course_name": "Certificate in Fintech and Digital Banking",
+            "short_name": "CIFADB",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 19,
+            "course_name": "Certificate in Data Analytics for Finance and Investment",
+            "short_name": "CIDAFAI",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 20,
+            "course_name": "Certificate in Financial Modelling and Valuation",
+            "short_name": "CIFMAV",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 21,
+            "course_name": "Cerificate in Corporate Governance and Regulatory Compliance",
+            "short_name": "CICGARC",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 22,
+            "course_name": "Certificate in SME Financing and Entrereneurial Finance",
+            "short_name": "C-SME-FAEF",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 23,
+            "course_name": "Certificate in Finacial Market and Capital Market Operation",
+            "short_name": "CIFMACMO",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 24,
+            "course_name": "Certificate in Risk management and Financial Intelligence",
+            "short_name": "CIRMAFI",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 25,
+            "course_name": "Japanese Language",
+            "short_name": "JL",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 26,
+            "course_name": "German Language",
+            "short_name": "GL",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 27,
+            "course_name": "Chinese Language",
+            "short_name": "CL",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 28,
+            "course_name": "Spanish Language",
+            "short_name": "SL",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 29,
+            "course_name": "Italian Language",
+            "short_name": "IL",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 30,
+            "course_name": "Artificial Intelligence for Administrators and Executives",
+            "short_name": "AIFAAE",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 31,
+            "course_name": "Artificial Intelligence and Supply Chain Management",
+            "short_name": "AIASCM",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 32,
+            "course_name": "Artificial Intelligence for Customs ",
+            "short_name": "AIFC",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 33,
+            "course_name": "Strategic Civil Defence, Emergency, Fire and AI-Enabled Public Safety Management",
+            "short_name": "SCDEF-AI-EPSM",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 34,
+            "course_name": "Artificial Intelligence in Law Practice",
+            "short_name": "AILP",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 35,
+            "course_name": "Artificial Intelligence in Pharmacy",
+            "short_name": "AIP",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 36,
+            "course_name": "Artificial Intelligence for Drug Discovery ",
+            "short_name": "AIDD",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 37,
+            "course_name": "Artificial Intelligence in Psychology",
+            "short_name": "AIIP",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 38,
+            "course_name": "Artificial Intelligence in Creative Arts ",
+            "short_name": "AICA",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 39,
+            "course_name": "Artificial Intelligence for Fashion Designers",
+            "short_name": "AIFD",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 40,
+            "course_name": "Executive Certificate in Public Policy and Strategic Governance",
+            "short_name": "ECPPSG",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 41,
+            "course_name": "Advanced Executive Certificate in Public Policy and Strategic Governance",
+            "short_name": "AECPPSG",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 42,
+            "course_name": "Executive Certificate in Regulatory Excellence",
+            "short_name": "ECRE",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 43,
+            "course_name": "Advanced Executive Certificate in Regulatory Excellence",
+            "short_name": "AECRE",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 44,
+            "course_name": "Executive Certificate in Strategic Leadership and Executive Management",
+            "short_name": "ECSLEM",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 45,
+            "course_name": "Advanced Executive Certificate in Strategic Leadership and Executive Management",
+            "short_name": "AECSLEM",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 46,
+            "course_name": "Executive Certificate in Public Financial Management",
+            "short_name": "ECPFM",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 47,
+            "course_name": "Advanced Executive Certificate in Public Financial Management",
+            "short_name": "AECPFM",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 48,
+            "course_name": "Executive Certificate in Project Management for Public Sector Organizations",
+            "short_name": "ECPMPSO",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 49,
+            "course_name": "Advanced Executive Certificate in Project Management for Public Sector Organizations",
+            "short_name": "AECPMPSO",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 50,
+            "course_name": "Executive Certificate in Organisational Culture and Performance Management",
+            "short_name": "ECOCPM",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 51,
+            "course_name": "Advanced Executive Certificate in Organisational Culture and Performance Management",
+            "short_name": "AECOCPM",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 52,
+            "course_name": "Executive Certificate in Procurement and Contract Management",
+            "short_name": "ECPCM",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 53,
+            "course_name": "Advanced Executive Certificate in Procurement and Contract Management",
+            "short_name": "AECPCM",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 54,
+            "course_name": "Executive Certificate in Monitoring, Evaluation and Impact Assesment ",
+            "short_name": "ECMEIA",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 55,
+            "course_name": "Advanced Executive Certificate in Monitoring, Evaluation and Impact Assesment ",
+            "short_name": "AECMEIA",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 56,
+            "course_name": "Executive Certificate in Digital Transformation and Artificial Intelligence for Government",
+            "short_name": "ECDTAIG",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 57,
+            "course_name": "Advanced Executive Certificate in Digital Transformation and Artificial Intelligence for Government",
+            "short_name": "AECDTAIG",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 58,
+            "course_name": "Executive Certificate in Monitoring, Evaluation and Impact Assesment ",
+            "short_name": "ECMEAIA",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 59,
+            "course_name": "Advanced Executive Certificate in Monitoring, Evaluation and Impact Assesment ",
+            "short_name": "AECMEIM",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 60,
+            "course_name": "Executive Certificate in Digital Transformation and Artificial Intelligence for Government",
+            "short_name": "ECDTAIFG",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 61,
+            "course_name": "Executive Certificate in Corporate Governance and Board Leadership",
+            "short_name": "ECCGBL",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 62,
+            "course_name": "Advanced Executive Certificate in Corporate Governance and Board Leadership",
+            "short_name": "AECCGBL",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 63,
+            "course_name": "Executive Certificate in Capital Market Regulation and Securities Administration",
+            "short_name": "ECCMRSA",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 64,
+            "course_name": "Advanced Executive Certificate in Capital Market Regulation and Securities Administration",
+            "short_name": "AECCMRSA",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 65,
+            "course_name": "Executive Certificate in Infrastructure Finance and Public-Private Partnerships (PPP)",
+            "short_name": "ECIFPPP",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 66,
+            "course_name": "Advanced Executive Certificate in Infrastructure Finance and Public-Private Partnerships (PPP)",
+            "short_name": "AECIFPPP",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 67,
+            "course_name": "Executive Certificate in Enterprise Risk Management and Compliance",
+            "short_name": "ECERMC",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 68,
+            "course_name": "Advanced Executive Certificate in Enterprise Risk Management and Compliance",
+            "short_name": "AECERMC",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 69,
+            "course_name": "Executive Certificate in Sustainability, ESG and Climate Governance",
+            "short_name": "ECS-ESG-CG",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 70,
+            "course_name": "Advanced Executive Certificate in Sustainability, ESG and Climate Governance",
+            "short_name": "AECS-ESG-CL",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 71,
+            "course_name": "Executive Certificate in Artificial Intelligence, Public Policy and Digital Governance",
+            "short_name": "ECAIPPDG",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 72,
+            "course_name": "Advanced Executive Certificate in Artificial Intelligence, Public Policy and Digital Governance",
+            "short_name": "AECAIPPDG",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 73,
+            "course_name": "Executive Certificate in Legislative Studies and Parliamentary Administration",
+            "short_name": "ECLSPA",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 74,
+            "course_name": "Advanced Executive Certificate in Legislative Studies and Parliamentary Administration",
+            "short_name": "AECLSPA",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 75,
+            "course_name": "Executive Certificate in Local Government Administration and Development",
+            "short_name": "ECLGAD",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 76,
+            "course_name": "Advanced Executive Certificate in Local Government Administration and Development",
+            "short_name": "AECLGAD",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 77,
+            "course_name": "Advanced Executive Certificate in Treasury and Cash Management",
+            "short_name": "AECTCM",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 78,
+            "course_name": "EXECUTIVE CERTIFICATE IN FINTECH AND DIGITAL FINANCE",
+            "short_name": "ECFDF",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 79,
+            "course_name": "ADVANCED EXECUTIVE CERTIFICATE IN FINTECH AND DIGITAL FINANCE",
+            "short_name": "AECFDF",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 80,
+            "course_name": "EXECUTIVE CERTIFICATE IN ISLAMIC FINANCE AND NON-INTEREST BANKING",
+            "short_name": "ECIFNIB",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 81,
+            "course_name": "ADVANCED EXECUTIVE CERTIFICATE IN ISLAMIC FINANCE AND NON-INTEREST BANKING",
+            "short_name": "AECIFNIB",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 82,
+            "course_name": "EXECUTIVE CERTIFICATE IN HUMAN RESOURCE MANAGEMENT AND TALENT DEVELOPMENT",
+            "short_name": "ECHRMTD",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 83,
+            "course_name": "ADVANCED EXECUTIVE CERTIFICATE IN HUMAN RESOURCE MANAGEMENT AND TALENT DEVELOPMENT",
+            "short_name": "AECHRMTD",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 84,
+            "course_name": "EXECUTIVE CERTIFICATE IN CHANGE MANAGEMENT AND ORGANIZATIONAL TRANSFORMATION",
+            "short_name": "ECCMOT",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 85,
+            "course_name": "ADVANCED EXECUTIVE CERTIFICATE IN CHANGE MANAGEMENT AND ORGANIZATIONAL TRANSFORMATION",
+            "short_name": "AECCMOT",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 86,
+            "course_name": "EXECUTIVE CERTIFICATE IN DATA ANALYTICS AND BUSINESS INTELLIGENCE",
+            "short_name": "ECDABI",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 87,
+            "course_name": "ADVANCED EXECUTIVE CERTIFICATE IN DATA ANALYTICS AND BUSINESS INTELLIGENCE",
+            "short_name": "AECDABI",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 88,
+            "course_name": "EXECUTIVE CERTIFICATE IN CYBERSECURITY AND INFORMATION ASSURANCE",
+            "short_name": "ECCIA",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 89,
+            "course_name": "ADVANCED EXECUTIVE CERTIFICATE IN CYBERSECURITY AND INFORMATION ASSURANCE",
+            "short_name": "AECCIA",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 90,
+            "course_name": "EXECUTIVE CERTIFICATE IN DATA PROTECTION AND PRIVACY MANAGEMENT",
+            "short_name": "ECDPPM",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 91,
+            "course_name": "ADVANCED EXECUTIVE CERTIFICATE IN DATA PROTECTION AND PRIVACY MANAGEMENT",
+            "short_name": "AECDPPM",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 92,
+            "course_name": "EXECUTIVE CERTIFICATE IN ENERGY TRANSITION AND SUSTAINABLE DEVELOPMENT",
+            "short_name": "ECETSD",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 93,
+            "course_name": "ADVANCED EXECUTIVE CERTIFICATE IN ENERGY TRANSITION AND SUSTAINABLE DEVELOPMENT",
+            "short_name": "AECETSD",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 94,
+            "course_name": "EXECUTIVE CERTIFICATE IN BLUE ECONOMY AND MARITIME ADMINISTRATION",
+            "short_name": "ECBEMA",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 95,
+            "course_name": "ADVANCED EXECUTIVE CERTIFICATE IN BLUE ECONOMY AND MARITIME ADMINISTRATION",
+            "short_name": "AECBEMA",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 96,
+            "course_name": "EXECUTIVE CERTIFICATE IN DISASTER RISK MANAGEMENT AND EMERGENCY PREPAREDNESS",
+            "short_name": "ECDRMEP",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 97,
+            "course_name": "ADVANCED EXECUTIVE CERTIFICATE IN DISASTER RISK MANAGEMENT AND EMERGENCY PREPAREDNESS",
+            "short_name": "AECDRMEP",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 98,
+            "course_name": "EXECUTIVE CERTIFICATE IN HEALTH POLICY AND HEALTH SYSTEMS MANAGEMENT",
+            "short_name": "ECHPHSM",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 99,
+            "course_name": "ADVANCED EXECUTIVE CERTIFICATE IN HEALTH POLICY AND HEALTH SYSTEMS MANAGEMENT",
+            "short_name": "AECHPHSM",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 100,
+            "course_name": "EXECUTIVE CERTIFICATE IN EDUCATION POLICY AND ADMINISTRATION",
+            "short_name": "ECEPA",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 101,
+            "course_name": "ADVANCED EXECUTIVE CERTIFICATE IN EDUCATION POLICY AND ADMINISTRATION",
+            "short_name": "AECEPA",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 102,
+            "course_name": "EXECUTIVE CERTIFICATE IN CAPITAL MARKETS AND INVESTMENT MANAGEMENT",
+            "short_name": "ECCMIM",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 103,
+            "course_name": "ADVANCED EXECUTIVE CERTIFICATE IN CAPITAL MARKETS AND INVESTMENT MANAGEMENT",
+            "short_name": "AECCMIM",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        },
+        {
+            "course_id": 104,
+            "course_name": "CERTIFICATE IN HOSPITALITY AND CUSTOMER SERVICE",
+            "short_name": "CHCS",
+            "course_group_id": 1,
+            "course_group": "CERTIFICATE PROGRAMS"
+        }
+    ]
+}
