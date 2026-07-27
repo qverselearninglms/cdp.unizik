@@ -91,7 +91,7 @@ jobs:
       # .htaccess is included so cPanel/Apache proxies to Next.js immediately on extract.
       - name: Create deployment archive
         run: |
-          tar -czf next-deploy.tar.gz \
+          tar -czf "${{ env.APP_NAME }}-next-deploy.tar.gz" \
             .next \
             public \
             package.json \
@@ -105,7 +105,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: nextjs-build
-          path: next-deploy.tar.gz
+          path: ${{ env.APP_NAME }}-next-deploy.tar.gz
           retention-days: 1
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -149,7 +149,7 @@ jobs:
       - name: Transfer archive to server
         run: |
           scp -P ${{ secrets.DEPLOY_SSH_PORT }} \
-            next-deploy.tar.gz \
+            "${{ env.APP_NAME }}-next-deploy.tar.gz" \
             ${{ secrets.DEPLOY_SSH_USER }}@${{ secrets.DEPLOY_SSH_HOST }}:~
 
       # ── Step 2: Extract archive so scripts/ is available ───────────────────
@@ -158,8 +158,8 @@ jobs:
           ssh -p ${{ secrets.DEPLOY_SSH_PORT }} \
             ${{ secrets.DEPLOY_SSH_USER }}@${{ secrets.DEPLOY_SSH_HOST }} \
             "mkdir -p ${{ env.APP_DIR }} && \
-             tar -xzf ~/next-deploy.tar.gz -C ${{ env.APP_DIR }} && \
-             rm -f ~/next-deploy.tar.gz && \
+             tar -xzf ~/"${{ env.APP_NAME }}-next-deploy.tar.gz" -C ${{ env.APP_DIR }} && \
+             rm -f ~/"${{ env.APP_NAME }}-next-deploy.tar.gz" && \
              chmod +x ${{ env.APP_DIR }}/scripts/bootstrap-vps.sh \
                       ${{ env.APP_DIR }}/scripts/deploy-server.sh"
 

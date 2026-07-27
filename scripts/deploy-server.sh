@@ -40,7 +40,8 @@ LE_EMAIL="${5:-support@qverselearning.com}"
 BACKEND_URL="${6:-https://cdp.api.unizik.qverselearning.org/api/v1/}"   # optional — trailing slash required
 WEBSERVER_OVERRIDE="${7:-}"   # optional: force "nginx" or "apache" — leave blank for auto-detect
 
-ARCHIVE="next-deploy.tar.gz"
+# ARCHIVE="next-deploy.tar.gz"
+ARCHIVE="${APP_NAME}-next-deploy.tar.gz"
 NGINX_CONF="/etc/nginx/conf.d/${DOMAIN}.conf"
 ENV_FILE="${APP_DIR}/.env.production"
 
