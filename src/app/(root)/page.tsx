@@ -6,11 +6,13 @@ import { HomepageSlider } from './components/slider/HomepageSlider';
 import CampusHighlights from './components/CampusHighlights';
 import CalenderView from './components/CalenderView';
 import { Footer } from './components/Footer';
+import HomeSlider from './components/slider/HomeSlider';
 
 export default function HomePage() {
   return (
     <main className="min-h-screen">
-      <HomepageSlider />
+      {/* <HomepageSlider /> */}
+      <HomeSlider />
       <Features />
       <Programs />
       <CalenderView />
