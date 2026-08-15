@@ -12,8 +12,10 @@ import {
 import type {
     AdmissionOfferStatus,
     AdmissionStudent,
+    AdmissionStudentResponse,
     ApplicationStatus,
     FeeSchedule,
+    LmsCategory,
     PaymentInitiationResponse,
     PaymentStatus,
     PaymentVerificationResponse,
@@ -22,6 +24,29 @@ import type {
 import type { UserInterface } from "@/types/global";
 import { ACCEPTANCE_FEE_AMOUNT, APPLICATION_FEE_AMOUNT, FULL_TUITION_FEE_AMOUNT } from "@/config/global.config";
 import { apiClient } from "@/core/client";
+import { getSelectedProgramPaymentInfo } from "@/lib/program-payment-context";
+
+interface AccessFeePaymentPayload {
+    amount: number;
+    fee_type: "access_fee";
+    program_id?: number;
+    category_id?: number;
+    program_name?: string;
+    access_fee_amount?: number | null;
+    tuition_amount?: number | null;
+    duration?: string | null;
+    source?: "create-account";
+    selected_at?: string;
+}
+
+interface ProgramPaymentMeta {
+    programId?: number;
+    programName?: string;
+    accessFeeAmount?: number | null;
+    tuitionAmount?: number | null;
+    duration?: string | null;
+    selectedAt?: string;
+}
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                             */
@@ -37,11 +62,11 @@ const MOCK_FEES: FeeSchedule = {
     fees: [
         {
             id: "fee-app-001",
-            name: "Application Fee",
-            slug: "application_fee",
+            name: "Access Fee",
+            slug: "access_fee",
             amount: 10_000,
             currency: "NGN",
-            description: "Non-refundable admission application processing fee",
+            description: "Non-refundable access fee required before completing admission",
         },
         {
             id: "fee-acc-001",
@@ -101,6 +126,87 @@ function mapApplicationStatus(apiStatus: string): ApplicationStatus {
 // Module-level mock state — populated from the authenticated user on first fetch
 let mockStudent: AdmissionStudent;
 let initialMockStudent: AdmissionStudent;
+let latestAdmissionStudent: AdmissionStudent | null = null;
+
+function parseAmount(value: unknown): number | null {
+    if (typeof value === "number" && Number.isFinite(value)) {
+        return Math.max(0, Math.round(value));
+    }
+
+    if (typeof value === "string") {
+        const stripped = value.replace(/[^\d.]/g, "").trim();
+        if (!stripped) return null;
+
+        const numeric = Number(stripped);
+        if (!Number.isFinite(numeric)) return null;
+
+        return Math.max(0, Math.round(numeric));
+    }
+
+    return null;
+}
+
+function getProgramMetaFromCategory(category?: LmsCategory | null): ProgramPaymentMeta | null {
+    if (!category) return null;
+
+    const accessFee = parseAmount(category.access_fee) ?? parseAmount(category.meta?.[1]);
+    const tuition = parseAmount(category.tuition) ?? parseAmount(category.meta?.[0]);
+    const duration = category.duration ?? (typeof category.meta?.[2] === "string" ? category.meta[2] : null);
+
+    return {
+        programId: category.id,
+        programName: category.name,
+        accessFeeAmount: accessFee,
+        tuitionAmount: tuition,
+        duration,
+    };
+}
+
+function getProgramPaymentMeta(): ProgramPaymentMeta | null {
+    const fromLocal = getSelectedProgramPaymentInfo();
+    const fromStudent = getProgramMetaFromCategory(latestAdmissionStudent?.lms_category);
+
+    if (fromLocal && fromStudent) {
+        // If selected program in current browser session differs from server profile,
+        // prioritize the latest explicit user selection for payment context.
+        if (fromLocal.programId !== fromStudent.programId) {
+            return {
+                programId: fromLocal.programId,
+                programName: fromLocal.programName,
+                accessFeeAmount: fromLocal.accessFeeAmount,
+                tuitionAmount: fromLocal.tuitionAmount,
+                duration: fromLocal.duration,
+                selectedAt: fromLocal.updatedAt,
+            };
+        }
+
+        return {
+            ...fromStudent,
+            accessFeeAmount: fromLocal.accessFeeAmount ?? fromStudent.accessFeeAmount,
+            tuitionAmount: fromLocal.tuitionAmount ?? fromStudent.tuitionAmount,
+            duration: fromLocal.duration ?? fromStudent.duration,
+            selectedAt: fromLocal.updatedAt,
+        };
+    }
+
+    if (fromStudent) {
+        return {
+            ...fromStudent,
+            selectedAt: new Date().toISOString(),
+        };
+    }
+
+    if (!fromLocal) return null;
+
+    return {
+        programId: fromLocal.programId,
+        programName: fromLocal.programName,
+        accessFeeAmount: fromLocal.accessFeeAmount,
+        tuitionAmount: fromLocal.tuitionAmount,
+        duration: fromLocal.duration,
+        selectedAt: fromLocal.updatedAt,
+    };
+}
 
 function mapUserToAdmissionStudent(user: UserInterface): AdmissionStudent {
     return {
@@ -139,7 +245,21 @@ function transformStudentData(apiData: AdmissionStudent): AdmissionStudent {
         is_admitted: apiData.is_admitted,
         session: apiData.session,
         offer_expiry_date: apiData.offer_expiry_date,
+        lms_category: apiData.lms_category ?? null,
     };
+}
+
+function extractStudentPayload(
+    response: AdmissionStudent | AdmissionStudentResponse | { data?: AdmissionStudent }
+): AdmissionStudent {
+    const candidate = response as AdmissionStudentResponse;
+
+    if (candidate?.data && typeof candidate.data === "object" && "id" in candidate.data) {
+        return candidate.data;
+    }
+
+    const direct = response as AdmissionStudent;
+    return direct;
 }
 
 /* ------------------------------------------------------------------ */
@@ -151,19 +271,47 @@ export const admissionService = {
     async fetchFees(): Promise<FeeSchedule> {
         // TODO: replace with → apiClient.get<FeeSchedule>("/admission/fees", { access_token: true })
         await delay(800);
-        return MOCK_FEES;
+        const selectedProgramFee = getProgramPaymentMeta();
+
+        return {
+            ...MOCK_FEES,
+            fees: MOCK_FEES.fees.map((fee) => {
+                if (fee.slug === "access_fee") {
+                    return {
+                        ...fee,
+                        amount: selectedProgramFee?.accessFeeAmount ?? fee.amount,
+                        description: selectedProgramFee?.programName
+                            ? `Access fee for ${selectedProgramFee.programName}`
+                            : fee.description,
+                    };
+                }
+
+                if (fee.slug === "tuition_fee") {
+                    return {
+                        ...fee,
+                        amount: selectedProgramFee?.tuitionAmount ?? fee.amount,
+                        description: selectedProgramFee?.programName
+                            ? `Tuition fee for ${selectedProgramFee.programName}`
+                            : fee.description,
+                    };
+                }
+
+                return fee;
+            }),
+        };
     },
 
     /* ---------- Student Data ---------- */
     async fetchStudentAdmission(user?: UserInterface): Promise<AdmissionStudent> {
-        const response = await apiClient.get<AdmissionStudent>(
+        const response = await apiClient.get<AdmissionStudent | AdmissionStudentResponse>(
             "/admission/student",
             { access_token: true }
         );
 
-        const studentData = response.data;
+        const studentData = extractStudentPayload(response.data as AdmissionStudent | AdmissionStudentResponse);
         // 2. Seed mock states on the first fetch so simulations have base data
         const transformed = transformStudentData(studentData);
+        latestAdmissionStudent = transformed;
         if (!initialMockStudent) {
             initialMockStudent = { ...transformed };
         }
@@ -174,10 +322,29 @@ export const admissionService = {
     },
 
     /* ---------- Initiate Application Payment ---------- */
-    async initiateApplicationPayment(): Promise<PaymentInitiationResponse> {
+    async initiateApplicationPayment(amount?: number): Promise<PaymentInitiationResponse> {
+        const selectedProgramFee = getProgramPaymentMeta();
+        const payloadAmount = amount ?? selectedProgramFee?.accessFeeAmount ?? APPLICATION_FEE_AMOUNT;
+
+        const payload: AccessFeePaymentPayload = {
+            amount: payloadAmount,
+            fee_type: "access_fee",
+            source: "create-account",
+        };
+
+        if (selectedProgramFee) {
+            payload.program_id = selectedProgramFee.programId;
+            payload.category_id = selectedProgramFee.programId;
+            payload.program_name = selectedProgramFee.programName;
+            payload.access_fee_amount = selectedProgramFee.accessFeeAmount;
+            payload.tuition_amount = selectedProgramFee.tuitionAmount;
+            payload.duration = selectedProgramFee.duration;
+            payload.selected_at = selectedProgramFee.selectedAt;
+        }
+
         const response = await apiClient.post<PaymentInitiationResponse>(
             "/application/initialize-payment",
-            { amount: APPLICATION_FEE_AMOUNT },
+            payload,
             { access_token: true }
         );
         return response.data;
@@ -424,9 +591,9 @@ export const admissionQueryOptions = {
 
 export const admissionMutationOptions = {
     initiateApplicationPayment: () =>
-        createApiMutationOptions<PaymentInitiationResponse, void>({
+        createApiMutationOptions<PaymentInitiationResponse, number | undefined>({
             mutationKey: [...admissionKeys.all, "payments", "application", "initiate"],
-            mutationFn: () => admissionService.initiateApplicationPayment(),
+            mutationFn: (amount) => admissionService.initiateApplicationPayment(amount),
         }),
 
     initiateAcceptanceFeePayment: () =>

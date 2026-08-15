@@ -14,9 +14,11 @@ export interface Feature {
 }
 
 export interface Program {
+  courseCode: string;
   title: string;
   description: string;
   duration: string;
+  tuition: string;
   icon: LucideIcon;
 }
 

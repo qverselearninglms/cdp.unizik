@@ -10,6 +10,7 @@ import { useInitiateAcceptanceFeePayment, useDevSimulate } from "../hooks/useAdm
 import { BadgeCheck, ExternalLink, CheckCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import type { StepSectionProps } from "../types/admission";
+import { setPendingAdmissionPaymentType } from "@/lib/program-payment-context";
 
 export function AcceptanceFeeSection({ student, fees }: StepSectionProps) {
     const accFee = fees.fees.find((f) => f.slug === "acceptance_fee");
@@ -20,6 +21,7 @@ export function AcceptanceFeeSection({ student, fees }: StepSectionProps) {
         try {
             const result = await initPayment.mutateAsync();
             if (result.success && result.gateway_url) {
+                setPendingAdmissionPaymentType("acceptance");
                 toast.success("Redirecting to payment gateway…");
                 setTimeout(() => {
                     window.location.href = result.gateway_url;

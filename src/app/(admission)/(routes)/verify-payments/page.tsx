@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,9 +15,14 @@ import {
 	ACCEPTANCE_FEE_AMOUNT,
 	FULL_TUITION_FEE_AMOUNT,
 } from "@/config/global.config";
+import {
+	clearPendingAdmissionPaymentType,
+	getPendingAdmissionPaymentType,
+	getSelectedProgramPaymentInfo,
+} from "@/lib/program-payment-context";
 
 // ─── Payment Type Resolution ────────────────────────────────────────────────
-type PaymentType = "application" | "acceptance" | "tuition" | "tuition-part";
+type PaymentType = "access" | "acceptance" | "tuition";
 
 interface PaymentTypeConfig {
 	type: PaymentType;
@@ -27,17 +32,17 @@ interface PaymentTypeConfig {
 }
 
 const PAYMENT_TYPES: PaymentTypeConfig[] = [
-	{ type: "application", title: "Verifying Application Payment", baseAmount: APPLICATION_FEE_AMOUNT },
+	{ type: "access", title: "Verifying Access Fee Payment", baseAmount: APPLICATION_FEE_AMOUNT },
 	{ type: "acceptance", title: "Verifying Acceptance Fee Payment", baseAmount: ACCEPTANCE_FEE_AMOUNT },
 	{ type: "tuition", title: "Verifying Tuition Payment", baseAmount: FULL_TUITION_FEE_AMOUNT },
-	{ type: "tuition-part", title: "Verifying Partial Tuition Payment", baseAmount: FULL_TUITION_FEE_AMOUNT / 2 },
 ];
 
 /**
  * Credo returns transAmount in the same unit as your payment initiation.
  * If amounts don't match, also try dividing by 100 (kobo → naira fallback).
  */
-function resolvePaymentType(transAmount: string | null): PaymentTypeConfig | null {
+function resolvePaymentType(transAmount: string | null, pendingType: PaymentTypeConfig | null): PaymentTypeConfig | null {
+	if (pendingType) return pendingType;
 	if (!transAmount) return null;
 
 	const raw = parseFloat(transAmount);
@@ -64,9 +69,12 @@ function resolvePaymentType(transAmount: string | null): PaymentTypeConfig | nul
 
 function VerifyApplication({ reference }: { reference: string }) {
 	const { data, isLoading, error } = useVerifyApplicationPayment(reference);
+	useEffect(() => {
+		clearPendingAdmissionPaymentType();
+	}, []);
 	return (
 		<PaymentVerificationView
-			title="Verifying Application Payment"
+			title="Verifying Access Fee Payment"
 			isLoading={isLoading}
 			error={error}
 			data={data}
@@ -77,6 +85,9 @@ function VerifyApplication({ reference }: { reference: string }) {
 
 function VerifyAcceptance({ reference }: { reference: string }) {
 	const { data, isLoading, error } = useVerifyAcceptanceFeePayment(reference);
+	useEffect(() => {
+		clearPendingAdmissionPaymentType();
+	}, []);
 	return (
 		<PaymentVerificationView
 			title="Verifying Acceptance Fee Payment"
@@ -90,6 +101,9 @@ function VerifyAcceptance({ reference }: { reference: string }) {
 
 function VerifyTuition({ reference }: { reference: string }) {
 	const { data, isLoading, error } = useVerifyTuitionPayment(reference);
+	useEffect(() => {
+		clearPendingAdmissionPaymentType();
+	}, []);
 	return (
 		<PaymentVerificationView
 			title="Verifying Tuition Payment"
@@ -107,9 +121,54 @@ function VerifyPaymentContent() {
 	const searchParams = useSearchParams();
 	const reference = searchParams.get("transRef") ?? searchParams.get("reference") ?? "";
 	const transAmount = searchParams.get("transAmount");
+	const explicitType = searchParams.get("payment_type") ?? searchParams.get("fee_type");
+	const selectedProgramFee = getSelectedProgramPaymentInfo();
 	console.log("Payment verification params", { reference, transAmount });
 
-	const paymentType = useMemo(() => resolvePaymentType(transAmount), [transAmount]);
+	const paymentType = useMemo(() => {
+		const dynamicTypes: PaymentTypeConfig[] = PAYMENT_TYPES.map((item) => {
+			if (item.type === "access") {
+				return {
+					...item,
+					baseAmount: selectedProgramFee?.accessFeeAmount ?? item.baseAmount,
+				};
+			}
+
+			if (item.type === "tuition") {
+				return {
+					...item,
+					baseAmount: selectedProgramFee?.tuitionAmount ?? item.baseAmount,
+				};
+			}
+
+			return item;
+		});
+
+		const pending = getPendingAdmissionPaymentType();
+		const requestedType = (explicitType ?? pending) as PaymentType | null;
+		const fromRequested = requestedType
+			? dynamicTypes.find((item) => item.type === requestedType) ?? null
+			: null;
+
+		if (fromRequested) return fromRequested;
+
+		if (!transAmount) return null;
+		const raw = parseFloat(transAmount);
+		if (isNaN(raw)) return null;
+
+		const candidates = [raw, raw / 100];
+		const sorted = [...dynamicTypes].sort((a, b) => b.baseAmount - a.baseAmount);
+
+		for (const amount of candidates) {
+			for (const config of sorted) {
+				if (amount >= config.baseAmount && amount <= config.baseAmount * 1.05) {
+					return config;
+				}
+			}
+		}
+
+		return resolvePaymentType(transAmount, null);
+	}, [explicitType, transAmount, selectedProgramFee]);
 	console.log("paymentType", paymentType);
 
 	if (!reference) {
@@ -137,13 +196,11 @@ function VerifyPaymentContent() {
 	}
 
 	switch (paymentType.type) {
-		case "application":
+		case "access":
 			return <VerifyApplication reference={reference} />;
 		case "acceptance":
 			return <VerifyAcceptance reference={reference} />;
 		case "tuition":
-			return <VerifyTuition reference={reference} />;
-		case "tuition-part":
 			return <VerifyTuition reference={reference} />;
 	}
 }

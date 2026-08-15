@@ -10,15 +10,18 @@ import { useInitiateApplicationPayment } from "../hooks/useAdmissionQueries";
 import { CreditCard, ExternalLink, Loader2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import type { StepSectionProps } from "../types/admission";
+import { setPendingAdmissionPaymentType } from "@/lib/program-payment-context";
 
 export function ApplicationPaymentSection({ student, fees }: StepSectionProps) {
-    const appFee = fees.fees.find((f) => f.slug === "application_fee");
+    const appFee = fees.fees.find((f) => f.slug === "access_fee")
+        ?? fees.fees.find((f) => f.slug === "application_fee");
     const initPayment = useInitiateApplicationPayment();
 
     const handlePay = async () => {
         try {
-            const result = await initPayment.mutateAsync();
+            const result = await initPayment.mutateAsync(appFee?.amount);
             if (result.success && result.gateway_url) {
+                setPendingAdmissionPaymentType("access");
                 toast.success("Redirecting to payment gateway…");
                 // Small delay so toast is visible
                 setTimeout(() => {
@@ -47,9 +50,9 @@ export function ApplicationPaymentSection({ student, fees }: StepSectionProps) {
                             <CreditCard className="size-5 text-primary" />
                         </div>
                         <div>
-                            <CardTitle className="text-lg">Application Fee Payment</CardTitle>
+                            <CardTitle className="text-lg">Access Fee Payment</CardTitle>
                             <CardDescription>
-                                Step 1 — Pay the application fee to access the admission form
+                                Step 1 — Pay the access fee before tuition to unlock your admission flow
                             </CardDescription>
                         </div>
                     </div>
@@ -110,11 +113,11 @@ export function ApplicationPaymentSection({ student, fees }: StepSectionProps) {
                                 Payment Required
                             </p>
                             <p className="text-xs leading-relaxed text-muted-foreground">
-                                You must pay the application fee of{" "}
+                                You must pay the access fee of{" "}
                                 <span className="font-semibold text-foreground">
                                     ₦{appFee?.amount.toLocaleString() ?? "10,000"}
                                 </span>{" "}
-                                to gain access to the admission application form. This fee is
+                                before you can proceed toward tuition payment. This fee is
                                 non-refundable and will be processed via the Credo payment gateway.
                             </p>
                         </div>

@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,87 +9,94 @@ import { StatusBadgeWidget } from "./StatusBadgeWidget";
 import { useInitiateTuitionPayment, useDevSimulate } from "../hooks/useAdmissionQueries";
 import { GraduationCap, ExternalLink, Loader2, AlertCircle, CheckCircle, CreditCard } from "lucide-react";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
 import type { StepSectionProps, TuitionPaymentPayload } from "../types/admission";
 import Link from "next/link";
 import { useAdmissionStore } from "../store/admissionStore";
+import { getSelectedProgramPaymentInfo, setPendingAdmissionPaymentType } from "@/lib/program-payment-context";
 
-type PaymentPlan = "full" | "half" | "custom";
+function slugify(value: string): string {
+    return value
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "");
+}
+
+function parseAmount(value?: string | number | null): number | null {
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    if (typeof value === "string") {
+        const sanitized = value.replace(/[^\d.]/g, "").trim();
+        if (!sanitized) return null;
+        const numeric = Number(sanitized);
+        if (Number.isFinite(numeric)) return numeric;
+    }
+    return null;
+}
 
 export function TuitionPaymentSection({ student, fees }: StepSectionProps) {
     const tuiFee = fees.fees.find((f) => f.slug === "tuition_fee");
     const initPayment = useInitiateTuitionPayment();
     const { simulateTuitionPaid } = useDevSimulate();
     const currentStep = useAdmissionStore((s) => s.currentStep);
+    const selectedProgram = getSelectedProgramPaymentInfo();
+    const effectiveProgramId = selectedProgram?.programId ?? student.lms_category?.id;
+    const effectiveProgramName = selectedProgram?.programName ?? student.lms_category?.name;
+    const derivedProgramTuition =
+        selectedProgram?.tuitionAmount
+        ?? parseAmount(student.lms_category?.tuition)
+        ?? parseAmount(student.lms_category?.meta?.[0] as string | number | undefined)
+        ?? tuiFee?.amount
+        ?? 195_000;
 
-    const totalAmount = tuiFee?.amount ?? 195_000;
+    const totalAmount = derivedProgramTuition;
     const amountPaid = student.tuition_amount_paid ?? 0;
-    const remaining = totalAmount - amountPaid;
+    const remaining = Math.max(totalAmount - amountPaid, 0);
     const isPartiallyPaid = amountPaid > 0 && remaining > 0;
-    const minimumPayment = Math.ceil(totalAmount / 2);
-
-    const [selectedPlan, setSelectedPlan] = useState<PaymentPlan>(isPartiallyPaid ? "full" : "half");
-    const [customAmount, setCustomAmount] = useState<string>("");
-
-    const getPaymentAmount = (): number => {
-        if (isPartiallyPaid) return remaining; // Only option: pay the balance
-        switch (selectedPlan) {
-            case "full":
-                return remaining;
-            case "half":
-                return minimumPayment;
-            case "custom": {
-                const parsed = parseInt(customAmount.replace(/,/g, ""), 10);
-                return isNaN(parsed) ? 0 : parsed;
-            }
+    const paymentAmount = remaining;
+    const effectiveTuitionFee = tuiFee
+        ? {
+            ...tuiFee,
+            amount: totalAmount,
+            description: effectiveProgramName
+                ? `Tuition fee for ${effectiveProgramName}`
+                : tuiFee.description,
         }
-    };
-
-    const paymentAmount = getPaymentAmount();
-    const isValidAmount = paymentAmount >= minimumPayment && paymentAmount <= remaining;
+        : null;
 
     const handlePay = async () => {
-        if (!isValidAmount) {
-            toast.error(`Amount must be between ₦${minimumPayment.toLocaleString()} and ₦${remaining.toLocaleString()}`);
+        if (paymentAmount <= 0) {
+            toast.error("No outstanding tuition amount to pay.");
             return;
         }
+
         try {
+            const courseTitle = effectiveProgramName || student.department || "Certificate Programme";
             const payload: TuitionPaymentPayload = {
                 amount: paymentAmount,
-                course_title: student.department,
+                course_title: courseTitle,
+                course_slug: slugify(courseTitle),
+                course_id: effectiveProgramId ? String(effectiveProgramId) : student.id,
+                fee_type: "tuition_fee",
+                program_id: effectiveProgramId,
+                program_name: effectiveProgramName,
             };
             const result = await initPayment.mutateAsync(payload);
             if (result.success && result.gateway_url) {
+                setPendingAdmissionPaymentType("tuition");
                 toast.success("Redirecting to payment gateway…");
                 setTimeout(() => {
                     window.location.href = result.gateway_url;
                 }, 800);
             }
-        } catch {
-            toast.error("Failed to initiate payment. Please try again.");
+        } catch (error) {
+            const message =
+                error && typeof error === "object" && "message" in error
+                    ? String((error as { message?: string }).message)
+                    : "Failed to initiate payment. Please try again.";
+
+            toast.error(message);
         }
     };
-
-    const paymentPlans = [
-        {
-            id: "full" as const,
-            label: "Full Payment",
-            description: "Pay the entire tuition at once",
-            amount: remaining,
-        },
-        {
-            id: "half" as const,
-            label: "Half Payment",
-            description: "Pay 50% now, complete later",
-            amount: minimumPayment,
-        },
-        {
-            id: "custom" as const,
-            label: "Custom Amount",
-            description: `Min ₦${minimumPayment.toLocaleString()}`,
-            amount: null,
-        },
-    ];
 
     const progressPercent = totalAmount > 0 ? Math.round((amountPaid / totalAmount) * 100) : 0;
 
@@ -121,13 +127,12 @@ export function TuitionPaymentSection({ student, fees }: StepSectionProps) {
                 <CardContent className="space-y-5">
                     <div className="flex flex-wrap items-center gap-2">
                         <StatusBadgeWidget label="Admission Confirmed" status="success" />
-                        <StatusBadgeWidget label="Acceptance Fee Paid" status="success" />
                         <StatusBadgeWidget
                             label={
                                 student.tuition_payment_status === "paid"
                                     ? "Tuition Paid"
                                     : isPartiallyPaid
-                                        ? `Partial — ₦${amountPaid.toLocaleString()} paid`
+                                        ? `Outstanding — ₦${remaining.toLocaleString()} left`
                                         : "Tuition Unpaid"
                             }
                             status={
@@ -142,7 +147,7 @@ export function TuitionPaymentSection({ student, fees }: StepSectionProps) {
 
                     <Separator />
 
-                    {tuiFee && <FeeInfoCard fee={tuiFee} />}
+                    {effectiveTuitionFee && <FeeInfoCard fee={effectiveTuitionFee} />}
 
                     {/* Payment progress (visible when partially paid) */}
                     {isPartiallyPaid && (
@@ -170,90 +175,6 @@ export function TuitionPaymentSection({ student, fees }: StepSectionProps) {
                                 <span>Remaining: ₦{remaining.toLocaleString()}</span>
                             </div>
                         </motion.div>
-                    )}
-
-                    {/* Payment plan selection (only for first payment) */}
-                    {!isPartiallyPaid && (
-                        <div className="space-y-3">
-                            <p className="text-sm font-medium text-foreground">Choose a payment plan</p>
-                            <div className="grid gap-3 sm:grid-cols-3">
-                                {paymentPlans.map((plan) => (
-                                    <button
-                                        key={plan.id}
-                                        type="button"
-                                        onClick={() => setSelectedPlan(plan.id)}
-                                        className={cn(
-                                            "relative flex flex-col items-start rounded-xl border p-3 text-left transition-all",
-                                            selectedPlan === plan.id
-                                                ? "border-primary bg-primary/5 ring-1 ring-primary/30 dark:bg-primary/10"
-                                                : "border-border hover:border-primary/30 hover:bg-muted/30"
-                                        )}
-                                    >
-                                        {/* Radio indicator */}
-                                        <div className="mb-2 flex w-full items-center justify-between">
-                                            <span className="text-xs font-semibold text-foreground">{plan.label}</span>
-                                            <div
-                                                className={cn(
-                                                    "flex size-4 items-center justify-center rounded-full border-2 transition-colors",
-                                                    selectedPlan === plan.id
-                                                        ? "border-primary bg-primary"
-                                                        : "border-muted-foreground/40"
-                                                )}
-                                            >
-                                                {selectedPlan === plan.id && (
-                                                    <CheckCircle className="size-3 text-primary-foreground" />
-                                                )}
-                                            </div>
-                                        </div>
-                                        <p className="text-[10px] leading-relaxed text-muted-foreground">
-                                            {plan.description}
-                                        </p>
-                                        {plan.amount !== null && (
-                                            <p className="mt-1 text-sm font-bold tabular-nums text-foreground">
-                                                ₦{plan.amount.toLocaleString()}
-                                            </p>
-                                        )}
-                                    </button>
-                                ))}
-                            </div>
-
-                            {/* Custom amount input */}
-                            {selectedPlan === "custom" && (
-                                <motion.div
-                                    initial={{ opacity: 0, height: 0 }}
-                                    animate={{ opacity: 1, height: "auto" }}
-                                    exit={{ opacity: 0, height: 0 }}
-                                    className="overflow-hidden"
-                                >
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-medium text-muted-foreground">
-                                            Enter amount (min ₦{minimumPayment.toLocaleString()})
-                                        </label>
-                                        <div className="relative">
-                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-muted-foreground">
-                                                ₦
-                                            </span>
-                                            <input
-                                                type="text"
-                                                inputMode="numeric"
-                                                value={customAmount}
-                                                onChange={(e) => {
-                                                    const raw = e.target.value.replace(/[^0-9]/g, "");
-                                                    setCustomAmount(raw ? parseInt(raw, 10).toLocaleString() : "");
-                                                }}
-                                                placeholder={minimumPayment.toLocaleString()}
-                                                className="w-full rounded-lg border border-input bg-background px-3 py-2.5 pl-7 text-sm font-medium tabular-nums text-foreground ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                            />
-                                        </div>
-                                        {customAmount && !isValidAmount && (
-                                            <p className="text-[10px] text-destructive">
-                                                Amount must be between ₦{minimumPayment.toLocaleString()} and ₦{remaining.toLocaleString()}
-                                            </p>
-                                        )}
-                                    </div>
-                                </motion.div>
-                            )}
-                        </div>
                     )}
 
                     {/* Balance callout for second payment */}
@@ -288,14 +209,20 @@ export function TuitionPaymentSection({ student, fees }: StepSectionProps) {
                         >
                             <CreditCard className="mt-0.5 size-4 shrink-0 text-primary" />
                             <div className="space-y-1">
-                                <p className="text-sm font-medium text-foreground">Flexible Payment</p>
+                                <p className="text-sm font-medium text-foreground">Full Tuition Payment Only</p>
                                 <p className="text-xs leading-relaxed text-muted-foreground">
-                                    You can pay the full tuition of{" "}
+                                    Program tuition: {" "}
                                     <span className="font-semibold text-foreground">
                                         ₦{totalAmount.toLocaleString()}
+                                    </span>
+                                    .
+                                </p>
+                                <p className="text-xs leading-relaxed text-muted-foreground">
+                                    Current payable amount for this transaction: {" "}
+                                    <span className="font-semibold text-foreground">
+                                        ₦{paymentAmount.toLocaleString()}
                                     </span>{" "}
-                                    at once, or pay at least half (₦{minimumPayment.toLocaleString()})
-                                    now and complete the rest later.
+                                    to unlock your courses and LMS access.
                                 </p>
                             </div>
                         </motion.div>
@@ -304,7 +231,7 @@ export function TuitionPaymentSection({ student, fees }: StepSectionProps) {
                     {/* CTA */}
                     <Button
                         onClick={handlePay}
-                        disabled={initPayment.isPending || (!isPartiallyPaid && !isValidAmount)}
+                        disabled={initPayment.isPending || paymentAmount <= 0}
                         className="btn-glow w-full gap-2"
                         size="lg"
                     >
@@ -315,8 +242,7 @@ export function TuitionPaymentSection({ student, fees }: StepSectionProps) {
                             </>
                         ) : (
                             <>
-                                {isPartiallyPaid ? "Pay Balance" : "Pay"}{" "}
-                                ₦{(isPartiallyPaid ? remaining : paymentAmount).toLocaleString()} Now
+                                Pay ₦{paymentAmount.toLocaleString()} Now
                                 <ExternalLink className="size-4" />
                             </>
                         )}

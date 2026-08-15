@@ -1,12 +1,12 @@
 import React, { ReactNode } from 'react'
-import { HomeHeader } from '@/components/layout/HomeHeader'
+import HomeFloatingControls from './components/HomeFloatingControls'
 
 const Layout = ({ children }: { children: ReactNode }) => {
     return (
         <main className='root'>
             <div className="root-container">
                 <div className="wrapper">
-                    <HomeHeader />
+                    <HomeFloatingControls />
                     {children}
                 </div>
             </div>
