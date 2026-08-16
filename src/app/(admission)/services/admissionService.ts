@@ -23,12 +23,17 @@ import type {
 } from "../types/admission";
 import type { UserInterface } from "@/types/global";
 import { ACCEPTANCE_FEE_AMOUNT, APPLICATION_FEE_AMOUNT, FULL_TUITION_FEE_AMOUNT } from "@/config/global.config";
+import { baseUrl } from "@/config";
 import { apiClient } from "@/core/client";
-import { getSelectedProgramPaymentInfo } from "@/lib/program-payment-context";
+import {
+    getSelectedProgramPaymentInfo,
+    type PendingAdmissionPaymentType,
+} from "@/lib/program-payment-context";
 
 interface AccessFeePaymentPayload {
     amount: number;
     fee_type: "access_fee";
+    callback_url?: string;
     program_id?: number;
     category_id?: number;
     program_name?: string;
@@ -37,6 +42,24 @@ interface AccessFeePaymentPayload {
     duration?: string | null;
     source?: "create-account";
     selected_at?: string;
+}
+
+/**
+ * Where the gateway should return the student, with the fee type already in it.
+ *
+ * The backend currently hardcodes its callback to the production frontend, so
+ * this field is ignored today (see docs/backend-callback-url-ticket.md). It is
+ * sent regardless: an unknown field is harmless, and the day the backend honours
+ * it, `fee_type` arrives in the callback query string and the verify page stops
+ * having to infer anything — on any device or browser, first try.
+ */
+export function buildPaymentCallbackUrl(feeType: PendingAdmissionPaymentType): string | undefined {
+    const origin =
+        (typeof window !== "undefined" ? window.location.origin : "") || baseUrl;
+
+    if (!origin) return undefined;
+
+    return `${origin}/verify-payments?fee_type=${feeType}`;
 }
 
 interface ProgramPaymentMeta {
@@ -329,6 +352,7 @@ export const admissionService = {
         const payload: AccessFeePaymentPayload = {
             amount: payloadAmount,
             fee_type: "access_fee",
+            callback_url: buildPaymentCallbackUrl("access"),
             source: "create-account",
         };
 
@@ -373,7 +397,11 @@ export const admissionService = {
     async initiateAcceptanceFeePayment(): Promise<PaymentInitiationResponse> {
         const response = await apiClient.post<PaymentInitiationResponse>(
             "/application/initialize-acceptance-payment",
-            { amount: ACCEPTANCE_FEE_AMOUNT },
+            {
+                amount: ACCEPTANCE_FEE_AMOUNT,
+                fee_type: "acceptance_fee",
+                callback_url: buildPaymentCallbackUrl("acceptance"),
+            },
             { access_token: true }
         );
         return response.data;
@@ -402,7 +430,7 @@ export const admissionService = {
     async initiateTuitionPayment(payload: TuitionPaymentPayload): Promise<PaymentInitiationResponse> {
         const response = await apiClient.post<PaymentInitiationResponse>(
             "/application/initialize-tuition-payment",
-            payload,
+            { ...payload, callback_url: buildPaymentCallbackUrl("tuition") },
             { access_token: true }
         );
         return response.data;

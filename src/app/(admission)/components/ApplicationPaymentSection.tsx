@@ -10,7 +10,8 @@ import { useInitiateApplicationPayment } from "../hooks/useAdmissionQueries";
 import { CreditCard, ExternalLink, Loader2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import type { StepSectionProps } from "../types/admission";
-import { setPendingAdmissionPaymentType } from "@/lib/program-payment-context";
+import { rememberPaymentIntent, setPendingAdmissionPaymentType } from "@/lib/program-payment-context";
+import { logPayment } from "@/lib/payment-debug";
 
 export function ApplicationPaymentSection({ student, fees }: StepSectionProps) {
     const appFee = fees.fees.find((f) => f.slug === "access_fee")
@@ -19,16 +20,31 @@ export function ApplicationPaymentSection({ student, fees }: StepSectionProps) {
 
     const handlePay = async () => {
         try {
+            logPayment("initiate:request", { feeType: "access", amount: appFee?.amount ?? null });
             const result = await initPayment.mutateAsync(appFee?.amount);
+            logPayment("initiate:response", result);
+
             if (result.success && result.gateway_url) {
                 setPendingAdmissionPaymentType("access");
+                // Tie the fee type to the gateway reference so the callback can
+                // recover it even after a refresh or on a fresh tab.
+                rememberPaymentIntent({
+                    reference: result.reference,
+                    type: "access",
+                    amount: appFee?.amount ?? null,
+                });
+                logPayment("intent:saved", { reference: result.reference, type: "access" });
                 toast.success("Redirecting to payment gateway…");
                 // Small delay so toast is visible
                 setTimeout(() => {
                     window.location.href = result.gateway_url;
                 }, 800);
             }
-        } catch {
+        } catch (error) {
+            logPayment("initiate:error", {
+                feeType: "access",
+                message: error instanceof Error ? error.message : String(error),
+            });
             toast.error("Failed to initiate payment. Please try again.");
         }
     };

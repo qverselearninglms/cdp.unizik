@@ -16,13 +16,68 @@ class CourseService {
     private apiCategoriesCache: ApiCategory[] | null = null;
     private apiCoursesCache: ApiCourse[] | null = null;
 
+    /**
+     * Pull the course list out of whatever shape the endpoint returns.
+     *
+     * `apiClient.get` already unwraps the HTTP response to the body, but the body
+     * itself is inconsistent across these endpoints — some put the array at
+     * `courses`, some at `data.courses`, some return `data` as the array outright.
+     * Rather than betting on one, try each in turn. An array that exists but is
+     * empty is a real answer (no enrolments) and stops the search.
+     */
+    private extractEnrolledCourses = (body: unknown): any[] => {
+        if (!body) return [];
+        if (Array.isArray(body)) return this.flattenCourseGroups(body);
+
+        const shape = body as Record<string, any>;
+        const candidates = [
+            shape.courses,
+            shape.data?.courses,
+            shape.data?.data?.courses,
+            shape.data,
+            shape.data?.data,
+        ];
+
+        const found = candidates.find(Array.isArray);
+        return found ? this.flattenCourseGroups(found) : [];
+    }
+
+    /**
+     * The "with-category" variant may nest courses under a category wrapper.
+     * Flatten those, carrying the category down onto each course so the card can
+     * still show which programme it belongs to.
+     */
+    private flattenCourseGroups = (items: any[]): any[] =>
+        items.flatMap((item) => {
+            if (item && Array.isArray(item.courses)) {
+                const groupName = item.category?.name ?? item.course_group ?? item.name ?? null;
+                const groupId = item.category?.id ?? item.course_group_id ?? item.id ?? null;
+
+                return item.courses.map((course: any) => ({
+                    ...course,
+                    course_group: course.course_group ?? groupName,
+                    course_group_id: course.course_group_id ?? groupId,
+                }));
+            }
+            return [item];
+        });
+
     getEnrolledCourseWithCategories = async (): Promise<Enrollment[]> => {
         try {
             const response = await apiClient.get<EnrollmentApiResponse>("/student/my-enrolled-courses-with-category");
-            const apiCourses = (response as any).courses || []; //response.data.courses || [];
+            const apiCourses = this.extractEnrolledCourses(response);
 
-            // Transform API courses to Enrollment format
-            return apiCourses.map((apiCourse: EnrolledCourseResponseType) => this.transformApiCourseToEnrollment(apiCourse));
+            if (apiCourses.length === 0) {
+                // Shape drift here is silent and looks identical to "no courses",
+                // so leave a breadcrumb naming the keys we actually received.
+                console.warn(
+                    '[enrollment] no courses extracted from /student/my-enrolled-courses-with-category — body keys:',
+                    response && typeof response === 'object' ? Object.keys(response) : typeof response,
+                    response
+                );
+            }
+
+            return apiCourses.map((apiCourse) => this.transformApiCourseToEnrollment(apiCourse));
         } catch (error) {
             const apiError = error as ApiError;
             console.error(`Failed to fetch enrollments from API [${apiError?.statusCode ?? 'unknown'}]:`, apiError?.message ?? String(error));
@@ -49,7 +104,7 @@ class CourseService {
     getEnrolledCourse = async (): Promise<Enrollment[]> => {
         try {
             const results = await apiClient.get<EnrollmentApiResponse>("/student/my-enrolled-courses");
-            const apiCourses = results.data.courses || [];
+            const apiCourses = this.extractEnrolledCourses(results);
 
             // Transform API courses to Enrollment format
             return apiCourses.map(apiCourse => this.transformApiCourseToEnrollment(apiCourse));
@@ -88,13 +143,20 @@ class CourseService {
         }
     }
 
-    // Helper to transform API course data to Enrollment
+    // Helper to transform API course data to Enrollment.
+    // Field names differ between the portal's own shape (course_id/course_name)
+    // and a raw Moodle course (id/fullname/shortname), so accept either.
     private transformApiCourseToEnrollment = (apiCourse: any): Enrollment => {
+        const courseId = apiCourse.course_id ?? apiCourse.id ?? apiCourse.courseId;
+        const courseName =
+            apiCourse.course_name ?? apiCourse.fullname ?? apiCourse.name ?? 'Untitled course';
+        const shortName = apiCourse.short_name ?? apiCourse.shortname ?? '';
+
         // Create course object from API data
         const course: Course = {
-            id: `${apiCourse.course_id}`,
-            title: apiCourse.course_name,
-            description: '', // Will be augmented from mock data if needed
+            id: `${courseId}`,
+            title: courseName,
+            description: apiCourse.summary ?? '',
             instructor: 'Instructor', // Default value
             rating: 0, // Default value
             studentsEnrolled: 0, // Default value
@@ -102,19 +164,19 @@ class CourseService {
 
             // Map API fields
             course_group: apiCourse.course_group,
-            course_group_id: apiCourse.course_group_id,
-            course_id: apiCourse.course_id,
-            course_name: apiCourse.course_name,
-            short_name: apiCourse.short_name
+            course_group_id: apiCourse.course_group_id ?? apiCourse.category,
+            course_id: courseId,
+            course_name: courseName,
+            short_name: shortName
         };
 
         return {
-            id: `enroll-${apiCourse.course_id}`,
-            courseId: `${apiCourse.course_id}`,
+            id: `enroll-${courseId}`,
+            courseId: `${courseId}`,
             course: course,
-            enrolledAt: new Date().toISOString(),
-            progress: 0, // Default progress
-            completed: false // Default completed status
+            enrolledAt: apiCourse.enrolled_at ?? new Date().toISOString(),
+            progress: Number(apiCourse.progress ?? 0),
+            completed: Boolean(apiCourse.completed ?? false)
         };
     }
 

@@ -12,7 +12,8 @@ import { toast } from "sonner";
 import type { StepSectionProps, TuitionPaymentPayload } from "../types/admission";
 import Link from "next/link";
 import { useAdmissionStore } from "../store/admissionStore";
-import { getSelectedProgramPaymentInfo, setPendingAdmissionPaymentType } from "@/lib/program-payment-context";
+import { getSelectedProgramPaymentInfo, rememberPaymentIntent, setPendingAdmissionPaymentType } from "@/lib/program-payment-context";
+import { logPayment } from "@/lib/payment-debug";
 
 function slugify(value: string): string {
     return value
@@ -80,9 +81,19 @@ export function TuitionPaymentSection({ student, fees }: StepSectionProps) {
                 program_id: effectiveProgramId,
                 program_name: effectiveProgramName,
             };
+            logPayment("initiate:request", payload);
             const result = await initPayment.mutateAsync(payload);
+            logPayment("initiate:response", result);
             if (result.success && result.gateway_url) {
                 setPendingAdmissionPaymentType("tuition");
+                rememberPaymentIntent({
+                    reference: result.reference,
+                    type: "tuition",
+                    amount: paymentAmount,
+                    programId: effectiveProgramId ?? null,
+                    programName: effectiveProgramName ?? null,
+                });
+                logPayment("intent:saved", { reference: result.reference, type: "tuition" });
                 toast.success("Redirecting to payment gateway…");
                 setTimeout(() => {
                     window.location.href = result.gateway_url;

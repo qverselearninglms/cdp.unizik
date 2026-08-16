@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence, Variants, Easing } from 'framer-motion';
 import { gsap } from 'gsap';
 import {
@@ -145,10 +145,15 @@ function CategoryCard({ node, depth, selectedProgramId, onSelect, onEnroll }: Ca
     };
 
     return (
-        <motion.div variants={cardVariants} ref={cardRef}>
+        <motion.div
+            variants={cardVariants}
+            ref={cardRef}
+            data-node-id={node.id}
+            className="w-[248px] flex-shrink-0 snap-start sm:w-[268px]"
+        >
             <Card
                 className={cn(
-                    'cursor-pointer overflow-hidden border bg-white transition-all duration-200 dark:bg-slate-900/60',
+                    'flex h-full cursor-pointer flex-col overflow-hidden border bg-white transition-all duration-200 dark:bg-slate-900/60',
                     hasChildren
                         ? 'border-slate-200 hover:border-blue-300 hover:bg-blue-50/40 dark:border-slate-700 dark:hover:border-blue-400 dark:hover:bg-blue-900/20'
                         : 'border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/40 dark:border-slate-700 dark:hover:border-emerald-400 dark:hover:bg-emerald-900/20',
@@ -158,39 +163,58 @@ function CategoryCard({ node, depth, selectedProgramId, onSelect, onEnroll }: Ca
                 onMouseLeave={handleHoverLeave}
                 onClick={() => hasChildren && onSelect(node)}
             >
-                <CardContent className="p-4">
-                    <div className="flex items-start justify-between gap-3">
-                        <div className="flex min-w-0 items-center gap-3">
-                            <div
-                                className={cn(
-                                    'flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl',
-                                    hasChildren
-                                        ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300'
-                                        : 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-300'
-                                )}
-                            >
-                                {getDepthIcon(depth, hasChildren)}
-                            </div>
-
-                            <div className="min-w-0">
-                                <p className="truncate text-sm font-semibold leading-tight text-slate-800 dark:text-slate-100">
-                                    {node.name}
-                                </p>
-                                {hasChildren ? (
-                                    <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-                                        {node.children.length} sub-categor{node.children.length === 1 ? 'y' : 'ies'}
-                                    </p>
-                                ) : (
-                                    <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-                                        Program ID: #{node.id}
-                                    </p>
-                                )}
-                            </div>
+                <CardContent className="flex flex-1 flex-col p-3.5">
+                    <div className="flex items-start gap-2.5">
+                        <div
+                            className={cn(
+                                'flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl',
+                                hasChildren
+                                    ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300'
+                                    : 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-300'
+                            )}
+                        >
+                            {getDepthIcon(depth, hasChildren)}
                         </div>
 
-                        {hasChildren ? (
-                            <ChevronRight className="h-4 w-4 flex-shrink-0 text-slate-400 dark:text-slate-500" />
-                        ) : (
+                        <div className="min-w-0 flex-1">
+                            <p
+                                title={node.name}
+                                className="line-clamp-2 text-sm font-semibold leading-snug text-slate-800 dark:text-slate-100"
+                            >
+                                {node.name}
+                            </p>
+                            <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                                {hasChildren
+                                    ? `${node.children.length} sub-categor${node.children.length === 1 ? 'y' : 'ies'}`
+                                    : `Program ID: #${node.id}`}
+                            </p>
+                        </div>
+
+                        {hasChildren && (
+                            <ChevronRight className="mt-1 h-4 w-4 flex-shrink-0 text-slate-400 dark:text-slate-500" />
+                        )}
+                    </div>
+
+                    {!hasChildren && (
+                        <>
+                            {/* Stacked rows read better than columns at this card width */}
+                            <dl className="mt-3 space-y-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 dark:border-slate-700 dark:bg-slate-800/70">
+                                {[
+                                    { label: 'Access fee', value: formatFeeLabel(node.access_fee, 'TBA') },
+                                    { label: 'Tuition', value: formatFeeLabel(node.tuition, 'TBA') },
+                                    { label: 'Duration', value: node.duration ?? 'TBA' },
+                                ].map((row) => (
+                                    <div key={row.label} className="flex items-baseline justify-between gap-2">
+                                        <dt className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                            {row.label}
+                                        </dt>
+                                        <dd className="truncate text-xs font-semibold text-slate-700 dark:text-slate-100">
+                                            {row.value}
+                                        </dd>
+                                    </div>
+                                ))}
+                            </dl>
+
                             <Button
                                 type="button"
                                 size="sm"
@@ -199,37 +223,16 @@ function CategoryCard({ node, depth, selectedProgramId, onSelect, onEnroll }: Ca
                                     onEnroll(node);
                                 }}
                                 className={cn(
-                                    'h-auto flex-shrink-0 rounded-lg px-3 py-1.5 text-xs text-white',
-                                    isSelected ? 'bg-emerald-700 hover:bg-emerald-800' : 'bg-emerald-600 hover:bg-emerald-700'
+                                    'mt-3 h-auto w-full rounded-lg py-1.5 text-xs text-white',
+                                    isSelected
+                                        ? 'bg-emerald-700 hover:bg-emerald-800'
+                                        : 'bg-emerald-600 hover:bg-emerald-700'
                                 )}
                             >
                                 <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />
                                 {isSelected ? 'Selected' : 'Select Program'}
                             </Button>
-                        )}
-                    </div>
-
-                    {!hasChildren && (
-                        <div className="mt-3 grid gap-2 sm:grid-cols-3">
-                            <div className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 dark:border-slate-700 dark:bg-slate-800/70">
-                                <p className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">Access Fee</p>
-                                <p className="mt-0.5 text-xs font-semibold text-slate-700 dark:text-slate-100">
-                                    {formatFeeLabel(node.access_fee, 'TBA')}
-                                </p>
-                            </div>
-                            <div className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 dark:border-slate-700 dark:bg-slate-800/70">
-                                <p className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">Tuition</p>
-                                <p className="mt-0.5 text-xs font-semibold text-slate-700 dark:text-slate-100">
-                                    {formatFeeLabel(node.tuition, 'TBA')}
-                                </p>
-                            </div>
-                            <div className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 dark:border-slate-700 dark:bg-slate-800/70">
-                                <p className="text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400">Duration</p>
-                                <p className="mt-0.5 text-xs font-semibold text-slate-700 dark:text-slate-100">
-                                    {node.duration ?? 'TBA'}
-                                </p>
-                            </div>
-                        </div>
+                        </>
                     )}
                 </CardContent>
             </Card>
@@ -255,6 +258,55 @@ export function ProgramSelector({ setValue, trigger, error }: ProgramSelectorPro
             : navigationStack[navigationStack.length - 1].children;
 
     const currentDepth = navigationStack.length;
+    const listKey = navigationStack.map((n) => n.id).join('-') || 'root';
+
+    /* ---- Horizontal strip scrolling ---- */
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const [canScrollLeft, setCanScrollLeft] = useState(false);
+    const [canScrollRight, setCanScrollRight] = useState(false);
+
+    const syncScrollState = useCallback(() => {
+        const el = scrollRef.current;
+        if (!el) return;
+        setCanScrollLeft(el.scrollLeft > 4);
+        setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+    }, []);
+
+    useEffect(() => {
+        const el = scrollRef.current;
+        if (!el) return;
+
+        syncScrollState();
+        el.addEventListener('scroll', syncScrollState, { passive: true });
+
+        const observer = new ResizeObserver(syncScrollState);
+        observer.observe(el);
+
+        return () => {
+            el.removeEventListener('scroll', syncScrollState);
+            observer.disconnect();
+        };
+        // Re-bind when the rendered list changes — AnimatePresence swaps the node.
+    }, [syncScrollState, listKey, currentNodes.length]);
+
+    // Drilling into a category starts the new list from its first card.
+    useEffect(() => {
+        scrollRef.current?.scrollTo({ left: 0, behavior: 'auto' });
+        syncScrollState();
+    }, [listKey, syncScrollState]);
+
+    // Bring the chosen program back into view so the confirmation and the card agree.
+    useEffect(() => {
+        if (!selectedProgram) return;
+        const card = scrollRef.current?.querySelector(`[data-node-id="${selectedProgram.id}"]`);
+        card?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }, [selectedProgram]);
+
+    const scrollByPage = (direction: 1 | -1) => {
+        const el = scrollRef.current;
+        if (!el) return;
+        el.scrollBy({ left: direction * Math.max(248, el.clientWidth * 0.8), behavior: 'smooth' });
+    };
 
     useEffect(() => {
         if (selectedProgram) {
@@ -421,34 +473,76 @@ export function ProgramSelector({ setValue, trigger, error }: ProgramSelectorPro
                 )}
             </AnimatePresence>
 
-            <AnimatePresence mode="wait">
-                <motion.div
-                    key={navigationStack.map((n) => n.id).join('-') || 'root'}
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate="visible"
-                    exit="exit"
-                    className="grid grid-cols-1 gap-2.5"
-                >
-                    {currentNodes.map((node) => (
-                        <CategoryCard
-                            key={node.id}
-                            node={node}
-                            depth={currentDepth}
-                            selectedProgramId={selectedProgram?.id ?? null}
-                            onSelect={drillInto}
-                            onEnroll={handleEnroll}
-                        />
-                    ))}
-
-                    {currentNodes.length === 0 && (
-                        <motion.div variants={cardVariants} className="py-10 text-center">
-                            <FolderOpen className="mx-auto mb-2 h-10 w-10 text-slate-300 dark:text-slate-600" />
-                            <p className="text-sm text-slate-500 dark:text-slate-400">No items in this category.</p>
+            {currentNodes.length === 0 ? (
+                <div className="py-10 text-center">
+                    <FolderOpen className="mx-auto mb-2 h-10 w-10 text-slate-300 dark:text-slate-600" />
+                    <p className="text-sm text-slate-500 dark:text-slate-400">No items in this category.</p>
+                </div>
+            ) : (
+                /* Horizontal strip — keeps the list one row tall so Continue stays in view */
+                <div className="relative">
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={listKey}
+                            ref={scrollRef}
+                            variants={containerVariants}
+                            initial="hidden"
+                            animate="visible"
+                            exit="exit"
+                            tabIndex={0}
+                            role="group"
+                            aria-label="Available programs — scroll horizontally"
+                            className="custom-scrollbar flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth px-0.5 pb-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+                        >
+                            {currentNodes.map((node) => (
+                                <CategoryCard
+                                    key={node.id}
+                                    node={node}
+                                    depth={currentDepth}
+                                    selectedProgramId={selectedProgram?.id ?? null}
+                                    onSelect={drillInto}
+                                    onEnroll={handleEnroll}
+                                />
+                            ))}
                         </motion.div>
+                    </AnimatePresence>
+
+                    {/* Edge fades + arrows, shown only when there is more to reach */}
+                    {canScrollLeft && (
+                        <>
+                            <div className="pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-background to-transparent" />
+                            <button
+                                type="button"
+                                aria-label="Scroll to previous programs"
+                                onClick={() => scrollByPage(-1)}
+                                className="absolute -left-1 top-1/2 z-10 hidden h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white shadow-md transition-colors hover:bg-slate-50 sm:flex dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800"
+                            >
+                                <ChevronLeft className="h-4 w-4 text-slate-600 dark:text-slate-300" />
+                            </button>
+                        </>
                     )}
-                </motion.div>
-            </AnimatePresence>
+
+                    {canScrollRight && (
+                        <>
+                            <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-background to-transparent" />
+                            <button
+                                type="button"
+                                aria-label="Scroll to more programs"
+                                onClick={() => scrollByPage(1)}
+                                className="absolute -right-1 top-1/2 z-10 hidden h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white shadow-md transition-colors hover:bg-slate-50 sm:flex dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800"
+                            >
+                                <ChevronRight className="h-4 w-4 text-slate-600 dark:text-slate-300" />
+                            </button>
+                        </>
+                    )}
+                </div>
+            )}
+
+            {(canScrollLeft || canScrollRight) && (
+                <p className="text-center text-[11px] text-slate-500 dark:text-slate-400 sm:hidden">
+                    Swipe to see more programs
+                </p>
+            )}
 
             {error && !selectedProgram && (
                 <motion.p
