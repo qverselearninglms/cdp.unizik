@@ -110,25 +110,27 @@ export const ProgrammeCard: React.FC<{ enrollment: Enrollment }> = ({ enrollment
       <CardContent className="p-4 md:p-6 pt-0 space-y-5 flex-1 flex flex-col">
         {/* Fees — each one named, so there is no ambiguity about which is which */}
         <div className="space-y-2">
-          {enrollment.fees.map((fee) => (
-            <div key={fee.key} className="flex items-center justify-between gap-3 text-sm">
-              <span className="text-muted-foreground">{fee.label}</span>
-              <span className="flex items-center gap-2 flex-shrink-0">
-                <span className="tabular-nums font-medium">
-                  {fee.amount != null && fee.amount > 0 ? naira(fee.amount) : 'Not published'}
+          {/* Only fees the backend actually prices — a row reading "Not published"
+              tells the student nothing and looks like a fault. */}
+          {enrollment.fees
+            .filter((fee) => fee.amount != null && fee.amount > 0)
+            .map((fee) => (
+              <div key={fee.key} className="flex items-center justify-between gap-3 text-sm">
+                <span className="text-muted-foreground">{fee.label}</span>
+                <span className="flex items-center gap-2 flex-shrink-0">
+                  <span className="tabular-nums font-medium">{naira(fee.amount as number)}</span>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${
+                      STATUS_TONE[fee.status] ?? 'bg-muted text-muted-foreground'
+                    }`}
+                  >
+                    {fee.status === 'partial'
+                      ? `${naira(fee.paid)} paid`
+                      : formatStatus(fee.status)}
+                  </span>
                 </span>
-                <span
-                  className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${
-                    STATUS_TONE[fee.status] ?? 'bg-muted text-muted-foreground'
-                  }`}
-                >
-                  {fee.status === 'partial' && fee.amount
-                    ? `${naira(fee.paid)} paid`
-                    : formatStatus(fee.status)}
-                </span>
-              </span>
-            </div>
-          ))}
+              </div>
+            ))}
         </div>
 
         {/* Admission progress */}

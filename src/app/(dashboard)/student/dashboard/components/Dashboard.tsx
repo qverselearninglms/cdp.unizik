@@ -17,7 +17,8 @@ import {
   Wallet,
 } from 'lucide-react';
 import { useStudentQueries } from '@/hooks/useStudentQueries';
-import { FeeBreakdownChart, buildFeeRows } from './FeeBreakdownChart';
+import { PaymentsPanel, buildFeeRows } from './PaymentsPanel';
+import { CoursesPanel } from './CoursesPanel';
 import { ProgrammeCard, nextPayableFee } from './ProgrammeCard';
 
 const naira = (value: number) =>
@@ -76,7 +77,7 @@ export const Dashboard: React.FC = () => {
     );
   }
 
-  const { profile, enrollments, unavailable } = dashboardData;
+  const { profile, enrollments, courses, unavailable } = dashboardData;
 
   const fullName =
     [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') || 'Student';
@@ -140,7 +141,7 @@ export const Dashboard: React.FC = () => {
         )} */}
 
         {/* Headline figures — each says exactly what it counts */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
           <Card className={outstanding > 0 ? 'border-orange-500/40' : undefined}>
             <CardContent className="p-4 md:p-6">
               <div className="flex items-start justify-between gap-2">
@@ -205,10 +206,34 @@ export const Dashboard: React.FC = () => {
               </div>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardContent className="p-4 md:p-6">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm font-medium text-muted-foreground">
+                    Courses enrolled
+                  </p>
+                  <p className="text-3xl md:text-4xl font-bold text-foreground mt-1">
+                    {courses.length}
+                  </p>
+                  <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                    {courses.length > 0 ? 'Available in the LMS' : 'None yet'}
+                  </p>
+                </div>
+                <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                  <BookOpen className="h-5 w-5 text-blue-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Fee breakdown — answers "which fee is which" */}
-        <FeeBreakdownChart rows={feeRows} />
+        {/* Fees — headline ratio, per-fee progress, then the full numbers */}
+        <PaymentsPanel rows={feeRows} />
+
+        {/* Courses the student is actually enrolled in */}
+        <CoursesPanel courses={courses} />
 
         {/* One card per programme */}
         {enrollments.length > 0 ? (
