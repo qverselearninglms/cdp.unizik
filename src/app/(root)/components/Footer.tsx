@@ -5,8 +5,10 @@ import { FOOTER_SECTIONS } from '@/lib/constants';
 
 export const Footer: React.FC = () => {
     return (
-        <footer className="bg-gray-800 text-white py-16">
-            <div className="max-w-7xl mx-auto px-6">
+        <footer className="relative overflow-hidden bg-gradient-to-r from-[#081632] via-[#0d274f] to-[#132f5f] py-16 text-white dark:from-[#040814] dark:via-[#08172f] dark:to-[#0f2450]">
+            <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-rose-500/14 blur-3xl" />
+            <div className="absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-blue-300/12 blur-3xl" />
+            <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-10">
                     {/* University Info */}
                     <div>
@@ -49,7 +51,7 @@ export const Footer: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="border-t border-gray-700 pt-8 text-center text-gray-400">
+                <div className="border-t border-white/15 pt-8 text-center text-blue-100/70">
                     <p>&copy; 2024 {SITE_TITLE}. All rights reserved. | Privacy Policy | Terms of Service</p>
                 </div>
             </div>

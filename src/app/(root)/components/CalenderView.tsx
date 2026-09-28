@@ -4,18 +4,26 @@ import UpcomingEvents from './UpcomingEvents'
 
 const CalenderView = () => {
     return (
-        <section id="calender_view" className="w-full py-10 px-6 min-h-[85vh] bg-slate-100 dark:bg-gray-900 flex items-center">
+        <section
+            id="calender_view"
+            className="relative flex min-h-[85vh] w-full items-center overflow-hidden bg-gradient-to-b from-slate-100 to-white px-4 py-16 dark:from-[#050d1e] dark:to-[#070f22] sm:px-6"
+        >
+            <div className="absolute -left-20 top-10 h-64 w-64 rounded-full bg-blue-500/10 blur-3xl" />
+            <div className="absolute -right-20 bottom-8 h-64 w-64 rounded-full bg-rose-500/10 blur-3xl" />
             <div className="w-full max-w-7xl mx-auto text-center">
-                <div className="text-center mb-16">
-                    <h2 className="text-3xl md:text-4xl font-bold text-gray-800 dark:text-white mb-4">
+                <div className="mb-12 text-center sm:mb-16">
+                    <p className="mb-3 text-sm uppercase tracking-[0.16em] text-blue-600 dark:text-blue-300">
+                        Academic Schedule
+                    </p>
+                    <h2 className="mb-4 text-3xl font-bold text-slate-900 dark:text-white sm:text-4xl">
                         Calender Events
                     </h2>
-                    <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+                    <p className="mx-auto max-w-3xl text-base text-slate-600 dark:text-slate-300 sm:text-lg">
                         Pick a glance at your academic schedule
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-16">
+                <div className="mt-12 grid grid-cols-1 gap-6 lg:mt-16 lg:grid-cols-3 lg:gap-8">
                     <div className="lg:col-span-2">
                         <Announcements />
                     </div>

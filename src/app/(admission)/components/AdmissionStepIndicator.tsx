@@ -6,23 +6,20 @@ import {
     CreditCard,
     FileText,
     Search,
-    BadgeCheck,
     GraduationCap,
     PartyPopper,
 } from "lucide-react";
-import { AdmissionStep } from "../types/admission";
 
 const STEPS = [
-    { label: "Application Fee", icon: CreditCard },
+    { label: "Access Fee", icon: CreditCard },
     { label: "Application Form", icon: FileText },
     { label: "Admission Status", icon: Search },
-    { label: "Acceptance Fee", icon: BadgeCheck },
     { label: "Tuition Fee", icon: GraduationCap },
     { label: "Completed", icon: PartyPopper },
 ] as const;
 
 interface AdmissionStepIndicatorProps {
-    currentStep: AdmissionStep;
+    currentStep: number;
 }
 
 export function AdmissionStepIndicator({ currentStep }: AdmissionStepIndicatorProps) {

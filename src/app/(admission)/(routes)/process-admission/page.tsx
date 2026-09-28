@@ -16,19 +16,63 @@ import {
     ApplicationPaymentSection,
     ApplicationFormSection,
     AdmissionStatusSection,
-    AcceptanceFeeSection,
     TuitionPaymentSection,
     AdmissionCompleteSection,
 } from "../../components";
 import { AdmissionStep } from "../../types/admission";
 import { GraduationCap, RotateCcw, Loader2 } from "lucide-react";
 import { useAdmissionStore } from "../../store/admissionStore";
+import { getSelectedProgramPaymentInfo } from "@/lib/program-payment-context";
+
+function parseAmount(value?: string | number): number | null {
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    if (typeof value === "string") {
+        const sanitized = value.replace(/[^\d.]/g, "").trim();
+        if (!sanitized) return null;
+        const numeric = Number(sanitized);
+        if (Number.isFinite(numeric)) return numeric;
+    }
+    return null;
+}
+
+function formatCurrency(value?: string | number): string {
+    const parsed = parseAmount(value);
+    if (parsed === null) return "TBA";
+    return new Intl.NumberFormat("en-NG", {
+        style: "currency",
+        currency: "NGN",
+        maximumFractionDigits: 0,
+    }).format(parsed);
+}
+
+function statusChipClasses(status?: string): string {
+    switch (status) {
+        case "paid":
+            return "border-emerald-200 bg-emerald-100 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200";
+        case "pending":
+            return "border-amber-200 bg-amber-100 text-amber-800 dark:border-amber-800 dark:bg-amber-900/50 dark:text-amber-200";
+        case "failed":
+            return "border-red-200 bg-red-100 text-red-800 dark:border-red-800 dark:bg-red-900/50 dark:text-red-200";
+        case "partial":
+            return "border-blue-200 bg-blue-100 text-blue-800 dark:border-blue-800 dark:bg-blue-900/50 dark:text-blue-200";
+        default:
+            return "border-slate-200 bg-slate-100 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200";
+    }
+}
+
+function statusLabel(status?: string): string {
+    if (!status) return "Unknown";
+    return status.charAt(0).toUpperCase() + status.slice(1);
+}
 
 export default function ProcessAdmissionPage() {
     const queryClient = useQueryClient();
     const { data: fees, isLoading: feesLoading } = useFees();
     const { data: student, isLoading: studentLoading, refetch } = useStudentAdmission();
     const currentStep = useAdmissionStore((s) => s.currentStep);
+    const displayStep = currentStep >= AdmissionStep.TUITION_PAYMENT
+        ? currentStep - 1
+        : currentStep;
     const { resetAll, simulateAppPaymentPaid, simulateApplied, simulateOffered, simulateAccepted, simulateDeclined, simulateExpired, simulateTuitionPaid } = useDevSimulate();
 
     /* Re-compute step whenever student data updates */
@@ -43,6 +87,15 @@ export default function ProcessAdmissionPage() {
     };
 
     const isLoading = feesLoading || studentLoading;
+    const selectedProgram = getSelectedProgramPaymentInfo();
+    const course = student?.lms_category;
+    const effectiveCourse = {
+        id: selectedProgram?.programId ?? course?.id,
+        name: selectedProgram?.programName ?? course?.name,
+        tuition: selectedProgram?.tuitionAmount ?? course?.tuition ?? (course?.meta?.[0] as string | number | undefined),
+        accessFee: selectedProgram?.accessFeeAmount ?? course?.access_fee ?? (course?.meta?.[1] as string | number | undefined),
+        duration: selectedProgram?.duration ?? course?.duration ?? (course?.meta?.[2] as string | undefined),
+    };
 
     return (
         <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
@@ -69,6 +122,70 @@ export default function ProcessAdmissionPage() {
                 </div>
             </motion.div>
 
+            {!isLoading && student && (
+                <motion.div
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/70"
+                >
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                        Applicant Details
+                    </p>
+                    <div className="mt-2 grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-3">
+                        <p className="text-slate-700 dark:text-slate-200">
+                            Name: <span className="font-semibold">{student.name}</span>
+                        </p>
+                        <p className="text-slate-700 dark:text-slate-200">
+                            Email: <span className="font-semibold">{student.email}</span>
+                        </p>
+                        <p className="text-slate-700 dark:text-slate-200">
+                            Session: <span className="font-semibold">{student.session}</span>
+                        </p>
+                    </div>
+
+                    <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900 dark:bg-emerald-950/40">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+                            Applied Course Information
+                        </p>
+
+                        {effectiveCourse.name ? (
+                            <>
+                                <p className="mt-2 text-sm font-bold text-emerald-900 dark:text-emerald-100">
+                                    {effectiveCourse.name}
+                                </p>
+                                <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-4">
+                                    <p className="text-emerald-800 dark:text-emerald-200">
+                                        Program ID: <span className="font-semibold">#{effectiveCourse.id ?? "TBA"}</span>
+                                    </p>
+                                    <p className="text-emerald-800 dark:text-emerald-200">
+                                        Access Fee: <span className="font-semibold">{formatCurrency(effectiveCourse.accessFee)}</span>
+                                    </p>
+                                    <p className="text-emerald-800 dark:text-emerald-200">
+                                        Tuition: <span className="font-semibold">{formatCurrency(effectiveCourse.tuition)}</span>
+                                    </p>
+                                    <p className="text-emerald-800 dark:text-emerald-200">
+                                        Duration: <span className="font-semibold">{effectiveCourse.duration ?? "TBA"}</span>
+                                    </p>
+                                </div>
+
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                    <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${statusChipClasses(student.application_payment_status)}`}>
+                                        Access Payment: {statusLabel(student.application_payment_status)}
+                                    </span>
+                                    <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${statusChipClasses(student.tuition_payment_status)}`}>
+                                        Tuition Payment: {statusLabel(student.tuition_payment_status)}
+                                    </span>
+                                </div>
+                            </>
+                        ) : (
+                            <p className="mt-2 text-sm text-emerald-800 dark:text-emerald-200">
+                                No course has been attached to this admission profile yet.
+                            </p>
+                        )}
+                    </div>
+                </motion.div>
+            )}
+
             {/* Step indicator */}
             <motion.div
                 initial={{ opacity: 0 }}
@@ -76,7 +193,7 @@ export default function ProcessAdmissionPage() {
                 transition={{ delay: 0.1 }}
                 className="mb-8 rounded-2xl border border-border/50 bg-card/50 p-4 shadow-sm backdrop-blur-sm"
             >
-                <AdmissionStepIndicator currentStep={currentStep} />
+                <AdmissionStepIndicator currentStep={displayStep} />
             </motion.div>
 
             {/* Loading skeleton */}
@@ -118,16 +235,7 @@ export default function ProcessAdmissionPage() {
                         />
                     )}
 
-                    {currentStep === AdmissionStep.ACCEPTANCE_FEE && (
-                        <AcceptanceFeeSection
-                            key="acceptance-fee"
-                            student={student}
-                            fees={fees}
-                            onRefresh={handleRefresh}
-                        />
-                    )}
-
-                    {currentStep === AdmissionStep.TUITION_PAYMENT && (
+                    {(currentStep === AdmissionStep.ACCEPTANCE_FEE || currentStep === AdmissionStep.TUITION_PAYMENT) && (
                         <TuitionPaymentSection
                             key="tuition-payment"
                             student={student}
@@ -169,7 +277,7 @@ export default function ProcessAdmissionPage() {
                             {simulateAppPaymentPaid.isPending && (
                                 <Loader2 className="size-3 animate-spin" />
                             )}
-                            Step 0→1: App Payment Paid
+                            Step 0→1: Access Fee Paid
                         </Button>
                         <Button
                             variant="outline"
@@ -205,7 +313,7 @@ export default function ProcessAdmissionPage() {
                             {simulateAccepted.isPending && (
                                 <Loader2 className="size-3 animate-spin" />
                             )}
-                            Step 3→4: Acceptance Fee Paid
+                            Mark Admission Accepted
                         </Button>
                         <Button
                             variant="outline"
@@ -241,7 +349,7 @@ export default function ProcessAdmissionPage() {
                             {simulateTuitionPaid.isPending && (
                                 <Loader2 className="size-3 animate-spin" />
                             )}
-                            Step 4→5: Tuition Paid
+                            Mark Tuition Paid
                         </Button>
                         <Button
                             variant="outline"

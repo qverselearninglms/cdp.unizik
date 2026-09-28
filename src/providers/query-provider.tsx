@@ -2,13 +2,20 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { installPaymentTraceConsoleHelper } from "@/lib/payment-debug";
 
 interface QueryProviderProps {
     children: ReactNode;
 }
 
 export function QueryProvider({ children }: QueryProviderProps) {
+    // Make __cdpPaymentLog() reachable from the console on every page, so the
+    // payment trail can be read wherever the gateway happens to drop you.
+    useEffect(() => {
+        installPaymentTraceConsoleHelper();
+    }, []);
+
     const [queryClient] = useState(
         () =>
             new QueryClient({

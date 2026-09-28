@@ -5,6 +5,11 @@ export interface Category {
     name: string;
     parent: number;
     sortorder: number;
+    description?: string;
+    tuition?: string;
+    access_fee?: string;
+    duration?: string;
+    meta?: Array<string | number>;
 }
 
 export interface CategoryNode extends Category {

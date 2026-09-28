@@ -1,6 +1,16 @@
 // src/lib/services/studentService.ts
 import { ApiResponse } from '@/types/auth';
 import { apiClient } from '@/core/client';
+import { parseAmount, toEnrollments, type Enrollment } from './enrollments';
+import { courseService } from '@/app/(root)/enrollment/services/course-service';
+import type { Enrollment as CourseEnrollment } from '@/app/(root)/enrollment/types/course.types';
+
+export type {
+  Enrollment,
+  EnrollmentFee,
+  EnrollmentFeeStatus,
+} from './enrollments';
+export { toEnrollments, parseAmount } from './enrollments';
 
 /**
  * Moodle Course Interface
@@ -210,6 +220,42 @@ export interface PaymentStats {
   analytics?: any;
 }
 
+/**
+ * Programme (Moodle category) attached to a student's admission record.
+ * `tuition` / `access_fee` arrive as formatted strings, e.g. "500,000".
+ */
+export interface AdmissionLmsCategory {
+  id: number;
+  name: string;
+  parent: number;
+  sortorder: number;
+  tuition?: string;
+  access_fee?: string;
+  duration?: string;
+  meta?: Array<string | number>;
+}
+
+/** Payload of GET /admission/student */
+export interface AdmissionSummary {
+  id: number | string;
+  name: string;
+  email: string;
+  department: string;
+  faculty: string;
+  application_payment_status: string;
+  application_status: string;
+  admission_status: string;
+  acceptance_payment_status: string;
+  tuition_payment_status: string;
+  tuition_amount_paid: number;
+  has_applied: boolean;
+  is_admitted: boolean;
+  progress_status: string | null;
+  session: string;
+  offer_expiry_date: string | null;
+  lms_category: AdmissionLmsCategory | null;
+}
+
 export interface Assessment {
   id: number;
   title: string;
@@ -343,14 +389,117 @@ function normalize<T>(res: any): ApiResponse<T> {
   };
 }
 
+/** Map the admission API's fee states onto the payment states the UI renders. */
+function mapAdmissionFeeStatus(status: string | undefined): Payment['status'] {
+  switch ((status || '').toLowerCase()) {
+    case 'paid':
+    case 'success':
+    case 'completed':
+      return 'paid';
+    case 'partial':
+    case 'pending':
+    case 'processing':
+      return 'pending';
+    case 'failed':
+    case 'overdue':
+      return 'overdue';
+    default:
+      return 'pending';
+  }
+}
+
+/**
+ * Turn enrolments into the PaymentStats shape the payments UI already renders,
+ * so the admission fee state can stand in for the missing payment-stats endpoint.
+ */
+export function buildPaymentStatsFromEnrollments(enrollments: Enrollment[]): PaymentStats {
+  const payments: Payment[] = enrollments.flatMap((enrollment) =>
+    enrollment.fees
+      .filter((fee) => fee.amount != null && fee.amount > 0)
+      .map((fee) => ({
+        id: `${enrollment.id}-${fee.key}`,
+        studentId: enrollment.id,
+        description: `${fee.label} — ${enrollment.programName}`,
+        amount: fee.amount as number,
+        dueDate: null,
+        paymentDate: null,
+        status: mapAdmissionFeeStatus(fee.status),
+        referenceNumber: `${fee.key}_fee`,
+        paymentMethod: null,
+        program: enrollment.programName,
+      }))
+  );
+
+  const totalDue = enrollments.reduce((sum, e) => sum + e.totalDue, 0);
+  const totalPaid = enrollments.reduce((sum, e) => sum + e.totalPaid, 0);
+
+  return {
+    studentPayments: {
+      summary: {
+        totalPaid,
+        totalPending: Math.max(0, totalDue - totalPaid),
+        totalOverdue: 0,
+        totalDue,
+      },
+      payments,
+      analytics: {
+        byStatus: {
+          paid: payments.filter((p) => p.status === 'paid').length,
+          pending: payments.filter((p) => p.status === 'pending').length,
+          overdue: payments.filter((p) => p.status === 'overdue').length,
+        },
+        byProgram: enrollments.map((e) => ({
+          program: e.programName,
+          totalDue: e.totalDue,
+          totalPaid: e.totalPaid,
+          outstanding: e.outstanding,
+        })),
+      },
+    },
+  };
+}
+
 /**
  * Student Service - All Methods
  */
 export const studentService = {
-  /** Get student profile */
+  /**
+   * Get student profile.
+   *
+   * The endpoint is `/application/profile/me` (what the auth flow uses) and it
+   * returns the account under `user`, not `data` — the previous `/application/profile`
+   * + `normalize()` combination got both wrong, which is why the profile page
+   * rendered blank fields.
+   */
   getProfile: async (): Promise<ApiResponse<StudentProfile>> => {
-    const res = await apiClient.get('/application/profile');
-    return normalize<StudentProfile>(res);
+    const res = await apiClient.get<any>('/application/profile/me');
+    const body: any = res ?? {};
+    const account: any = body.user ?? body.data?.user ?? body.data ?? body;
+
+    const profile: StudentProfile = {
+      user_id: Number(account?.id ?? 0) || 0,
+      first_name: account?.first_name ?? '',
+      last_name: account?.last_name ?? '',
+      email: account?.email ?? '',
+      phone: account?.phone ?? '',
+      username: account?.username ?? null,
+      address: account?.address ?? null,
+      state: account?.state ?? null,
+      country: account?.country ?? '',
+      admission_no: account?.admission_no ?? account?.matric_no ?? null,
+      registration_date: account?.registration_date ?? account?.created_at ?? null,
+      enrollment_status:
+        account?.enrollment_status ?? (account?.is_active ? 'active' : 'inactive'),
+      current_class_id: account?.current_class_id ?? null,
+      meta: account?.meta ?? null,
+    };
+
+    if (!profile.email && !profile.first_name) {
+      console.warn('[profile] no account fields found in /application/profile/me — body keys:',
+        body && typeof body === 'object' ? Object.keys(body) : typeof body, body);
+    }
+
+    return { status: 200, message: 'Profile fetched', data: profile };
   },
 
   /** Update student profile */
@@ -361,10 +510,44 @@ export const studentService = {
     return normalize<StudentProfile>(res);
   },
 
-  /** Payment stats */
+  /** Admission record — programme, session and fee states for the signed-in student */
+  getAdmissionStudent: async (): Promise<ApiResponse<AdmissionSummary | null>> => {
+    const res = await apiClient.get('/admission/student');
+    return normalize<AdmissionSummary | null>(res);
+  },
+
+  /**
+   * Payment stats.
+   *
+   * `/student/dashboard/payment-stats` is the only reference to that path in the
+   * codebase and it returns nothing usable, so the fee state on the admission
+   * record is used instead — real amounts and real statuses rather than an empty
+   * page. If the endpoint ever starts answering, its data wins.
+   */
   getPaymentStats: async (): Promise<ApiResponse<PaymentStats>> => {
-    const res = await apiClient.get('/student/dashboard/payment-stats');
-    return normalize<PaymentStats>(res);
+    const [statsResult, admissionResult] = await Promise.allSettled([
+      apiClient.get('/student/dashboard/payment-stats'),
+      studentService.getAdmissionStudent(),
+    ]);
+
+    if (statsResult.status === 'fulfilled') {
+      const stats = normalize<PaymentStats>(statsResult.value);
+      const summary = stats.data?.studentPayments?.summary ?? stats.data?.summary;
+
+      if (summary && (Number(summary.totalDue) > 0 || Number(summary.totalPaid) > 0)) {
+        return stats;
+      }
+    }
+
+    const enrollments = toEnrollments(
+      admissionResult.status === 'fulfilled' ? admissionResult.value.data : null
+    );
+
+    return {
+      status: 200,
+      message: 'Payment summary derived from admission record',
+      data: buildPaymentStatsFromEnrollments(enrollments),
+    };
   },
 
   /** Assessments */
@@ -552,56 +735,105 @@ export const studentService = {
     }
   },
 
-  /** Dashboard Summary */
+  /**
+   * Dashboard Summary.
+   *
+   * `/admission/student` is the one endpoint guaranteed to be live for every
+   * signed-in student, so it is the spine of this payload: identity, programme
+   * and fee state all come from it. The `/student/*` and `/application/profile`
+   * endpoints are treated as optional enrichment — when they are missing the
+   * dashboard still renders real data instead of blanks. `unavailable` lists
+   * whichever of them failed so the UI can say so rather than showing zeroes.
+   */
   getDashboardSummary: async (): Promise<ApiResponse<{
     profile: StudentProfile;
+    admission: AdmissionSummary | null;
+    enrollments: Enrollment[];
     paymentStats: PaymentStats;
+    courses: CourseEnrollment[];
     recentAssessments: Assessment[];
     attendance: AttendanceRecord[];
     upcomingDeadlines: any[];
+    unavailable: string[];
   }>> => {
-    const [p, ps, a, at] = await Promise.allSettled([
+    const [adm, p, ps, a, at, co] = await Promise.allSettled([
+      studentService.getAdmissionStudent(),
       studentService.getProfile(),
       studentService.getPaymentStats(),
       studentService.getAssessments(),
       studentService.getAttendance(),
+      courseService.getEnrolledCourseWithCategories(),
     ]);
 
-    const profile =
-      p.status === 'fulfilled' ? p.value.data : ({
-        user_id: 0,
-        first_name: 'Student',
-        last_name: '',
-        email: '',
-        phone: '',
-        username: null,
-        address: null,
-        state: null,
-        country: '',
-        admission_no: null,
-        registration_date: null,
-        enrollment_status: 'active',
-        current_class_id: null,
-        meta: null,
-      } as StudentProfile);
+    const unavailable: string[] = [];
+    const track = (label: string, result: PromiseSettledResult<unknown>) => {
+      if (result.status === 'rejected') {
+        unavailable.push(label);
+        console.warn(`[dashboard] ${label} unavailable:`, result.reason);
+      }
+    };
+    track('admission', adm);
+    track('profile', p);
+    track('payments', ps);
+    track('assessments', a);
+    track('attendance', at);
+    track('courses', co);
 
-    const paymentStats =
-      ps.status === 'fulfilled' ? ps.value.data : ({
-        studentPayments: {
-          summary: { totalPaid: 0, totalPending: 0, totalOverdue: 0, totalDue: 0 },
-          payments: [],
-          analytics: {
-            byStatus: { paid: 0, pending: 0, overdue: 0 },
-            byProgram: [],
-          },
-        },
-      } as PaymentStats);
+    const admission =
+      adm.status === 'fulfilled' ? (adm.value.data ?? null) : null;
+
+    const courses: CourseEnrollment[] = co.status === 'fulfilled' ? (co.value ?? []) : [];
+
+    /* ---------- Profile: fetched values win, admission fills the gaps ---------- */
+    const admissionNameParts = (admission?.name ?? '').trim().split(/\s+/).filter(Boolean);
+    const fetchedProfile = p.status === 'fulfilled' ? p.value.data : null;
+
+    const profile: StudentProfile = {
+      user_id: fetchedProfile?.user_id || Number(admission?.id) || 0,
+      first_name: fetchedProfile?.first_name || admissionNameParts[0] || 'Student',
+      last_name: fetchedProfile?.last_name || admissionNameParts.slice(1).join(' ') || '',
+      email: fetchedProfile?.email || admission?.email || '',
+      phone: fetchedProfile?.phone || '',
+      username: fetchedProfile?.username ?? null,
+      address: fetchedProfile?.address ?? null,
+      state: fetchedProfile?.state ?? null,
+      country: fetchedProfile?.country || '',
+      admission_no:
+        fetchedProfile?.admission_no ?? (admission?.id != null ? String(admission.id) : null),
+      registration_date: fetchedProfile?.registration_date ?? null,
+      enrollment_status:
+        fetchedProfile?.enrollment_status ||
+        (admission?.is_admitted ? 'admitted' : admission?.admission_status || 'pending'),
+      current_class_id: fetchedProfile?.current_class_id ?? admission?.lms_category?.id ?? null,
+      meta: fetchedProfile?.meta ?? null,
+    };
+
+    /* ---------- Enrollments: one entry per programme the student has taken up ---------- */
+    const enrollments = toEnrollments(admission);
+
+    const totalDue = enrollments.reduce((sum, e) => sum + e.totalDue, 0);
+    const totalPaid = enrollments.reduce((sum, e) => sum + e.totalPaid, 0);
+
+    /* ---------- Payments: derive from the fee state when the
+                  payment-stats endpoint is unavailable ---------- */
+    const admissionPaymentStats = buildPaymentStatsFromEnrollments(enrollments);
+
+    const fetchedPaymentStats = ps.status === 'fulfilled' ? ps.value.data : null;
+    const fetchedSummary =
+      fetchedPaymentStats?.studentPayments?.summary ?? fetchedPaymentStats?.summary;
+    const hasFetchedPayments =
+      !!fetchedSummary &&
+      (Number(fetchedSummary.totalDue) > 0 || Number(fetchedSummary.totalPaid) > 0);
+
+    const paymentStats = hasFetchedPayments
+      ? (fetchedPaymentStats as PaymentStats)
+      : admissionPaymentStats;
 
     const assessments =
-      a.status === 'fulfilled' ? a.value.data : [];
+      a.status === 'fulfilled' ? (a.value.data ?? []) : [];
 
     const attendance =
-      at.status === 'fulfilled' ? at.value.data : [];
+      at.status === 'fulfilled' ? (at.value.data ?? []) : [];
 
     const upcomingDeadlines = assessments
       .filter((x) => x.score === null)
@@ -618,10 +850,14 @@ export const studentService = {
       message: 'Dashboard data fetched successfully',
       data: {
         profile,
+        admission,
+        enrollments,
+        courses,
         paymentStats,
         recentAssessments: assessments.slice(0, 10),
         attendance: attendance.slice(0, 30),
         upcomingDeadlines,
+        unavailable,
       },
     };
   },

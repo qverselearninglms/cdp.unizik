@@ -4,18 +4,26 @@ import Link from "next/link";
 
 export default function CampusHighlights() {
     return (
-        <section id="campus_highlight" className="w-full py-16 px-6 min-h-[85vh] flex items-center bg-white dark:bg-gray-800">
+        <section
+            id="campus_highlight"
+            className="relative flex min-h-[85vh] w-full items-center overflow-hidden bg-gradient-to-b from-white to-slate-100 px-4 py-16 dark:from-[#050d1e] dark:to-[#091226] sm:px-6"
+        >
+            <div className="absolute -left-24 -top-16 h-64 w-64 rounded-full bg-blue-500/10 blur-3xl" />
+            <div className="absolute -right-24 -bottom-16 h-64 w-64 rounded-full bg-fuchsia-500/10 blur-3xl" />
             <div className="w-full max-w-7xl mx-auto text-center">
                 <div className="text-center mb-12">
-                    <h2 className="text-3xl font-bold text-[#23608c] dark:text-blue-400 mb-4">Campus Highlights</h2>
-                    <p className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+                    <p className="mb-3 text-sm uppercase tracking-[0.16em] text-blue-600 dark:text-blue-300">
+                        Discover Campus
+                    </p>
+                    <h2 className="mb-4 text-3xl font-bold text-slate-900 dark:text-white sm:text-4xl">Campus Highlights</h2>
+                    <p className="mx-auto max-w-2xl text-slate-600 dark:text-slate-300">
                         Experience what makes our university special through our state-of-the-art facilities and vibrant community.
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
                     {CAMPUSHIGHLIGHTS.map((ch, index) => (
-                        <div key={index} className="group relative overflow-hidden rounded-lg h-64 w-auto">
+                        <div key={index} className="group relative h-64 w-auto overflow-hidden rounded-xl border border-slate-200/60 dark:border-white/10">
                             <Image
                                 src={ch.imageUrl}
                                 fill
@@ -32,7 +40,7 @@ export default function CampusHighlights() {
                 <div className="mt-8 text-center">
                     <Link
                         href="#"
-                        className="inline-flex items-center justify-center bg-[#d25400] dark:bg-orange-600 hover:bg-[#b34800] dark:hover:bg-orange-700 text-white font-medium py-3 px-6 rounded-md transition-colors"
+                        className="inline-flex items-center justify-center rounded-full border border-white/15 bg-gradient-to-r from-[#eb3f57] via-[#963bcb] to-[#0d58cb] px-7 py-3 font-medium text-white shadow-[0_12px_36px_rgba(218,72,100,0.43)] transition-all hover:scale-[1.02]"
                     >
                         Take a Virtual Tour
                     </Link>

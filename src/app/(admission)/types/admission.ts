@@ -6,6 +6,17 @@ export type PaymentStatus = "unpaid" | "pending" | "partial" | "paid" | "failed"
 export type AdmissionOfferStatus = "pending" | "offered" | "rejected" | "accepted" | "declined" | "expired";
 export type ApplicationStatus = "not_started" | "submitted" | "under_review";
 
+export interface LmsCategory {
+    id: number;
+    name: string;
+    parent: number;
+    sortorder: number;
+    tuition?: string;
+    access_fee?: string;
+    duration?: string;
+    meta?: Array<string | number>;
+}
+
 /** Represents a single fee item from the API */
 export interface FeeItem {
     id: string;
@@ -39,6 +50,13 @@ export interface AdmissionStudent {
     is_admitted: boolean;
     session: string;
     offer_expiry_date: string | null;
+    lms_category?: LmsCategory | null;
+}
+
+export interface AdmissionStudentResponse {
+    status: number;
+    response: string;
+    data: AdmissionStudent;
 }
 
 /** Payload for initiating a tuition payment */
@@ -47,6 +65,9 @@ export interface TuitionPaymentPayload {
     course_title: string;
     course_slug?: string;
     course_id?: string;
+    fee_type?: "tuition_fee";
+    program_id?: number;
+    program_name?: string;
 }
 
 /** Payment initiation response from the backend */

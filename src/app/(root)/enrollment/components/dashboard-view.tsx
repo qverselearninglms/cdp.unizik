@@ -2,7 +2,7 @@ import { useCourseStore } from '../stores/course-store';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Plus, Award, Database, Home } from 'lucide-react';
+import { Plus, Award, Database, Home, BookOpen } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useCourseQueries } from '../hooks/use-course-queries';
 import { courseService } from '../services/course-service';
@@ -243,6 +243,21 @@ export function DashboardView({ userId }: { userId: string }) {
                         )
                     })}
                 </div>
+
+                {/* An empty grid is indistinguishable from a broken fetch — say which it is */}
+                {enrolledCourses.length === 0 && (
+                    <Card className="border-2 border-dashed">
+                        <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
+                            <BookOpen className="h-10 w-10 text-muted-foreground" />
+                            <div>
+                                <p className="font-semibold">No courses yet</p>
+                                <p className="mt-1 text-sm text-muted-foreground">
+                                    Once your enrolment is confirmed, your courses appear here.
+                                </p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
             </div>
             <ConfirmModal
                 open={unenrollModalOpen}

@@ -38,7 +38,7 @@ export function ApplicationFormSection({ student }: StepSectionProps) {
                 <CardContent className="space-y-5">
                     {/* Status */}
                     <div className="flex flex-wrap items-center gap-2">
-                        <StatusBadgeWidget label="Application Fee Paid" status="success" />
+                        <StatusBadgeWidget label="Access Fee Paid" status="success" />
                         <StatusBadgeWidget
                             label={student.has_applied ? "Form Submitted" : "Form Not Submitted"}
                             status={student.has_applied ? "success" : "warning"}
@@ -58,7 +58,7 @@ export function ApplicationFormSection({ student }: StepSectionProps) {
                                 Payment Confirmed!
                             </p>
                             <p className="text-xs leading-relaxed text-muted-foreground">
-                                Your application fee has been successfully processed. You now have
+                                Your access fee has been successfully processed. You now have
                                 access to the admission application form. Please fill it out
                                 carefully — all information will be verified by the admissions office.
                             </p>

@@ -11,10 +11,12 @@ export const Stats: React.FC = () => {
     return (
         <section
             ref={statsRef}
-            className="bg-gradient-to-br from-blue-800 to-blue-600 text-white py-16 px-6 text-center"
+            className="relative overflow-hidden bg-gradient-to-r from-[#091737] via-[#0d2c63] to-[#163f82] px-4 py-16 text-center text-white dark:from-[#040814] dark:via-[#09162f] dark:to-[#0f2450] sm:px-6"
         >
+            <div className="absolute -left-24 -top-24 h-64 w-64 rounded-full bg-rose-500/18 blur-3xl" />
+            <div className="absolute -bottom-24 -right-24 h-64 w-64 rounded-full bg-blue-300/16 blur-3xl" />
             <div className="max-w-8xl mx-auto">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-10">
+                <div className="grid grid-cols-2 gap-8 md:grid-cols-4 md:gap-10">
                     {STATS.map((stat, index) => (
                         <div key={index} className="text-center">
                             <span
