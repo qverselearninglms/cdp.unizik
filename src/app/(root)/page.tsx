@@ -12,13 +12,21 @@ export default function HomePage() {
   return (
     <main className="min-h-screen">
       {/* <HomepageSlider /> */}
+
       <HomeSlider />
+
       <Features />
+
       <Programs />
+
       <CalenderView />
+
       <CampusHighlights />
+
       <Stats />
+
       <Footer />
+      
     </main>
   );
 }
