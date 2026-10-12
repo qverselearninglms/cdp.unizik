@@ -16,6 +16,18 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+### Required auth environment variables
+
+Auth.js session JWT encryption requires a stable secret across all runtimes (Node + Edge). Set one of these in your local environment before logging in:
+
+```bash
+AUTH_SECRET=your-long-random-secret
+# or
+NEXTAUTH_SECRET=your-long-random-secret
+```
+
+If this secret changes between runs, existing session cookies become unreadable and users can see `JWTSessionError` / `JWEDecryptionFailed` errors until they sign in again.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.

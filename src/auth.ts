@@ -1,8 +1,10 @@
-import NextAuth, { User } from "next-auth"
+import NextAuth, { Session, User } from "next-auth"
 import Credentials from "next-auth/providers/credentials"
 import { signInFormData, signInSchema } from "./schema/auth-schema"
 import { authApi } from "./lib/services/auth"
 import { UserInterface } from "./types/global"
+
+const authSecret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
     trustHost: true,
@@ -67,7 +69,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         }
     },
 
-    secret: process.env.NEXTAUTH_SECRET,
+    secret: authSecret,
     session: {
         strategy: "jwt",
     },
@@ -84,4 +86,37 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
     }
 })
 
+const isInvalidJwtSessionError = (error: unknown) => {
+    if (!(error instanceof Error)) return false;
 
+    const cause = (error as { cause?: unknown }).cause;
+    const causeMessage =
+        typeof cause === "string"
+            ? cause
+            : cause instanceof Error
+                ? cause.message
+                : "";
+
+    return (
+        error.message.includes("JWTSessionError") ||
+        error.message.includes("JWEDecryptionFailed") ||
+        causeMessage.includes("JWTSessionError") ||
+        causeMessage.includes("JWEDecryptionFailed")
+    );
+};
+
+export const safeAuth = async (): Promise<Session | null> => {
+    try {
+        return await auth();
+    } catch (error) {
+        if (isInvalidJwtSessionError(error)) {
+            console.warn(
+                "[auth] Invalid or stale session cookie detected. Returning null session and continuing request.",
+                error
+            );
+            return null;
+        }
+
+        throw error;
+    }
+};

@@ -9,7 +9,7 @@ import { SITE_NAME } from "@/config";
 import { Metadata } from "next";
 import { AppSidebar } from "@/components/app-sidebar";
 import SiteHeader from "@/components/site-header";
-import { auth } from "@/auth";
+import { safeAuth } from "@/auth";
 import { AuthUser } from "@/types/auth";
 import { Suspense } from "react";
 import { ExtensionCleanup } from "@/components/layout/ClientOnly";
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 };
 
 const layout = async ({ children }: { children: React.ReactNode }) => {
-    const session = await auth()
+    const session = await safeAuth()
 
     return (
         <MainLayout requireAuth revealHeader={true} >

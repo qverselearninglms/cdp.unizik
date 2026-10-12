@@ -6,7 +6,7 @@ import { APP_CONFIG } from "@/config";
 import { cookies } from "next/headers";
 import { cn } from "@/lib/utils";
 import { ActiveThemeProvider } from "@/components/active-theme";
-import { auth } from "@/auth";
+import { safeAuth } from "@/auth";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { QueryProvider } from "@/providers/query-provider";
@@ -63,7 +63,7 @@ export default async function RootLayout({
 }: Readonly<{
     children: React.ReactNode;
 }>) {
-    const session = await auth()
+    const session = await safeAuth()
 
     const cookieStore = await cookies()
     const activeThemeValue = cookieStore.get("active_theme")?.value

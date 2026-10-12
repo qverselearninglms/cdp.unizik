@@ -1,9 +1,9 @@
-import { auth } from '@/auth'
+import { safeAuth } from '@/auth'
 import { redirect } from 'next/navigation'
 import { Dashboard } from './components/Dashboard'
 
 export default async function StudentDashboard() {
-    const session = await auth()
+    const session = await safeAuth()
 
     if (!session) {
         redirect('/auth/signin')
