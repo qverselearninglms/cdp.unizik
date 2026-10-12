@@ -28,7 +28,7 @@ NEXTAUTH_SECRET=your-long-random-secret
 
 If this secret changes between runs, existing session cookies become unreadable and users can see `JWTSessionError` / `JWEDecryptionFailed` errors until they sign in again.
 
-The app also clears stale Auth.js session cookies automatically when visiting `/auth/signin`, so affected users can recover without manually clearing browser storage.
+The app also clears stale Auth.js session cookies automatically when visiting `/auth/signin`, then shows a one-time message ("Session refreshed. Please sign in again.") so affected users can recover without manually clearing browser storage.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 

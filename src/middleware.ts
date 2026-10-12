@@ -7,6 +7,7 @@ const AUTH_COOKIES_TO_CLEAR = [
     "authjs.session-token",
     "__Secure-authjs.session-token",
 ];
+const AUTH_RECOVERY_COOKIE = "cdp_auth_session_recovered";
 
 export default auth((req) => {
     if (!req.nextUrl.pathname.startsWith("/auth/signin")) {
@@ -14,11 +15,23 @@ export default auth((req) => {
     }
 
     const response = NextResponse.next();
+    let clearedAnySessionCookie = false;
 
     for (const cookieName of AUTH_COOKIES_TO_CLEAR) {
         if (req.cookies.get(cookieName)) {
             response.cookies.delete(cookieName);
+            clearedAnySessionCookie = true;
         }
+    }
+
+    if (clearedAnySessionCookie) {
+        response.cookies.set(AUTH_RECOVERY_COOKIE, "1", {
+            path: "/",
+            maxAge: 60,
+            httpOnly: false,
+            sameSite: "lax",
+            secure: process.env.NODE_ENV === "production",
+        });
     }
 
     return response;
