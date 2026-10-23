@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence, Variants, Easing } from 'framer-motion';
 import { gsap } from 'gsap';
 import {
@@ -14,6 +14,8 @@ import {
     Loader2,
     AlertCircle,
     RefreshCcw,
+    Search,
+    X,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -257,6 +259,14 @@ export function ProgramSelector({ setValue, trigger, error }: ProgramSelectorPro
             ? categoryTree
             : navigationStack[navigationStack.length - 1].children;
 
+    const [searchTerm, setSearchTerm] = useState('');
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+    const filteredNodes = useMemo(() => {
+        if (!normalizedSearch) return currentNodes;
+
+        return currentNodes.filter((node) => node.name.toLowerCase().includes(normalizedSearch));
+    }, [currentNodes, normalizedSearch]);
+
     const currentDepth = navigationStack.length;
     const listKey = navigationStack.map((n) => n.id).join('-') || 'root';
 
@@ -388,6 +398,28 @@ export function ProgramSelector({ setValue, trigger, error }: ProgramSelectorPro
         <div className="space-y-4">
             <Card className="border border-slate-200 bg-gradient-to-br from-blue-50/60 to-white dark:border-slate-700 dark:from-slate-900 dark:to-slate-900">
                 <CardHeader className="px-4 pb-3 pt-4">
+                    <div className="relative mb-3">
+                        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                        <input
+                            type="search"
+                            value={searchTerm}
+                            onChange={(event) => setSearchTerm(event.target.value)}
+                            placeholder="Search programs or sub-programs..."
+                            className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-10 text-sm text-slate-700 shadow-sm outline-none transition-colors placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-blue-500 dark:focus:ring-blue-900/60"
+                            aria-label="Search programs"
+                        />
+                        {searchTerm && (
+                            <button
+                                type="button"
+                                onClick={() => setSearchTerm('')}
+                                aria-label="Clear program search"
+                                className="absolute right-3 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                            >
+                                <X className="h-3.5 w-3.5" />
+                            </button>
+                        )}
+                    </div>
+
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             {currentDepth > 0 && (
@@ -407,7 +439,7 @@ export function ProgramSelector({ setValue, trigger, error }: ProgramSelectorPro
                         </div>
 
                         <Badge variant="secondary" className="text-xs">
-                            {currentNodes.length} option{currentNodes.length !== 1 ? 's' : ''}
+                            {filteredNodes.length} option{filteredNodes.length !== 1 ? 's' : ''}
                         </Badge>
                     </div>
 
@@ -473,17 +505,21 @@ export function ProgramSelector({ setValue, trigger, error }: ProgramSelectorPro
                 )}
             </AnimatePresence>
 
-            {currentNodes.length === 0 ? (
+            {filteredNodes.length === 0 ? (
                 <div className="py-10 text-center">
                     <FolderOpen className="mx-auto mb-2 h-10 w-10 text-slate-300 dark:text-slate-600" />
-                    <p className="text-sm text-slate-500 dark:text-slate-400">No items in this category.</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                        {searchTerm
+                            ? `No programs match “${searchTerm}”. Try another keyword.`
+                            : 'No items in this category.'}
+                    </p>
                 </div>
             ) : (
                 /* Horizontal strip — keeps the list one row tall so Continue stays in view */
                 <div className="relative">
                     <AnimatePresence mode="wait">
                         <motion.div
-                            key={listKey}
+                            key={`${listKey}-${searchTerm}`}
                             ref={scrollRef}
                             variants={containerVariants}
                             initial="hidden"
@@ -494,7 +530,7 @@ export function ProgramSelector({ setValue, trigger, error }: ProgramSelectorPro
                             aria-label="Available programs — scroll horizontally"
                             className="custom-scrollbar flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth px-0.5 pb-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
                         >
-                            {currentNodes.map((node) => (
+                            {filteredNodes.map((node) => (
                                 <CategoryCard
                                     key={node.id}
                                     node={node}
