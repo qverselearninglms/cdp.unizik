@@ -133,7 +133,6 @@ export interface CourseActions {
 export interface PaymentData {
     amount: number;
     authorizationUrl: string;
-    credoReference: string;
     crn: string;
     debitAmount: number;
     fee: number;

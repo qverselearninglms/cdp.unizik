@@ -286,15 +286,72 @@ function extractStudentPayload(
 }
 
 /* ------------------------------------------------------------------ */
+/*  Backend fee schedule (GET /payments/fees)                           */
+/* ------------------------------------------------------------------ */
+
+interface BackendFeeSchedule {
+    currency?: string;
+    program_id?: number;
+    test_amount?: boolean;
+    fees?: Array<{ slug: string; name?: string; amount?: number; currency?: string }>;
+}
+
+/** Backend slugs → the slugs the admission pages look up. */
+const BACKEND_FEE_SLUGS: Record<string, string> = {
+    "application-fee": "access_fee",
+    "acceptance-fee": "acceptance_fee",
+    "tuition-fee": "tuition_fee",
+};
+
+function mapBackendFees(body: BackendFeeSchedule | null | undefined, programName: string | null): FeeSchedule | null {
+    if (!body || !Array.isArray(body.fees)) return null;
+
+    const fees = MOCK_FEES.fees.map((fallback) => {
+        const match = body.fees!.find((f) => BACKEND_FEE_SLUGS[f.slug] === fallback.slug);
+        if (!match || typeof match.amount !== "number") return fallback;
+
+        const forProgramme = programName && fallback.slug !== "acceptance_fee" ? ` for ${programName}` : "";
+        return {
+            ...fallback,
+            amount: match.amount,
+            currency: match.currency ?? fallback.currency,
+            description: body.test_amount
+                ? `Test amount for your account${forProgramme}`
+                : forProgramme
+                    ? `${fallback.name}${forProgramme}`
+                    : fallback.description,
+        };
+    });
+
+    return { ...MOCK_FEES, fees };
+}
+
+/* ------------------------------------------------------------------ */
 /*  Public API                                                          */
 /* ------------------------------------------------------------------ */
 
 export const admissionService = {
     /* ---------- Fees ---------- */
     async fetchFees(): Promise<FeeSchedule> {
-        // TODO: replace with → apiClient.get<FeeSchedule>("/admission/fees", { access_token: true })
-        await delay(800);
         const selectedProgramFee = getProgramPaymentMeta();
+
+        // The backend decides what every payment costs (the programme's Moodle fees, or the
+        // test amount for test accounts), so show its figures — they are what the checkout charges.
+        try {
+            const response = await apiClient.get<BackendFeeSchedule>("/payments/fees", {
+                params: selectedProgramFee?.programId ? { program_id: selectedProgramFee.programId } : undefined,
+                access_token: true,
+            });
+            // get() returns the response body itself; tolerate a { data: … } wrapper too.
+            const raw = response as unknown as BackendFeeSchedule & { data?: BackendFeeSchedule };
+            const body = Array.isArray(raw?.fees) ? raw : raw?.data;
+            const fromBackend = mapBackendFees(body, selectedProgramFee?.programName ?? null);
+            if (fromBackend) return fromBackend;
+        } catch {
+            // Fall through to the local estimate below; the server still charges the right amount.
+        }
+
+        await delay(300);
 
         return {
             ...MOCK_FEES,

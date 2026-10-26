@@ -104,7 +104,7 @@ export function AcceptanceFeeSection({ student, fees }: StepSectionProps) {
                                 <span className="font-semibold text-foreground">
                                     ₦{accFee?.amount.toLocaleString() ?? "30,000"}
                                 </span>
-                                . Payment will be processed via the Credo payment gateway.
+                                . Payment will be processed via the TransactPay payment gateway.
                             </p>
                         </div>
                     </motion.div>

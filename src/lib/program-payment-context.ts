@@ -80,9 +80,7 @@ export function rememberPaymentIntent(record: {
 /**
  * Look the intent up by any reference the callback carries.
  *
- * Credo returns BOTH `reference` (the merchant reference we initiated with) and
- * `transRef` (its own transaction reference), and which one matches what the
- * backend handed us at initiation is not guaranteed — so try every candidate
+ * The callback may carry `transRef` and/or `reference`, so try every candidate
  * rather than betting on one.
  */
 export function findPaymentIntent(

@@ -134,7 +134,7 @@ export function ApplicationPaymentSection({ student, fees }: StepSectionProps) {
                                     ₦{appFee?.amount.toLocaleString() ?? "10,000"}
                                 </span>{" "}
                                 before you can proceed toward tuition payment. This fee is
-                                non-refundable and will be processed via the Credo payment gateway.
+                                non-refundable and will be processed via the TransactPay payment gateway.
                             </p>
                         </div>
                     </motion.div>

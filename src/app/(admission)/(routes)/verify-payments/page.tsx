@@ -72,8 +72,7 @@ function normalisePaymentType(value: string | null | undefined): PaymentType | n
  * payment as the wrong fee type is a far more expensive mistake than asking the
  * student to retry.
  *
- * Credo returns transAmount in the same unit as the initiation, so the kobo
- * fallback (÷100) is tried too.
+ * Some gateways report the amount in kobo, so the ÷100 fallback is tried too.
  */
 function resolveByAmount(
 	transAmount: string | null,
@@ -85,8 +84,8 @@ function resolveByAmount(
 	const raw = parseFloat(transAmount);
 	if (isNaN(raw)) return null;
 
-	// transAmount is gross — Credo reports its cut separately as processorFee,
-	// so the fee the student was actually charged is the difference.
+	// transAmount may be gross, with the gateway's cut reported separately as
+	// processorFee, so the fee the student was actually charged is the difference.
 	const fee = parseFloat(processorFee ?? "");
 	const net = isNaN(fee) ? raw : raw - fee;
 
@@ -195,9 +194,8 @@ function VerifyTuition({ reference, intentRefs }: VerifyProps) {
 
 function VerifyPaymentContent() {
 	const searchParams = useSearchParams();
-	// Credo sends both: `reference` is the merchant reference we initiated with,
-	// `transRef` is its own transaction reference. Keep both — the ledger may be
-	// keyed by either, depending on which one the backend returned at initiation.
+	// TransactPay returns to /verify-payments?transRef=TP-… (our reference). Keep
+	// `reference` too — the intent ledger may be keyed by either.
 	const transRef = searchParams.get("transRef");
 	const merchantRef = searchParams.get("reference");
 	const reference = transRef ?? merchantRef ?? "";
