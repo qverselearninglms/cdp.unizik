@@ -57,24 +57,19 @@ const VERIFY_ENDPOINTS: Record<FeeType, string> = {
     access: "/application/verify-access-payment",
 };
 
-/** Accept every spelling the URL or backend may use. */
+/**
+ * Accept every spelling the URL or backend may use: `access`, `access_fee`,
+ * `course_access_fee`, `ACCESS-FEE`, … Matched on the distinctive stem so an
+ * unexpected variant still resolves instead of silently falling through.
+ */
 export function normaliseFeeType(value: unknown): FeeType | null {
-    switch (String(value ?? "").trim().toLowerCase()) {
-        case "application":
-        case "application_fee":
-            return "application";
-        case "acceptance":
-        case "acceptance_fee":
-            return "acceptance";
-        case "tuition":
-        case "tuition_fee":
-            return "tuition";
-        case "access":
-        case "access_fee":
-            return "access";
-        default:
-            return null;
-    }
+    const v = String(value ?? "").trim().toLowerCase();
+    if (!v) return null;
+    if (v.includes("access")) return "access";
+    if (v.includes("tuition")) return "tuition";
+    if (v.includes("accept")) return "acceptance";
+    if (v.includes("applic")) return "application";
+    return null;
 }
 
 /** Our references encode the fee: TP-APP-… / TP-ACC-… / TP-TUI-… / TP-AXS-…. */

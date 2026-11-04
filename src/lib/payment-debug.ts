@@ -30,6 +30,7 @@ export type PaymentStage =
   | "callback:params"
   | "callback:resolved"
   | "callback:unresolved"
+  | "callback:destination"
   | "verify:response"
   | "verify:error";
 

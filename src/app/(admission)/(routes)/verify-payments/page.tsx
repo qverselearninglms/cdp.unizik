@@ -55,10 +55,17 @@ function safeRedirect(value: string | null | undefined): string | null {
 	return null;
 }
 
+/**
+ * Where the student goes next. Our own `redirect` param (only the access-fee
+ * checkout sets it) wins outright; otherwise the fee decides.
+ */
 function destinationFor(fee: FeeType, redirectParam: string | null, paid: boolean): string {
-	if (fee !== "access") return "/process-admission";
-	const base = safeRedirect(redirectParam) ?? COURSE_ENROLLMENT_PATH;
-	return paid ? `${base}${base.includes("?") ? "&" : "?"}access=granted` : base;
+	const explicit = safeRedirect(redirectParam);
+	if (!explicit && fee !== "access") return "/process-admission";
+	const base = explicit ?? COURSE_ENROLLMENT_PATH;
+	const isEnrollment = base.split("?")[0] === COURSE_ENROLLMENT_PATH;
+	if (!paid || !isEnrollment) return base;
+	return `${base}${base.includes("?") ? "&" : "?"}access=granted`;
 }
 
 function VerifyPaymentContent() {
@@ -69,13 +76,21 @@ function VerifyPaymentContent() {
 	const reference = displayReference(params);
 	const redirectParam = searchParams.get("redirect");
 
-	// Best guess of the fee, only to pick an endpoint — the reply has the final say.
-	const guessed = useMemo<{ fee: FeeType; via: string }>(() => {
-		const fromQuery = normaliseFeeType(searchParams.get("payment_type") ?? searchParams.get("fee_type"));
-		if (fromQuery) return { fee: fromQuery, via: "query param" };
+	// The backend encodes the fee in the reference it issued (TP-AXS-… etc.):
+	// the one signal that can't be stale, misspelt or edited into another fee.
+	const fromRef = useMemo(
+		() => feeTypeFromReference(params.transRef, params.reference, params.trans_ref, params.merchant_reference),
+		[params]
+	);
 
-		const fromRef = feeTypeFromReference(params.transRef, params.reference, params.trans_ref, params.merchant_reference);
+	// Best guess of the fee, to pick an endpoint (any endpoint verifies any fee).
+	const guessed = useMemo<{ fee: FeeType; via: string }>(() => {
 		if (fromRef) return { fee: fromRef, via: "reference prefix" };
+
+		// Read each param on its own: an unrecognised payment_type must not hide a good fee_type.
+		const fromQuery =
+			normaliseFeeType(searchParams.get("payment_type")) ?? normaliseFeeType(searchParams.get("fee_type"));
+		if (fromQuery) return { fee: fromQuery, via: "query param" };
 
 		const intent = findPaymentIntent(params.transRef, params.reference);
 		if (intent) return { fee: intent.type, via: "reference ledger" };
@@ -84,7 +99,7 @@ function VerifyPaymentContent() {
 		if (pending) return { fee: pending, via: "pending slot" };
 
 		return { fee: "application", via: "default (backend resolves the fee)" };
-	}, [searchParams, params]);
+	}, [fromRef, searchParams, params]);
 
 	useEffect(() => {
 		installPaymentTraceConsoleHelper();
@@ -134,8 +149,22 @@ function VerifyPaymentContent() {
 		forgetPaymentIntent(params.transRef, params.reference);
 	}, [outcome, params.transRef, params.reference]);
 
-	const fee = result?.feeType ?? guessed.fee;
+	// Prefix first (backend-issued), then the reply's payment_type, then our guess.
+	const fee = fromRef ?? result?.feeType ?? guessed.fee;
 	const paid = outcome === "paid";
+	const continueTo = destinationFor(fee, redirectParam, paid);
+
+	useEffect(() => {
+		if (!result) return;
+		logPayment("callback:destination", {
+			fee,
+			fromRef,
+			replyFeeType: result.feeType,
+			guessed,
+			redirectParam,
+			continueTo,
+		});
+	}, [result, fee, fromRef, guessed, redirectParam, continueTo]);
 
 	return (
 		<PaymentOutcomeView
@@ -143,7 +172,7 @@ function VerifyPaymentContent() {
 			isLoading={!!reference && query.isLoading}
 			result={result}
 			reference={reference}
-			continueTo={destinationFor(fee, redirectParam, paid)}
+			continueTo={continueTo}
 			continueLabel={fee === "access" ? "Go to my courses" : "Continue admission"}
 			onRetry={() => query.refetch()}
 			isRetrying={query.isFetching}
