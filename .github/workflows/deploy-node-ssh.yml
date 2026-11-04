@@ -55,6 +55,12 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Fail fast instead of hanging for GitHub's 6-hour default.
+    timeout-minutes: 20
+    # A newer push makes an in-progress build pointless — cancel it.
+    concurrency:
+      group: build-production
+      cancel-in-progress: true
 
     steps:
       - uses: actions/checkout@v4
@@ -70,6 +76,18 @@ jobs:
         # clean previous build artifacts to prevent accidental inclusion in the deployment archive.
       - name: Clean previous build
         run: rm -rf .next
+
+      # Restore Next.js's incremental build cache AFTER the clean above, so the
+      # deploy archive is still built fresh but unchanged pages/modules aren't
+      # recompiled. Key changes with dependencies and source; falls back to the
+      # latest cache for the same dependencies.
+      - name: Restore Next.js build cache
+        uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ hashFiles('src/**/*.[jt]s', 'src/**/*.[jt]sx') }}
+          restore-keys: |
+            nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
 
       # NEXT_PUBLIC_* vars are baked into the bundle at build time.
       # They do NOT need to exist on the server at runtime.
@@ -120,6 +138,12 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # One deploy at a time, and never cancel one mid-flight (that could leave
+    # the server half-extracted). A waiting deploy is replaced by a newer one.
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
     if: github.ref == 'refs/heads/main'
 
     steps:
