@@ -13,7 +13,7 @@ const COURSE_ENROLLMENT_AMOUNT = 20000;
 
 export function CoursesView({ userId }: { userId: string }) {
     const { selectedSubCategory, setView, enrolledCourses, paidCategories } = useCourseStore();
-    const { paymentMutation, enrollmentInCourseMutation, isPaymentProcessing } = useCourseQueries(userId);
+    const { accessFeePaymentMutation, enrollmentInCourseMutation, isPaymentProcessing } = useCourseQueries(userId);
     const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
 
     if (!selectedSubCategory) {
@@ -23,13 +23,13 @@ export function CoursesView({ userId }: { userId: string }) {
 
     const handleProgramPayment = () => {
         setSelectedCourse(selectedSubCategory.id);
-        paymentMutation.mutate({
+        const amount = Number(COURSE_ENROLLMENT_AMOUNT || 0);
+        if (!amount || amount <= 0) return;
+
+        accessFeePaymentMutation.mutate({
             programId: selectedSubCategory.id,
-            paymentData: {
-                method: 'card',
-                amount: COURSE_ENROLLMENT_AMOUNT,
-                program_name: selectedSubCategory.name
-            }
+            courseGroupName: selectedSubCategory.name,
+            amount,
         });
     };
 
@@ -164,21 +164,21 @@ export function CoursesView({ userId }: { userId: string }) {
 
                 {!isCategoryPaidFor() && <div className="w-full lg:w-auto">
                     <Button
-                        className="w-full lg:w-auto bg-accent-400 hover:bg-accent-700 text-white"
-                        onClick={() => handleProgramPayment()}
+                        className="w-full lg:w-auto bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white shadow-lg shadow-amber-500/20"
+                        onClick={handleProgramPayment}
                         disabled={isPaymentProcessing}
                         size="xl"
                     >
                         {isPaymentProcessing ? (
                             <div className="flex items-center justify-center">
                                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                                Processing...
+                                Initiating payment...
                             </div>
                         ) : (
                             <div className="flex items-center">
-                                <CreditCard className="w-4 h-4 mr-2" />
-                                <span className="hidden sm:inline">Unlock access to courses</span>
-                                <span className="sm:hidden">Enroll Now</span>
+                                <CreditCard className="w-5 h-5 mr-2" />
+                                <span className="hidden sm:inline">Pay access fee to unlock courses</span>
+                                <span className="sm:hidden">Pay access fee</span>
                             </div>
                         )}
                     </Button>

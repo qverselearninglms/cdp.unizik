@@ -37,7 +37,7 @@ import {
 
 import type { Course, Assessment, AssessmentsData } from '@/lib/services/teacherService';
 
-export const AssessmentsPage: React.FC = () => {
+const AssessmentsPage: React.FC = () => {
   const [selectedCourseId, setSelectedCourseId] = useState<number | undefined>(undefined);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [view, setView] = useState<'upcoming' | 'completed' | 'drafts'>('upcoming');

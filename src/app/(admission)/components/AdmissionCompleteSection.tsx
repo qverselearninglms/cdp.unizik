@@ -67,7 +67,7 @@ export function AdmissionCompleteSection({ student }: StepSectionProps) {
     }, []);
 
     const checklist = [
-        { label: "Access Fee Paid", done: true },
+        { label: "Application Fee Paid", done: true },
         { label: "Application Form Submitted", done: true },
         { label: "Admission Offered & Accepted", done: true },
         { label: "Acceptance Fee Paid", done: true },

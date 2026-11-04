@@ -43,7 +43,7 @@ interface DailyAttendance extends AttendanceRecord {
   students?: StudentAttendance[];
 }
 
-export const AttendancePage: React.FC = () => {
+const AttendancePage: React.FC = () => {
   const [view, setView] = useState<'daily' | 'monthly'>('daily');
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [attendanceData, setAttendanceData] = useState<AttendanceData>({

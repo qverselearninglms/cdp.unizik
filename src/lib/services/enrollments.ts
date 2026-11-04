@@ -13,7 +13,7 @@
 export type EnrollmentFeeStatus = 'paid' | 'partial' | 'pending' | 'overdue' | 'unpaid';
 
 export interface EnrollmentFee {
-  key: 'access' | 'acceptance' | 'tuition';
+  key: 'application' | 'acceptance' | 'tuition';
   label: string;
   /** null when the backend does not publish an amount for this fee */
   amount: number | null;
@@ -82,22 +82,22 @@ function feePaid(status: EnrollmentFeeStatus, amount: number | null, explicit?: 
 function buildEnrollment(record: any): Enrollment {
   const category = record?.lms_category ?? record?.category ?? record?.program ?? null;
 
-  const accessAmount = category?.access_fee != null ? parseAmount(category.access_fee) : null;
+  const applicationAmount = category?.application_fee != null ? parseAmount(category.application_fee) : null;
   const tuitionAmount = category?.tuition != null ? parseAmount(category.tuition) : null;
   const acceptanceAmount =
     category?.acceptance_fee != null ? parseAmount(category.acceptance_fee) : null;
 
-  const accessStatus = mapFeeStatus(record?.application_payment_status);
+  const applicationStatus = mapFeeStatus(record?.application_payment_status);
   const acceptanceStatus = mapFeeStatus(record?.acceptance_payment_status);
   const tuitionStatus = mapFeeStatus(record?.tuition_payment_status);
 
   const fees: EnrollmentFee[] = [
     {
-      key: 'access',
-      label: 'Access fee',
-      amount: accessAmount,
-      paid: feePaid(accessStatus, accessAmount),
-      status: accessStatus,
+      key: 'application',
+      label: 'Application fee',
+      amount: applicationAmount,
+      paid: feePaid(applicationStatus, applicationAmount),
+      status: applicationStatus,
     },
     {
       key: 'acceptance',

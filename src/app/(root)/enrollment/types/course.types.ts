@@ -27,6 +27,24 @@ export interface VerifyPaymentResponse {
     error?: [];
 }
 
+export interface AccessFeePaymentRequest {
+    course_group_id: number | string;
+    course_group_name?: string;
+    amount: number;
+    fee_type: 'access_fee';
+    callback_url?: string;
+    payment_method?: 'card';
+}
+
+export interface AccessFeePaymentStatus {
+    course_group_id: number | string;
+    fee_type: 'access_fee';
+    status: 'not_started' | 'pending' | 'paid' | 'verified';
+    amount: number | null;
+    reference?: string | null;
+    verified_at?: string | null;
+}
+
 // Update EnrollmentApiResponse to match actual API structure
 export interface EnrollmentApiResponse {
     status: string;

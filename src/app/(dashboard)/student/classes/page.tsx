@@ -43,7 +43,7 @@ import {
 import { format } from 'date-fns';
 import Link from 'next/link';
 
-export const CoursesPage: React.FC = () => {
+const CoursesPage: React.FC = () => {
   // All hooks at the top - unconditional
   const { useCourses, useStudentCourses, useAssessments, useAttendance } = useStudentQueries();
   const { data: coursesResponse, isLoading: coursesLoading, error: coursesError } = useCourses();

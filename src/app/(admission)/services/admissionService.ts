@@ -30,14 +30,14 @@ import {
     type PendingAdmissionPaymentType,
 } from "@/lib/program-payment-context";
 
-interface AccessFeePaymentPayload {
+interface ApplicationFeePaymentPayload {
     amount: number;
-    fee_type: "access_fee";
+    fee_type: "application_fee";
     callback_url?: string;
     program_id?: number;
     category_id?: number;
     program_name?: string;
-    access_fee_amount?: number | null;
+    application_fee_amount?: number | null;
     tuition_amount?: number | null;
     duration?: string | null;
     source?: "create-account";
@@ -65,7 +65,7 @@ export function buildPaymentCallbackUrl(feeType: PendingAdmissionPaymentType): s
 interface ProgramPaymentMeta {
     programId?: number;
     programName?: string;
-    accessFeeAmount?: number | null;
+    applicationFeeAmount?: number | null;
     tuitionAmount?: number | null;
     duration?: string | null;
     selectedAt?: string;
@@ -85,11 +85,11 @@ const MOCK_FEES: FeeSchedule = {
     fees: [
         {
             id: "fee-app-001",
-            name: "Access Fee",
-            slug: "access_fee",
+            name: "Application Fee",
+            slug: "application_fee",
             amount: 10_000,
             currency: "NGN",
-            description: "Non-refundable access fee required before completing admission",
+            description: "Non-refundable application fee required before completing admission",
         },
         {
             id: "fee-acc-001",
@@ -172,14 +172,14 @@ function parseAmount(value: unknown): number | null {
 function getProgramMetaFromCategory(category?: LmsCategory | null): ProgramPaymentMeta | null {
     if (!category) return null;
 
-    const accessFee = parseAmount(category.access_fee) ?? parseAmount(category.meta?.[1]);
+    const applicationFee = parseAmount(category.application_fee) ?? parseAmount(category.meta?.[1]);
     const tuition = parseAmount(category.tuition) ?? parseAmount(category.meta?.[0]);
     const duration = category.duration ?? (typeof category.meta?.[2] === "string" ? category.meta[2] : null);
 
     return {
         programId: category.id,
         programName: category.name,
-        accessFeeAmount: accessFee,
+        applicationFeeAmount: applicationFee,
         tuitionAmount: tuition,
         duration,
     };
@@ -196,7 +196,7 @@ function getProgramPaymentMeta(): ProgramPaymentMeta | null {
             return {
                 programId: fromLocal.programId,
                 programName: fromLocal.programName,
-                accessFeeAmount: fromLocal.accessFeeAmount,
+                applicationFeeAmount: fromLocal.applicationFeeAmount,
                 tuitionAmount: fromLocal.tuitionAmount,
                 duration: fromLocal.duration,
                 selectedAt: fromLocal.updatedAt,
@@ -205,7 +205,7 @@ function getProgramPaymentMeta(): ProgramPaymentMeta | null {
 
         return {
             ...fromStudent,
-            accessFeeAmount: fromLocal.accessFeeAmount ?? fromStudent.accessFeeAmount,
+            applicationFeeAmount: fromLocal.applicationFeeAmount ?? fromStudent.applicationFeeAmount,
             tuitionAmount: fromLocal.tuitionAmount ?? fromStudent.tuitionAmount,
             duration: fromLocal.duration ?? fromStudent.duration,
             selectedAt: fromLocal.updatedAt,
@@ -224,7 +224,7 @@ function getProgramPaymentMeta(): ProgramPaymentMeta | null {
     return {
         programId: fromLocal.programId,
         programName: fromLocal.programName,
-        accessFeeAmount: fromLocal.accessFeeAmount,
+        applicationFeeAmount: fromLocal.applicationFeeAmount,
         tuitionAmount: fromLocal.tuitionAmount,
         duration: fromLocal.duration,
         selectedAt: fromLocal.updatedAt,
@@ -298,7 +298,7 @@ interface BackendFeeSchedule {
 
 /** Backend slugs → the slugs the admission pages look up. */
 const BACKEND_FEE_SLUGS: Record<string, string> = {
-    "application-fee": "access_fee",
+    "application-fee": "application_fee",
     "acceptance-fee": "acceptance_fee",
     "tuition-fee": "tuition_fee",
 };
@@ -356,12 +356,12 @@ export const admissionService = {
         return {
             ...MOCK_FEES,
             fees: MOCK_FEES.fees.map((fee) => {
-                if (fee.slug === "access_fee") {
+                if (fee.slug === "application_fee") {
                     return {
                         ...fee,
-                        amount: selectedProgramFee?.accessFeeAmount ?? fee.amount,
+                        amount: selectedProgramFee?.applicationFeeAmount ?? fee.amount,
                         description: selectedProgramFee?.programName
-                            ? `Access fee for ${selectedProgramFee.programName}`
+                            ? `A fee for ${selectedProgramFee.programName}`
                             : fee.description,
                     };
                 }
@@ -404,12 +404,12 @@ export const admissionService = {
     /* ---------- Initiate Application Payment ---------- */
     async initiateApplicationPayment(amount?: number): Promise<PaymentInitiationResponse> {
         const selectedProgramFee = getProgramPaymentMeta();
-        const payloadAmount = amount ?? selectedProgramFee?.accessFeeAmount ?? APPLICATION_FEE_AMOUNT;
+        const payloadAmount = amount ?? selectedProgramFee?.applicationFeeAmount ?? APPLICATION_FEE_AMOUNT;
 
-        const payload: AccessFeePaymentPayload = {
+        const payload: ApplicationFeePaymentPayload = {
             amount: payloadAmount,
-            fee_type: "access_fee",
-            callback_url: buildPaymentCallbackUrl("access"),
+            fee_type: "application_fee",
+            callback_url: buildPaymentCallbackUrl("application"),
             source: "create-account",
         };
 
@@ -417,7 +417,7 @@ export const admissionService = {
             payload.program_id = selectedProgramFee.programId;
             payload.category_id = selectedProgramFee.programId;
             payload.program_name = selectedProgramFee.programName;
-            payload.access_fee_amount = selectedProgramFee.accessFeeAmount;
+            payload.application_fee_amount = selectedProgramFee.applicationFeeAmount;
             payload.tuition_amount = selectedProgramFee.tuitionAmount;
             payload.duration = selectedProgramFee.duration;
             payload.selected_at = selectedProgramFee.selectedAt;

@@ -2,7 +2,7 @@ import { useCourseStore } from '../stores/course-store';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Plus, Award, Database, Home, BookOpen } from 'lucide-react';
+import { Plus, Award, Database, Home, BookOpen, CreditCard, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useCourseQueries } from '../hooks/use-course-queries';
 import { courseService } from '../services/course-service';
@@ -24,6 +24,8 @@ export function DashboardView({ userId }: { userId: string }) {
         courseToUnenroll,
         setCourseToUnenroll,
     } = useCourseQueries(userId);
+
+    const requiresAccessFee = enrolledCourses.length === 0;
 
     // const handleUnenroll = (courseId: string, courseGroupId: number) => {
     //     unenrollFromCourseMutation.mutate({
@@ -134,35 +136,17 @@ export function DashboardView({ userId }: { userId: string }) {
 
     return (
         <>
-            <div className="space-y-12">
+            <div className="space-y-8">
                 <motion.div
                     initial={{ y: -20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     className="flex justify-between items-center"
                 >
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">My Learning Dashboard</h1>
-                        <p className="text-primary-800 mt-2">Continue where you left off</p>
+                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Book your course access</h1>
+                        <p className="text-primary-800 mt-2">Complete the access fee step below to unlock your learning dashboard.</p>
                     </div>
                     <div className="flex items-center space-x-5">
-                        {/* <Button
-                            type="button"
-                            variant="secondary"
-                            size="sm"
-                            onClick={clearCache}
-                            className="text-xs"
-                        >
-                            <Database className="w-3 h-3 mr-1" />
-                            Refresh Data
-                        </Button>
-                        <Button
-                            onClick={toggleShowAllCategories}
-                            variant="outline"
-                            className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-600 dark:border-yellow-200 dark:text-yellow-600 dark:hover:bg-yellow-50 dark:hover:text-yellow-600"
-                        >
-                            <Plus className="w-4 h-4 mr-2" />
-                            Enroll in More Programs
-                        </Button> */}
                         <Button
                             variant="outline"
                             className="border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-600 dark:border-yellow-200 dark:text-yellow-600 dark:hover:bg-yellow-50 dark:hover:text-yellow-600"
@@ -175,6 +159,34 @@ export function DashboardView({ userId }: { userId: string }) {
                         </Button>
                     </div>
                 </motion.div>
+
+                {requiresAccessFee && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 p-6 shadow-sm dark:border-amber-500/40 dark:from-amber-950/50 dark:to-orange-950/60"
+                    >
+                        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                            <div>
+                                <p className="text-sm font-medium uppercase tracking-[0.15em] text-amber-700 dark:text-amber-300">Next step</p>
+                                <h2 className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">Pay your access fee to continue</h2>
+                                <p className="mt-2 max-w-2xl text-sm text-slate-600 dark:text-slate-300">
+                                    Your course access is gated until payment is confirmed. Complete the payment, come back to this page, and your learning button will unlock automatically.
+                                </p>
+                            </div>
+                            <Button
+                                size="lg"
+                                className="bg-amber-600 hover:bg-amber-700 text-white shadow-lg shadow-amber-500/20"
+                                asChild
+                            >
+                                <Link href="/enrollment?step=pay-access-fee">
+                                    <CreditCard className="w-4 h-4 mr-2" />
+                                    Pay access fee
+                                </Link>
+                            </Button>
+                        </div>
+                    </motion.div>
+                )}
 
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                     {enrolledCourses.map((enrollment, index) => {
@@ -214,27 +226,13 @@ export function DashboardView({ userId }: { userId: string }) {
                                                 <Progress value={enrollment.progress} className="h-2" />
                                             </div>
 
-                                            <div className="grid grid-cols-2 gap-5">
+                                            <div className="grid grid-cols-1 gap-3">
                                                 <Button
                                                     className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                                                     onClick={() => courseService.redirectToCourseWarePlatform(String(user?.school_reg_number))}
                                                 >
                                                     Continue Learning
                                                 </Button>
-                                                {/* <Button
-                                                    variant="ghost"
-                                                    className="dark:hover:text-white"
-                                                    // onClick={() => handleUnenroll(enrollment.course.id, enrollment.course.course_group_id)}
-                                                    // disabled={isUnenrollmentProcessing}
-                                                    onClick={() => handleUnenrollClick(
-                                                        enrollment.courseId,
-                                                        enrollment.course.course_group_id,
-                                                        enrollment.course.course_name || enrollment.course.title
-                                                    )}
-                                                    disabled={isUnenrollmentProcessing}
-                                                >
-                                                    {isUnenrollmentProcessing ? 'Unenrolling...' : 'Unenroll'}
-                                                </Button> */}
                                             </div>
                                         </div>
                                     </CardContent>

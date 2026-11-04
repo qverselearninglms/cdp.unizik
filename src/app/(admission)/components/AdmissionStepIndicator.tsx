@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 
 const STEPS = [
-    { label: "Access Fee", icon: CreditCard },
+    { label: "Application Fee", icon: CreditCard },
     { label: "Application Form", icon: FileText },
     { label: "Admission Status", icon: Search },
     { label: "Tuition Fee", icon: GraduationCap },

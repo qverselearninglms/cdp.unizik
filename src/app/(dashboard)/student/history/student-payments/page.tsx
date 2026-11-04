@@ -28,7 +28,7 @@ import {
 import { format } from 'date-fns';
 import { Progress } from '@/components/ui/progress';
 
-export const PaymentsPage: React.FC = () => {
+const PaymentsPage: React.FC = () => {
   // All hooks must be called unconditionally - move them to the top
   const { usePaymentStats } = useStudentQueries();
   const { data: paymentResponse, isLoading, error } = usePaymentStats();

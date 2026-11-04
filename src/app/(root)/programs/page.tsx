@@ -100,7 +100,7 @@ export default function ProgramsPage() {
                             {program.duration}
                           </span>
                           <span className="text-xs font-medium text-slate-500 dark:text-slate-300">
-                            Access: {program.accessFee}
+                            Application: {program.applicationFee}
                           </span>
                         </div>
 

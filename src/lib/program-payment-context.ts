@@ -2,7 +2,14 @@ export const SELECTED_PROGRAM_PAYMENT_KEY = "cdp_selected_program_payment";
 export const PENDING_ADMISSION_PAYMENT_KEY = "cdp_pending_admission_payment_type";
 export const PAYMENT_INTENT_LEDGER_KEY = "cdp_payment_intents";
 
-export type PendingAdmissionPaymentType = "access" | "acceptance" | "tuition";
+/** `access` is the course-enrollment access fee; the rest are admission fees. */
+export type PendingAdmissionPaymentType = "application" | "acceptance" | "tuition" | "access";
+
+const PAYMENT_TYPES: readonly PendingAdmissionPaymentType[] = ["application", "acceptance", "tuition", "access"];
+
+function isPaymentType(value: unknown): value is PendingAdmissionPaymentType {
+  return typeof value === "string" && (PAYMENT_TYPES as readonly string[]).includes(value);
+}
 
 /**
  * What we knew about a payment at the moment we handed the user to the gateway,
@@ -20,7 +27,9 @@ export interface PaymentIntentRecord {
   programName: string | null;
   createdAt: string;
 }
-
+/**
+ * Read the payment intents from local storage.
+ */
 /** Keep the ledger small — it only exists to resolve recent callbacks. */
 const MAX_INTENTS = 20;
 
@@ -38,7 +47,7 @@ function readIntents(): PaymentIntentRecord[] {
       (item): item is PaymentIntentRecord =>
         !!item &&
         typeof item.reference === "string" &&
-        (item.type === "access" || item.type === "acceptance" || item.type === "tuition")
+        isPaymentType(item.type)
     );
   } catch {
     return [];
@@ -115,9 +124,9 @@ export function forgetPaymentIntent(...references: Array<string | null | undefin
 export interface SelectedProgramPaymentInfo {
   programId: number;
   programName: string;
-  accessFeeAmount: number | null;
+  applicationFeeAmount: number | null;
   tuitionAmount: number | null;
-  accessFeeLabel: string | null;
+  applicationFeeLabel: string | null;
   tuitionLabel: string | null;
   duration: string | null;
   updatedAt: string;
@@ -164,9 +173,9 @@ export function getSelectedProgramPaymentInfo(): SelectedProgramPaymentInfo | nu
     return {
       programId: parsed.programId,
       programName: parsed.programName,
-      accessFeeAmount: parseAmount(parsed.accessFeeAmount),
+      applicationFeeAmount: parseAmount(parsed.applicationFeeAmount),
       tuitionAmount: parseAmount(parsed.tuitionAmount),
-      accessFeeLabel: typeof parsed.accessFeeLabel === "string" ? parsed.accessFeeLabel : null,
+      applicationFeeLabel: typeof parsed.applicationFeeLabel === "string" ? parsed.applicationFeeLabel : null,
       tuitionLabel: typeof parsed.tuitionLabel === "string" ? parsed.tuitionLabel : null,
       duration: typeof parsed.duration === "string" ? parsed.duration : null,
       updatedAt: typeof parsed.updatedAt === "string" ? parsed.updatedAt : new Date().toISOString(),
@@ -185,7 +194,7 @@ export function getPendingAdmissionPaymentType(): PendingAdmissionPaymentType | 
   if (typeof window === "undefined") return null;
 
   const value = window.localStorage.getItem(PENDING_ADMISSION_PAYMENT_KEY);
-  if (value === "access" || value === "acceptance" || value === "tuition") {
+  if (isPaymentType(value)) {
     return value;
   }
 

@@ -34,7 +34,7 @@ import {
   Shield
 } from 'lucide-react';
 
-export const NotificationsPage: React.FC = () => {
+const NotificationsPage: React.FC = () => {
   const [view, setView] = useState<'all' | 'unread' | 'sent' | 'archived'>('all');
   const [composeDialogOpen, setComposeDialogOpen] = useState(false);
 

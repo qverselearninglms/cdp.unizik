@@ -12,7 +12,7 @@ export interface LmsCategory {
     parent: number;
     sortorder: number;
     tuition?: string;
-    access_fee?: string;
+    application_fee?: string;
     duration?: string;
     meta?: Array<string | number>;
 }

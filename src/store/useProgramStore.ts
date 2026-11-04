@@ -7,7 +7,7 @@ export interface Category {
     sortorder: number;
     description?: string;
     tuition?: string;
-    access_fee?: string;
+    application_fee?: string;
     duration?: string;
     meta?: Array<string | number>;
 }

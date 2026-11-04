@@ -93,7 +93,7 @@ export default function ProcessAdmissionPage() {
         id: selectedProgram?.programId ?? course?.id,
         name: selectedProgram?.programName ?? course?.name,
         tuition: selectedProgram?.tuitionAmount ?? course?.tuition ?? (course?.meta?.[0] as string | number | undefined),
-        accessFee: selectedProgram?.accessFeeAmount ?? course?.access_fee ?? (course?.meta?.[1] as string | number | undefined),
+        applicationFee: selectedProgram?.applicationFeeAmount ?? course?.application_fee ?? (course?.meta?.[1] as string | number | undefined),
         duration: selectedProgram?.duration ?? course?.duration ?? (course?.meta?.[2] as string | undefined),
     };
 
@@ -158,7 +158,7 @@ export default function ProcessAdmissionPage() {
                                         Program ID: <span className="font-semibold">#{effectiveCourse.id ?? "TBA"}</span>
                                     </p>
                                     <p className="text-emerald-800 dark:text-emerald-200">
-                                        Access Fee: <span className="font-semibold">{formatCurrency(effectiveCourse.accessFee)}</span>
+                                        Application Fee: <span className="font-semibold">{formatCurrency(effectiveCourse.applicationFee)}</span>
                                     </p>
                                     <p className="text-emerald-800 dark:text-emerald-200">
                                         Tuition: <span className="font-semibold">{formatCurrency(effectiveCourse.tuition)}</span>
@@ -170,7 +170,7 @@ export default function ProcessAdmissionPage() {
 
                                 <div className="mt-3 flex flex-wrap gap-2">
                                     <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${statusChipClasses(student.application_payment_status)}`}>
-                                        Access Payment: {statusLabel(student.application_payment_status)}
+                                        Application Payment: {statusLabel(student.application_payment_status)}
                                     </span>
                                     <span className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${statusChipClasses(student.tuition_payment_status)}`}>
                                         Tuition Payment: {statusLabel(student.tuition_payment_status)}
@@ -277,7 +277,7 @@ export default function ProcessAdmissionPage() {
                             {simulateAppPaymentPaid.isPending && (
                                 <Loader2 className="size-3 animate-spin" />
                             )}
-                            Step 0→1: Access Fee Paid
+                            Step 0→1: Application Fee Paid
                         </Button>
                         <Button
                             variant="outline"

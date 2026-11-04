@@ -232,6 +232,23 @@ class ApiClient {
         return response.data;
     }
 
+    /**
+     * GET that resolves for EVERY HTTP status and hands back the status code
+     * with the body, instead of throwing.
+     *
+     * For endpoints whose status codes are answers rather than errors — the
+     * payment verify endpoints reply 401 for a declined payment, which the
+     * error interceptor would otherwise treat as an expired session and log
+     * the student out. Only network failures (no response at all) reject.
+     */
+    async getWithStatus<T = unknown>(
+        url: string,
+        config?: AxiosRequestConfig
+    ): Promise<{ httpStatus: number; body: T }> {
+        const response = await this.instance.get<T>(url, { ...config, validateStatus: () => true });
+        return { httpStatus: response.status, body: response.data };
+    }
+
     async post<T = unknown>(
         url: string,
         data?: unknown,

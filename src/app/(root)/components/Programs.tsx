@@ -113,9 +113,9 @@ export const Programs: React.FC = () => {
                         <span className="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 dark:border-white/10 dark:bg-slate-800 dark:text-slate-200">
                           {program.duration}
                         </span>
-                        <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
-                          Access: {program.accessFee}
-                        </span>
+                        {/* <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                          Application: {program.applicationFee}
+                        </span> */}
                       </div>
 
                       <Button

@@ -14,26 +14,25 @@ import { rememberPaymentIntent, setPendingAdmissionPaymentType } from "@/lib/pro
 import { logPayment } from "@/lib/payment-debug";
 
 export function ApplicationPaymentSection({ student, fees }: StepSectionProps) {
-    const appFee = fees.fees.find((f) => f.slug === "access_fee")
-        ?? fees.fees.find((f) => f.slug === "application_fee");
+    const appFee = fees.fees.find((f) => f.slug === "application_fee");
     const initPayment = useInitiateApplicationPayment();
 
     const handlePay = async () => {
         try {
-            logPayment("initiate:request", { feeType: "access", amount: appFee?.amount ?? null });
+            logPayment("initiate:request", { feeType: "application", amount: appFee?.amount ?? null });
             const result = await initPayment.mutateAsync(appFee?.amount);
             logPayment("initiate:response", result);
 
             if (result.success && result.gateway_url) {
-                setPendingAdmissionPaymentType("access");
+                setPendingAdmissionPaymentType("application");
                 // Tie the fee type to the gateway reference so the callback can
                 // recover it even after a refresh or on a fresh tab.
                 rememberPaymentIntent({
                     reference: result.reference,
-                    type: "access",
+                    type: "application",
                     amount: appFee?.amount ?? null,
                 });
-                logPayment("intent:saved", { reference: result.reference, type: "access" });
+                logPayment("intent:saved", { reference: result.reference, type: "application" });
                 toast.success("Redirecting to payment gateway…");
                 // Small delay so toast is visible
                 setTimeout(() => {
@@ -42,7 +41,7 @@ export function ApplicationPaymentSection({ student, fees }: StepSectionProps) {
             }
         } catch (error) {
             logPayment("initiate:error", {
-                feeType: "access",
+                feeType: "application",
                 message: error instanceof Error ? error.message : String(error),
             });
             toast.error("Failed to initiate payment. Please try again.");
@@ -66,9 +65,9 @@ export function ApplicationPaymentSection({ student, fees }: StepSectionProps) {
                             <CreditCard className="size-5 text-primary" />
                         </div>
                         <div>
-                            <CardTitle className="text-lg">Access Fee Payment</CardTitle>
+                            <CardTitle className="text-lg">Application Fee Payment</CardTitle>
                             <CardDescription>
-                                Step 1 — Pay the access fee before tuition to unlock your admission flow
+                                Step 1 — Pay the application fee before tuition to unlock your admission flow
                             </CardDescription>
                         </div>
                     </div>
@@ -129,7 +128,7 @@ export function ApplicationPaymentSection({ student, fees }: StepSectionProps) {
                                 Payment Required
                             </p>
                             <p className="text-xs leading-relaxed text-muted-foreground">
-                                You must pay the access fee of{" "}
+                                You must pay the application fee of{" "}
                                 <span className="font-semibold text-foreground">
                                     ₦{appFee?.amount.toLocaleString() ?? "10,000"}
                                 </span>{" "}

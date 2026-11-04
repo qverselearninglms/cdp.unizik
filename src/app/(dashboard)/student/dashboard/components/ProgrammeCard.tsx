@@ -65,7 +65,7 @@ export const nextPayableFee = (enrollment: Enrollment) =>
 
 export const ProgrammeCard: React.FC<{ enrollment: Enrollment }> = ({ enrollment }) => {
   const steps = [
-    { label: 'Access fee', status: enrollment.applicationPaymentStatus },
+    { label: 'Application fee', status: enrollment.applicationPaymentStatus },
     { label: 'Application form', status: enrollment.applicationStatus },
     { label: 'Admission decision', status: enrollment.admissionStatus },
     // { label: 'Acceptance fee', status: enrollment.acceptancePaymentStatus },

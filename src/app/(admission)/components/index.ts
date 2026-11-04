@@ -6,5 +6,6 @@ export { AcceptanceFeeSection } from "./AcceptanceFeeSection";
 export { TuitionPaymentSection } from "./TuitionPaymentSection";
 export { AdmissionCompleteSection } from "./AdmissionCompleteSection";
 export { PaymentVerificationView } from "./PaymentVerificationView";
+export { PaymentOutcomeView } from "./PaymentOutcomeView";
 export { FeeInfoCard } from "./FeeInfoCard";
 export { StatusBadgeWidget } from "./StatusBadgeWidget";

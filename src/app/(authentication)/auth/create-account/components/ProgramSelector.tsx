@@ -202,7 +202,7 @@ function CategoryCard({ node, depth, selectedProgramId, onSelect, onEnroll }: Ca
                             {/* Stacked rows read better than columns at this card width */}
                             <dl className="mt-3 space-y-1 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 dark:border-slate-700 dark:bg-slate-800/70">
                                 {[
-                                    { label: 'Access fee', value: formatFeeLabel(node.access_fee, 'TBA') },
+                                    { label: 'Application fee', value: formatFeeLabel(node.application_fee, 'TBA') },
                                     { label: 'Tuition', value: formatFeeLabel(node.tuition, 'TBA') },
                                     { label: 'Duration', value: node.duration ?? 'TBA' },
                                 ].map((row) => (
@@ -345,9 +345,9 @@ export function ProgramSelector({ setValue, trigger, error }: ProgramSelectorPro
         saveSelectedProgramPaymentInfo({
             programId: node.id,
             programName: node.name,
-            accessFeeAmount: toAmount(node.access_fee),
+            applicationFeeAmount: toAmount(node.application_fee),
             tuitionAmount: toAmount(node.tuition),
-            accessFeeLabel: node.access_fee ?? null,
+            applicationFeeLabel: node.application_fee ?? null,
             tuitionLabel: node.tuition ?? null,
             duration: node.duration ?? null,
             updatedAt: new Date().toISOString(),
@@ -479,7 +479,7 @@ export function ProgramSelector({ setValue, trigger, error }: ProgramSelectorPro
 
                         <div className="mt-3 grid gap-2 sm:grid-cols-3">
                             <span className="rounded-lg bg-emerald-100 px-2.5 py-2 text-xs font-medium text-emerald-800 dark:bg-emerald-900/70 dark:text-emerald-100">
-                                Access: {formatFeeLabel(selectedProgram.access_fee, 'TBA')}
+                                Application: {formatFeeLabel(selectedProgram.application_fee, 'TBA')}
                             </span>
                             <span className="rounded-lg bg-emerald-100 px-2.5 py-2 text-xs font-medium text-emerald-800 dark:bg-emerald-900/70 dark:text-emerald-100">
                                 Tuition: {formatFeeLabel(selectedProgram.tuition, 'TBA')}
@@ -490,7 +490,7 @@ export function ProgramSelector({ setValue, trigger, error }: ProgramSelectorPro
                         </div>
 
                         <p className="mt-2 text-[11px] text-emerald-700/90 dark:text-emerald-300/90">
-                            Payment order: access fee first, then tuition.
+                            Payment order: application fee first, then tuition.
                         </p>
                     </motion.div>
                 ) : (
@@ -500,7 +500,7 @@ export function ProgramSelector({ setValue, trigger, error }: ProgramSelectorPro
                         exit={{ opacity: 0 }}
                         className="text-xs text-slate-600 dark:text-slate-300"
                     >
-                        Tip: each course card shows access fee, tuition, and duration. Click Select Program to confirm your choice.
+                        Tip: each course card shows application fee, tuition, and duration. Click Select Program to confirm your choice.
                     </motion.p>
                 )}
             </AnimatePresence>

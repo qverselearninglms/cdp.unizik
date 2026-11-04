@@ -29,7 +29,7 @@ import {
   Camera
 } from 'lucide-react';
 
-export const ProfilePage: React.FC = () => {
+const ProfilePage: React.FC = () => {
   // All hooks at the top
   const { useProfile, useUpdateProfile, useChangePassword, useExportData } = useStudentQueries();
   const { data: profileResponse, isLoading, error, refetch } = useProfile();

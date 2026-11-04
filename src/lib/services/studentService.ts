@@ -222,7 +222,7 @@ export interface PaymentStats {
 
 /**
  * Programme (Moodle category) attached to a student's admission record.
- * `tuition` / `access_fee` arrive as formatted strings, e.g. "500,000".
+ * `tuition` / `application_fee` arrive as formatted strings, e.g. "500,000".
  */
 export interface AdmissionLmsCategory {
   id: number;
@@ -230,7 +230,7 @@ export interface AdmissionLmsCategory {
   parent: number;
   sortorder: number;
   tuition?: string;
-  access_fee?: string;
+  application_fee?: string;
   duration?: string;
   meta?: Array<string | number>;
 }

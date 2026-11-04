@@ -1,6 +1,7 @@
 // app/layout.tsx
 import type { Metadata, Viewport } from "next";
 import { Geist_Mono, Outfit } from "next/font/google"; // Add Outfit import
+import localFont from "next/font/local";
 import "./globals.css";
 import { APP_CONFIG } from "@/config";
 import { cookies } from "next/headers";
@@ -13,11 +14,9 @@ import { QueryProvider } from "@/providers/query-provider";
 import AuthProvider from "@/providers/AuthProvider";
 import { PageLoadProviders } from "@/providers/page-load-provider";
 
-// Configure Outfit font
-const outfit = Outfit({
+const outfit = localFont({
+    src: "./fonts/Outfit-VariableFont_wght.ttf",
     variable: "--font-outfit",
-    subsets: ["latin"],
-    weight: ["300", "400", "500", "600", "700", "800", "900"], // All weights
     display: "swap",
 });
 

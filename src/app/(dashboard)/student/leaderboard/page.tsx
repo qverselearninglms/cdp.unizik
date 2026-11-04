@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { useStudentQueries } from '@/hooks/useStudentQueries';
 
-export const GamificationPage: React.FC = () => {
+const GamificationPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'badges' | 'leaderboard' | 'rewards'>('overview');
   
   const { useGamificationData, useRedeemReward } = useStudentQueries();

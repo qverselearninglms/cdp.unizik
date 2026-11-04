@@ -86,19 +86,36 @@ class CourseService {
     }
 
     getPaidCategories = async (): Promise<Enrollment[]> => {
-        try {
-            const response = await apiClient.get<EnrollmentApiResponse>("/student/paid-courses-category");
-            const paidCategories = (response as any).data || [];
+        const candidateRoutes = [
+            "/student/paid-courses-category",
+            "/student/paid-course-categories",
+            "/student/paid-courses",
+        ];
 
-            return paidCategories
-        } catch (error) {
-            const apiError = error as ApiError;
-            console.error(
-                `Failed to fetch paid categories from API [${apiError?.statusCode ?? 'unknown'}]:`,
-                apiError?.message ?? String(error)
-            );
-            return [];
+        for (const route of candidateRoutes) {
+            try {
+                const response = await apiClient.get<EnrollmentApiResponse>(route);
+                const payload = (response as any)?.data ?? response;
+                const paidCategories = Array.isArray(payload) ? payload : payload?.data ?? [];
+                return paidCategories;
+            } catch (error) {
+                const apiError = error as ApiError;
+                const isMissingRoute =
+                    apiError?.statusCode === 404 ||
+                    String(apiError?.message ?? "").toLowerCase().includes("route not found") ||
+                    String(apiError?.message ?? "").toLowerCase().includes("does not exist");
+
+                if (isMissingRoute) continue;
+
+                console.error(
+                    `Failed to fetch paid categories from API [${apiError?.statusCode ?? 'unknown'}]:`,
+                    apiError?.message ?? String(error)
+                );
+                return [];
+            }
         }
+
+        return [];
     }
 
     getEnrolledCourse = async (): Promise<Enrollment[]> => {
@@ -320,6 +337,32 @@ class CourseService {
             courseCount: courses.length,
             courses: courses as Course[],
         };
+    }
+
+    initiateAccessFeePayment = async (programId: string, courseGroupName: string, amount: number): Promise<PaymentData> => {
+        try {
+            const callbackUrl = `${window.location.origin}/verify-payments?payment_type=access_fee&redirect=/enrollment`;
+            const response = await apiClient.post<PaymentData>('/student/course-payment', {
+                department: courseGroupName,
+                course_group_id: programId,
+                amount,
+                fee_type: 'access_fee',
+                callback_url: callbackUrl,
+            });
+
+            if (response.status !== 200) {
+                throw new Error(response.message || 'Failed to initialize access fee payment');
+            }
+
+            if (!response.data) {
+                throw new Error('No payment data received');
+            }
+
+            return response.data;
+        } catch (error) {
+            console.error('Error initiating access fee payment:', error);
+            throw error as ApiError;
+        }
     }
 
     processPayment = async (programId: string, paymentData: Record<string, unknown>): Promise<PaymentData> => {

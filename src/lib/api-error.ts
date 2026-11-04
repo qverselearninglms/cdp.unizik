@@ -44,8 +44,13 @@ export function handleApiError(
     error: ApiError,
     fallbackMessage = 'Something went wrong. Please try again.'
 ): void {
-    const message = error.message || fallbackMessage;
     const fieldErrors = extractFieldErrors(error);
+    const rawMessage = error.message?.trim();
+    const isGenericValidationMessage = /^validation failed\.?$/i.test(rawMessage ?? '');
+    const message =
+        isGenericValidationMessage && fieldErrors.length > 0
+            ? 'Please check the highlighted fields and try again.'
+            : rawMessage || fallbackMessage;
 
     if (fieldErrors.length > 0) {
         toast.error(message, {

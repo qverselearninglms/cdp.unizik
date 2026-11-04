@@ -52,12 +52,9 @@ export const useCourseQueries = (userId: string) => {
             setLoading(true);
         },
         onSuccess: (data, variables) => {
-            // useCourseStore.getState().enrollInCourse(variables.programId);
-            // Invalidate enrollments to refresh data
             queryClient.invalidateQueries({
                 queryKey: ['student-enrollments', userId]
             });
-            // redirect to payment gatway
             if (data.authorizationUrl) {
                 window.location.href = data.authorizationUrl;
                 toast.success('Redirecting to payment gateway...');
@@ -66,6 +63,28 @@ export const useCourseQueries = (userId: string) => {
         onError: (error) => {
             console.error('Payment error:', error);
             toast.error(error.message || 'Failed to initialize payment');
+        },
+        onSettled: () => {
+            setLoading(false);
+        },
+    });
+
+    const accessFeePaymentMutation = useMutation({
+        mutationFn: ({ programId, courseGroupName, amount }: { programId: string; courseGroupName: string; amount: number }) =>
+            courseService.initiateAccessFeePayment(programId, courseGroupName, amount),
+        onMutate: () => {
+            setLoading(true);
+        },
+        onSuccess: (data) => {
+            queryClient.invalidateQueries({ queryKey: ['student-enrollments', userId] });
+            if (data.authorizationUrl) {
+                window.location.href = data.authorizationUrl;
+                toast.success('Redirecting to secure payment gateway...');
+            }
+        },
+        onError: (error) => {
+            console.error('Access fee payment error:', error);
+            toast.error(error.message || 'Failed to initialize access fee payment');
         },
         onSettled: () => {
             setLoading(false);
@@ -140,6 +159,7 @@ export const useCourseQueries = (userId: string) => {
         reloadCategoriesAndCourses: reloadAllQueries,
         enrollmentsQuery,
         paymentMutation,
+        accessFeePaymentMutation,
         verifyCourseGroupPurchaseQuery,
         enrollmentInCourseMutation,
         unenrollFromCourseMutation,
