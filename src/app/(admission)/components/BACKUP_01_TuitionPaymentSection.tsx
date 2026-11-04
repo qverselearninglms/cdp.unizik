@@ -409,7 +409,7 @@ export function TuitionPaymentSection({ student }: StepSectionProps) {
                         </Button>
 
                         {currentStep === 5 && <Button className="w-full gap-2" size="default" variant="outline" asChild>
-                            <Link href="/enrollment">View your Enrolled Courses</Link>
+                            <Link href="/course-enrollment">View your Enrolled Courses</Link>
                         </Button>}
                     </div>
 

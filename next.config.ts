@@ -5,6 +5,15 @@ const nextConfig = {
     ignoreDuringBuilds: true, // Add this for now to ensure deployment
   },
 
+  // The old /enrollment module was replaced by /course-enrollment. Keep old
+  // bookmarks, emailed links and stray gateway callbacks working.
+  redirects: async () => {
+    return [
+      { source: '/enrollment/verify-payment', destination: '/verify-payments', permanent: true },
+      { source: '/enrollment/:path*', destination: '/course-enrollment', permanent: true },
+    ];
+  },
+
   headers: async () => {
     return [
       {

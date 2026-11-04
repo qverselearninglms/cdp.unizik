@@ -150,7 +150,7 @@ export function AdmissionCompleteSection({ student }: StepSectionProps) {
                             <span>Ready to start your academic journey?</span>
                         </div>
                         <Button
-                            onClick={() => router.push("/enrollment")}
+                            onClick={() => router.push("/course-enrollment")}
                             className="btn-glow w-full gap-2"
                             size="lg"
                         >

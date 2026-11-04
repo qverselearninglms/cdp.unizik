@@ -2,8 +2,8 @@
 import { ApiResponse } from '@/types/auth';
 import { apiClient } from '@/core/client';
 import { parseAmount, toEnrollments, type Enrollment } from './enrollments';
-import { courseService } from '@/app/(root)/enrollment/services/course-service';
-import type { Enrollment as CourseEnrollment } from '@/app/(root)/enrollment/types/course.types';
+import { lmsCourseService } from '@/lib/services/lmsCourseService';
+import type { CourseEnrollment } from '@/types/course';
 
 export type {
   Enrollment,
@@ -762,7 +762,7 @@ export const studentService = {
       studentService.getPaymentStats(),
       studentService.getAssessments(),
       studentService.getAttendance(),
-      courseService.getEnrolledCourseWithCategories(),
+      lmsCourseService.getEnrolledCourses(),
     ]);
 
     const unavailable: string[] = [];

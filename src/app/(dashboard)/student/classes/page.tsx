@@ -460,7 +460,7 @@ const CoursesPage: React.FC = () => {
                               Open
                             </Button>
                           ) : (
-                            <Link  href="/enrollment" size="sm" variant="secondary">
+                            <Link  href="/course-enrollment" size="sm" variant="secondary">
                               Enroll
                             </Link>
                           )} */}

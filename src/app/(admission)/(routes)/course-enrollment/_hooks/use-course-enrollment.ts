@@ -10,7 +10,7 @@ import {
     rememberPaymentIntent,
     setPendingAdmissionPaymentType,
 } from "@/lib/program-payment-context";
-import { courseService } from "@/app/(root)/enrollment/services/course-service";
+import { lmsCourseService } from "@/lib/services/lmsCourseService";
 import { verifyPayment, type VerifyResult } from "@/lib/payment-verification";
 import { AccessPaymentRefused, enrollmentService } from "../_services/enrollment-service";
 import type { EnrollmentPhase, EnrollmentProgram } from "../_types/enrollment";
@@ -194,7 +194,7 @@ export function useCourseEnrollment() {
             toast.error("Your student username isn't available yet. Please sign out and back in.");
             return;
         }
-        courseService.redirectToCourseWarePlatform(String(username));
+        lmsCourseService.redirectToCourseWarePlatform(String(username));
     };
 
     return {

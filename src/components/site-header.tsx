@@ -33,7 +33,7 @@ const SiteHeader = () => {
                 {isParentPage && <StudentSelector />}
                 {user?.role === 'STUDENT' && <div className="flex items-center gap-2">
                     <LucideLink className="w-4 h-4" />
-                    <Link href={`/enrollment`} >
+                    <Link href="/course-enrollment" >
                         Enroll In Courses
                     </Link>
                 </div>}

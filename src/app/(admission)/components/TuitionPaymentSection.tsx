@@ -264,7 +264,7 @@ export function TuitionPaymentSection({ student, fees }: StepSectionProps) {
                         variant="outline"
                         asChild
                     >
-                        <Link href="/enrollment">
+                        <Link href="/course-enrollment">
                             View your Enrolled courses
                         </Link>
                     </Button>}

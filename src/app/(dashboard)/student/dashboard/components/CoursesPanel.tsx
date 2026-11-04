@@ -7,9 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { BookOpen, ChevronRight, ExternalLink } from 'lucide-react';
-import { courseService } from '@/app/(root)/enrollment/services/course-service';
+import { lmsCourseService } from '@/lib/services/lmsCourseService';
 import { useAuthContext } from '@/providers/AuthProvider';
-import type { Enrollment as CourseEnrollment } from '@/app/(root)/enrollment/types/course.types';
+import type { CourseEnrollment } from '@/types/course';
 
 export const CoursesPanel: React.FC<{ courses: CourseEnrollment[] }> = ({ courses }) => {
   const { user } = useAuthContext();
@@ -17,7 +17,7 @@ export const CoursesPanel: React.FC<{ courses: CourseEnrollment[] }> = ({ course
   const openCourseware = () => {
     const username = (user as { username?: string; email?: string })?.username
       ?? (user as { email?: string })?.email;
-    if (username) courseService.redirectToCourseWarePlatform(username);
+    if (username) lmsCourseService.redirectToCourseWarePlatform(username);
   };
 
   return (
@@ -50,7 +50,7 @@ export const CoursesPanel: React.FC<{ courses: CourseEnrollment[] }> = ({ course
               </p>
             </div>
             <Button asChild variant="outline" size="sm">
-              <Link href="/enrollment">
+              <Link href="/course-enrollment">
                 Browse enrolment
                 <ChevronRight className="ml-1 h-4 w-4" />
               </Link>
